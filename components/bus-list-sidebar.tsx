@@ -4,6 +4,7 @@ import { useState } from "react"
 import type { Bus } from "@/types/bus"
 import { ChevronDown, Filter, Search, X } from "lucide-react"
 import { useBusTracking } from "@/hooks/use-bus-tracking"
+import { formatNumber } from "@/lib/utils"
 
 interface BusListSidebarProps {
   buses: Bus[]
@@ -205,7 +206,7 @@ export default function BusListSidebar({
                   </div>
                   <div>
                     <div className="text-[#7d7d7d]">Speed</div>
-                    <div className="font-medium">{bus.speed} km/h</div>
+                    <div className="font-medium">{formatNumber(bus.speed,3)} km/h</div>
                   </div>
                   <div>
                     <div className="text-[#7d7d7d]">Next Stop</div>

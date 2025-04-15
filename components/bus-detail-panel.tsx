@@ -1,5 +1,6 @@
 "use client"
 
+import { formatNumber, formatSpeed } from "@/lib/utils"
 import type { Bus } from "@/types/bus"
 import { ChevronRight, Clock, MapPin, Phone, X } from "lucide-react"
 
@@ -79,12 +80,12 @@ export default function BusDetailPanel({ bus, onClose }: BusDetailPanelProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#f9f9f9] p-3 rounded-md">
               <div className="text-xs text-[#7d7d7d] mb-1">Speed</div>
-              <div className="text-lg font-medium">{bus.speed} km/h</div>
+              <div className="text-lg font-medium">{formatNumber(bus.speed,3)} km/h</div>
             </div>
             <div className="bg-[#f9f9f9] p-3 rounded-md">
               <div className="text-xs text-[#7d7d7d] mb-1">Heading</div>
-              <div className="text-lg font-medium">{bus.heading}°</div>
-            </div>
+                <div className="text-lg font-medium">{formatNumber(bus.heading,3)}°</div>
+              </div>
           </div>
         </div>
 
