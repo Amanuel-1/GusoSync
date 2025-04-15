@@ -22,8 +22,10 @@ export default function ClientLayout({
       <div className="w-20 bg-[#103a5e] flex flex-col items-center">
         <div className="py-6 flex flex-col items-center">
           <div className="text-white font-bold text-2xl mb-8">
-            <span className="sr-only">PMD</span>
-            <div className="w-10 h-10 bg-white text-[#103a5e] flex items-center justify-center font-bold">PMD</div>
+            <span className="sr-only">GuzoSync</span>
+            <div className="w-10 h-10 bg-white text-[#103a5e] flex items-center justify-center">
+              <img src="/image.png" alt="GuzoSync Logo" className="w-full h-full object-contain" />
+            </div>
           </div>
 
           <div className="flex flex-col gap-8 items-center">
@@ -147,11 +149,11 @@ export default function ClientLayout({
         {/* Header */}
         <header className="h-14 border-b border-[#d9d9d9] bg-white flex items-center justify-between px-6">
           <div className="flex items-center">
-            <span className="font-bold text-[#103a5e] text-lg">PMD</span>
+            <span className="font-bold text-[#103a5e] text-lg">GuzoSync</span>
             <span className="text-[#7d7d7d] text-xs ml-1">
-              Professional
+              Bus Tracking
               <br />
-              Monitoring Dashboard
+              & Management
             </span>
           </div>
 
