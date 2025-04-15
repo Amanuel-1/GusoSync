@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { BusLocation } from "../services/busTrackingService"
 import { useSocket } from "../utils/socket"
+import { formatNumber } from "@/lib/utils"
 
 interface BusMapProps {
   selectedBusId?: string
@@ -129,7 +130,7 @@ export default function BusMap({ selectedBusId, onBusSelected, className = "" }:
                     </div>
                   </div>
                   <div className="text-xs mt-1">
-                    Route: {bus.routeId} • Speed: {bus.speed} km/h
+                    Route: {bus.routeId} • Speed: {formatNumber(bus.speed,3)} km/h
                   </div>
                   <div className="text-xs">
                     Passengers: {bus.passengerCount}/{bus.capacity} • Next Stop: {bus.nextStopEta}

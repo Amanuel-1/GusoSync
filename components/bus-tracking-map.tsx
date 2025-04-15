@@ -54,9 +54,15 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || map.current) return
+    if (!mapContainer.current) return
 
     try {
+      // Clean up existing map if it exists
+      if (map.current && map.current.loaded()) {
+        map.current.remove()
+        map.current = null
+      }
+
       const mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v12",
@@ -75,15 +81,6 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
       mapInstance.on('load', () => {
         console.log('Map loaded successfully')
         setMapLoaded(true)
-
-        // Initialize bus markers
-        buses.forEach(bus => {
-          const marker = new mapboxgl.Marker(createBusMarker(bus))
-            .setLngLat([bus.location.longitude, bus.location.latitude])
-            .addTo(mapInstance)
-
-          markers.current[bus.id] = marker
-        })
       })
 
       mapInstance.on('error', (e) => {
@@ -91,8 +88,12 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
       })
 
       return () => {
-        if (mapInstance) {
-          mapInstance.remove()
+        if (mapInstance && mapInstance.loaded()) {
+          try {
+            mapInstance.remove()
+          } catch (error) {
+            console.error('Error removing map:', error)
+          }
         }
       }
     } catch (error) {
@@ -104,29 +105,18 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
   useEffect(() => {
     if (!mapLoaded || !map.current) return
 
+    // Clear existing markers
+    Object.values(markers.current).forEach(marker => marker.remove())
+    markers.current = {}
+
+    // Add new markers
     buses.forEach(bus => {
-      if (markers.current[bus.id]) {
-        // Update existing marker
-        markers.current[bus.id].setLngLat([bus.location.longitude, bus.location.latitude])
-        const img = markers.current[bus.id].getElement().querySelector("img")
-        if (img) {
-          img.style.transform = `rotate(${bus.heading}deg)`
-        }
-      } else if (map.current) {
-        // Create new marker
+      if (map.current) {
         const marker = new mapboxgl.Marker(createBusMarker(bus))
           .setLngLat([bus.location.longitude, bus.location.latitude])
           .addTo(map.current)
 
         markers.current[bus.id] = marker
-      }
-    })
-
-    // Remove markers for buses that no longer exist
-    Object.keys(markers.current).forEach(busId => {
-      if (!buses.find(bus => bus.id === busId)) {
-        markers.current[busId].remove()
-        delete markers.current[busId]
       }
     })
   }, [buses, mapLoaded])
