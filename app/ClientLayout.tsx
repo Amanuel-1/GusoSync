@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Bell, Mail } from "lucide-react"
+import { Bell, Mail, X, Check, AlertTriangle, Info } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 // No CSS import needed here
@@ -14,7 +14,65 @@ export default function ClientLayout({
   children: React.ReactNode
 }) {
   const [showUserPopup, setShowUserPopup] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showInbox, setShowInbox] = useState(false)
   const pathname = usePathname()
+
+  // Sample notifications data
+  const notifications = [
+    {
+      id: 1,
+      type: "alert",
+      title: "Bus A245 Delayed",
+      message: "Bus A245 is delayed by 15 minutes due to traffic",
+      time: "2 minutes ago",
+      read: false
+    },
+    {
+      id: 2,
+      type: "info",
+      title: "Route Update",
+      message: "Route R-103 has been modified",
+      time: "1 hour ago",
+      read: true
+    },
+    {
+      id: 3,
+      type: "warning",
+      title: "Low Fuel Alert",
+      message: "Bus B112 is running low on fuel",
+      time: "3 hours ago",
+      read: false
+    }
+  ]
+
+  // Sample inbox messages
+  const messages = [
+    {
+      id: 1,
+      sender: "Route Manager",
+      subject: "Route Assignment Update",
+      preview: "Your route assignment has been updated for next week...",
+      time: "10:30 AM",
+      read: false
+    },
+    {
+      id: 2,
+      sender: "System Admin",
+      subject: "System Maintenance",
+      preview: "Scheduled maintenance will occur this weekend...",
+      time: "Yesterday",
+      read: true
+    },
+    {
+      id: 3,
+      sender: "Driver Support",
+      subject: "Training Session",
+      preview: "New training session available for all drivers...",
+      time: "2 days ago",
+      read: true
+    }
+  ]
 
   return (
     <div className="flex h-screen w-full bg-[#f4f9fc] overflow-hidden">
@@ -158,35 +216,119 @@ export default function ClientLayout({
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="bg-[#e92c2c] text-white px-3 py-1.5 rounded-full text-sm flex items-center gap-1">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Police Helpline
-            </button>
-
+            {/* Notifications Dropdown */}
             <div className="relative">
-              <button className="relative">
+              <button 
+                className="relative"
+                onClick={() => {
+                  setShowNotifications(!showNotifications)
+                  setShowInbox(false)
+                }}
+              >
                 <Bell size={20} />
                 <span className="absolute -top-1 -right-1 bg-[#e92c2c] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   2
                 </span>
               </button>
+
+              {showNotifications && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)}></div>
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-20 overflow-hidden">
+                    <div className="p-3 border-b border-gray-100 flex justify-between items-center">
+                      <h3 className="font-medium text-[#103a5e]">Notifications</h3>
+                      <button className="text-xs text-[#0097fb]">Mark all as read</button>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
+                            !notification.read ? "bg-[#f8f9ff]" : ""
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className={`mt-1 ${
+                              notification.type === "alert" ? "text-[#e92c2c]" :
+                              notification.type === "warning" ? "text-[#ff8a00]" :
+                              "text-[#0097fb]"
+                            }`}>
+                              {notification.type === "alert" ? <AlertTriangle size={16} /> :
+                               notification.type === "warning" ? <AlertTriangle size={16} /> :
+                               <Info size={16} />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <h4 className="font-medium text-sm">{notification.title}</h4>
+                                <span className="text-xs text-[#7d7d7d]">{notification.time}</span>
+                              </div>
+                              <p className="text-xs text-[#7d7d7d] mt-1">{notification.message}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-3 border-t border-gray-100 text-center">
+                      <button className="text-xs text-[#0097fb]">View all notifications</button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
+            {/* Inbox Dropdown */}
             <div className="relative">
-              <button className="relative">
+              <button 
+                className="relative"
+                onClick={() => {
+                  setShowInbox(!showInbox)
+                  setShowNotifications(false)
+                }}
+              >
                 <Mail size={20} />
                 <span className="absolute -top-1 -right-1 bg-[#e92c2c] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   3
                 </span>
               </button>
+
+              {showInbox && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowInbox(false)}></div>
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-20 overflow-hidden">
+                    <div className="p-3 border-b border-gray-100 flex justify-between items-center">
+                      <h3 className="font-medium text-[#103a5e]">Messages</h3>
+                      <button className="text-xs text-[#0097fb]">Mark all as read</button>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {messages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
+                            !message.read ? "bg-[#f8f9ff]" : ""
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-sm">{message.sender}</h4>
+                                {!message.read && (
+                                  <span className="w-2 h-2 rounded-full bg-[#0097fb]"></span>
+                                )}
+                              </div>
+                              <div className="text-sm mt-1">{message.subject}</div>
+                              <p className="text-xs text-[#7d7d7d] mt-1">{message.preview}</p>
+                            </div>
+                            <span className="text-xs text-[#7d7d7d]">{message.time}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-3 border-t border-gray-100 text-center">
+                      <button className="text-xs text-[#0097fb]">View all messages</button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="relative">
