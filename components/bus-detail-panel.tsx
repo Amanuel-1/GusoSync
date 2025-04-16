@@ -180,7 +180,10 @@ export default function BusDetailPanel({ bus, onClose }: BusDetailPanelProps) {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer
+      TODO: Instead of a phone call, an in-app messaging should be used between (a) driver and control center and (b) the queue regulators and the control center.
+            the history button will show the records routes the bus has been assigned to , and information about the drivers and incidents related to the bus.
+      */}
       <div className="p-4 border-t border-[#d9d9d9]">
         <div className="grid grid-cols-2 gap-2">
           <button className="bg-[#0097fb] text-white py-2 rounded-md hover:bg-[#0088e2] transition-colors flex items-center justify-center">
