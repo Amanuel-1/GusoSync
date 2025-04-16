@@ -546,9 +546,9 @@ export default function UsersPage() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-auto p-6 pt-0">
+      <div className="flex-1 overflow-auto p-6 py-12">
         {/* Filters and Search */}
-        <div className="flex justify-between mb-6">
+        <div className="flex justify-between mb-2 py-4">
           <div className="flex gap-2">
             <div className="relative">
               <input
@@ -722,7 +722,7 @@ export default function UsersPage() {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-md shadow-sm overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm overflow-hidden ">
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
