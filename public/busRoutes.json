@@ -1,0 +1,797 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 30,
+          "agency_id": 2,
+          "route_short_name": "AB031",
+          "route_long_name": "ለገሀር - 4 ኪሎ - ሽሮ ሜዳ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 29,
+          "agency_id": 2,
+          "route_short_name": "AB001",
+          "route_long_name": "መገናኛ - ወሰን ግሮሰሪ   ካራ - የካ አባዶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 31,
+          "agency_id": 2,
+          "route_short_name": "AB061",
+          "route_long_name": "ጨፌ አያት ኮንዲሚኒየም - cmc ሚካኤል/መገናኛ - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 32,
+          "agency_id": 2,
+          "route_short_name": "AB091",
+          "route_long_name": "ከአዲስ ከተማ - ሰበታ/ተፍኪ - ተጂ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 33,
+          "agency_id": 2,
+          "route_short_name": "AB121",
+          "route_long_name": "ጀሞ ቁ.2 - ብስራተ  ገብርኤል - ሜክሲኮ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 57,
+          "agency_id": 2,
+          "route_short_name": "AB101",
+          "route_long_name": "ከመገናኛ - መሪ - አባ\nኪሮስ አደባባይ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 34,
+          "agency_id": 2,
+          "route_short_name": "AB003",
+          "route_long_name": "አየር ጤና - ዋቢ ሸበሌ - ጊዮርጊስ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 35,
+          "agency_id": 2,
+          "route_short_name": "AB033",
+          "route_long_name": "ኮተቤ ገብርኤል - መገናኛ - አራት ኪሎ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 36,
+          "agency_id": 2,
+          "route_short_name": "AB004",
+          "route_long_name": "ቃሊቲ - ቄራ/ተግባረ ዕድ ት/ቤት - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 37,
+          "agency_id": 2,
+          "route_short_name": "AB034",
+          "route_long_name": "ጀር/አደባባይ - ተግባረ እድ ት/ ቤት - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 38,
+          "agency_id": 2,
+          "route_short_name": "AB064",
+          "route_long_name": "መገኛ  - 6ኪሎ - ጉራራ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 39,
+          "agency_id": 2,
+          "route_short_name": "AB094",
+          "route_long_name": "ፒያሳ - መድሀኒአለም ት/ቤት ሩ - ሚኪሊላንድ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 40,
+          "agency_id": 2,
+          "route_short_name": "AB124",
+          "route_long_name": "መገናኛ  - በጎሮ - ቱሉዲምቱ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 41,
+          "agency_id": 2,
+          "route_short_name": "AB006",
+          "route_long_name": "ቄራ - ጊዩርጊስ - ሰሜን አዲሱ ገበያ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 42,
+          "agency_id": 2,
+          "route_short_name": "AB036",
+          "route_long_name": "ካራ ቆሬ - ጣር ሃይሎች ሆስፒታል - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 43,
+          "agency_id": 2,
+          "route_short_name": "AB066",
+          "route_long_name": "አዲስ ከተማ - ጣር ሃይሎች\nሆስፒታል - ካራ ቆሬ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 44,
+          "agency_id": 2,
+          "route_short_name": "AB037",
+          "route_long_name": "ቀራንዮ - ዋቢ\nሸበሌ - ጊዮርጊስ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 45,
+          "agency_id": 2,
+          "route_short_name": "AB067",
+          "route_long_name": "ጆሞ - ሳር ቤት - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 46,
+          "agency_id": 2,
+          "route_short_name": "AB097",
+          "route_long_name": "መገናኛ - አያት\nአደባባይ/አባ ኪሮስ - ለገጣፎ ሚሽን  ት/ቤት",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 47,
+          "agency_id": 2,
+          "route_short_name": "AB038",
+          "route_long_name": "ጀር/አደባባይ - ጥቁር አንበሳ ት/ቤት - ስድስት ኪሎ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 48,
+          "agency_id": 2,
+          "route_short_name": "AB068",
+          "route_long_name": "ጣር ሃይሎች ሆስፒታል - ግቢ ገብርኤል - ም.ሆስፒታል",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 49,
+          "agency_id": 2,
+          "route_short_name": "AB009",
+          "route_long_name": "ብራስ\nክሊኒክ - ካሳንቺስ - ፒያሳ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 50,
+          "agency_id": 2,
+          "route_short_name": "AB039",
+          "route_long_name": "ቦሌ ት/ቤት - 4 ኪሎ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 51,
+          "agency_id": 2,
+          "route_short_name": "AB069",
+          "route_long_name": "ሎሜ\nሜዳ - 18  ማዞሪያ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 61,
+          "agency_id": 2,
+          "route_short_name": "AB104",
+          "route_long_name": "ወርቁ ሰፈር - ዮሴፍ ቤ/ክ - ቄራ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 52,
+          "agency_id": 2,
+          "route_short_name": "AB099",
+          "route_long_name": "ከአየር ጤና - ወለቴ - አለም ገና ሚኤል",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 67,
+          "agency_id": 2,
+          "route_short_name": "AB077",
+          "route_long_name": "አየር ጤና - ብስራተ ገ/ኤል - ቄራ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 53,
+          "agency_id": 2,
+          "route_short_name": "AB010",
+          "route_long_name": "ኮተቤ መምህራን ኮሌጅ - ሾላ ገበያ - ፒያሳ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 54,
+          "agency_id": 2,
+          "route_short_name": "AB100",
+          "route_long_name": "ከጆሞ - ደሴ ሆቴል - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 55,
+          "agency_id": 2,
+          "route_short_name": "AB041",
+          "route_long_name": "ኢየሱስ - 4 ኪሎ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 56,
+          "agency_id": 2,
+          "route_short_name": "AB071",
+          "route_long_name": "ገርጂ መብራት ሃይል - 22 ት/ፓሊስ - ባልቻ ሆስፒታል",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 58,
+          "agency_id": 2,
+          "route_short_name": "AB012",
+          "route_long_name": "ጉራራ - 6 ኪሎ/ማርቆስ ቤ/ክ/ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 59,
+          "agency_id": 2,
+          "route_short_name": "AB102",
+          "route_long_name": "ካራ - መገናኛ - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 60,
+          "agency_id": 2,
+          "route_short_name": "AB014",
+          "route_long_name": "ሳሪስ ኦቦ - ስታዲየም - ፒያሳ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 62,
+          "agency_id": 2,
+          "route_short_name": "AB015",
+          "route_long_name": "መገናኛ - 4 ኪሎ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 63,
+          "agency_id": 2,
+          "route_short_name": "AB045",
+          "route_long_name": "ለገሀር - ቀለመወርቅ\nት/ቤት - ድል በር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 64,
+          "agency_id": 2,
+          "route_short_name": "AB106",
+          "route_long_name": "መገናኛ - ሲኤምሲ ሚካኤል - ቦሌ አራብሳ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 65,
+          "agency_id": 2,
+          "route_short_name": "AB017",
+          "route_long_name": "ቁስÌም - 5 ኪሎ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 66,
+          "agency_id": 2,
+          "route_short_name": "AB047",
+          "route_long_name": "የነገው ሰው ት/ቤት - ፓስተር - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 68,
+          "agency_id": 2,
+          "route_short_name": "AB018",
+          "route_long_name": "ቀራንዮ - 18 \nማዞሪያ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 69,
+          "agency_id": 2,
+          "route_short_name": "AB048",
+          "route_long_name": "ቦሌ  ሚካኤል - ሰንሻይን - ጊዮርጊስ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 70,
+          "agency_id": 2,
+          "route_short_name": "AB019",
+          "route_long_name": "ሳንሱሲ - መድሀኒአለም ት/ቤት - ፒያሳ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 71,
+          "agency_id": 2,
+          "route_short_name": "AB049",
+          "route_long_name": "ጨፌ አያት ኮንዲሚኒየም - ሲኤምሲ ሚካኤል - መገናኛ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 72,
+          "agency_id": 2,
+          "route_short_name": "AB079",
+          "route_long_name": "አራት ኪሎ - መገናኛ/ሰሚት መገንጠያ - ሳሚት ኮንዲሚኒየም",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 73,
+          "agency_id": 2,
+          "route_short_name": "AB109",
+          "route_long_name": "ሳሪስ አቦ - ቃሊቲ - ቱሉ ዲምቱ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 74,
+          "agency_id": 2,
+          "route_short_name": "AB050",
+          "route_long_name": "ወለቴ - አየርጠየና - ጦር ሀይሎች",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 75,
+          "agency_id": 2,
+          "route_short_name": "AB110",
+          "route_long_name": "ስድስት ኪሎ - ሳሪስ አቦ/ቃሊቲ - ቱሉ ዲምቱ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 76,
+          "agency_id": 2,
+          "route_short_name": "AB021",
+          "route_long_name": "ፌሊ ዶሮ - 18  ማዞሪያ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 77,
+          "agency_id": 2,
+          "route_short_name": "AB062",
+          "route_long_name": "ሰበታ - ካራ\nቆሬ/ቀጠና ሁለት - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 78,
+          "agency_id": 2,
+          "route_short_name": "AB022",
+          "route_long_name": "ሰሚት ኮንዲሚኒየም - cmc ሚካኤል/መገናኛ - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 79,
+          "agency_id": 2,
+          "route_short_name": "AB082",
+          "route_long_name": "ጎሮ አደባባይ - 22 ት/ፓሊስ - ባላቻ ሆስፒታል",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 80,
+          "agency_id": 2,
+          "route_short_name": "AB112",
+          "route_long_name": "ክብ \nመስመር - 6ኪሎ/18 ማዞሪያ/ለቡ መ/ሀይል/ቦ - ክብ መስመር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 81,
+          "agency_id": 2,
+          "route_short_name": "AB083",
+          "route_long_name": "ጨፌ አያት ኮንዲሚኒየም - cmc\nሚካኤል/መገናኛ - 6ኪሎ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 82,
+          "agency_id": 2,
+          "route_short_name": "AB084",
+          "route_long_name": "ኮልፌ ዕፎይታ - ኮካ ፋብሪካ - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 83,
+          "agency_id": 2,
+          "route_short_name": "AB114",
+          "route_long_name": "ገላን - ቃሊቲ  /ሳሪስ /ጎተራ        - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 84,
+          "agency_id": 2,
+          "route_short_name": "AB025",
+          "route_long_name": "ለገሀር - ጎተራ/ሳሪስ/ቃሊቲ - አቃቂ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 85,
+          "agency_id": 2,
+          "route_short_name": "AB055",
+          "route_long_name": "ለገሀር - 4 ኪሎ - ጉራራ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 86,
+          "agency_id": 2,
+          "route_short_name": "AB056",
+          "route_long_name": "ሳሪስ አቦ - ግቢ ገብርኤል - ሽሮ\nሜዳ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 87,
+          "agency_id": 2,
+          "route_short_name": "AB086",
+          "route_long_name": "አየር ጤና - ቆዳ  ፋብሪካ - ቆርኪ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 88,
+          "agency_id": 2,
+          "route_short_name": "AB027",
+          "route_long_name": "ለገሀር - ሳሪስ አቦ - ቃለታ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 89,
+          "agency_id": 2,
+          "route_short_name": "AB057",
+          "route_long_name": "ካራ - ሀና\nማሪያም/መገናኛ - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 90,
+          "agency_id": 2,
+          "route_short_name": "AB087",
+          "route_long_name": "ውንጌት ት/ቤት - ጣር ሃይሎች ሆስፒታል - አየር ጤና",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 91,
+          "agency_id": 2,
+          "route_short_name": "AB117",
+          "route_long_name": "ከቆጣሪ ኮዶምንየም - ሳር ቤት - ሜክሲኮ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 92,
+          "agency_id": 2,
+          "route_short_name": "AB058",
+          "route_long_name": "አለም ባንክ - ጣር ሃይሎች ሆስፒታል - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 93,
+          "agency_id": 2,
+          "route_short_name": "AB088",
+          "route_long_name": "መርካቶ - ወሰርቢ/ሱሉልታ - ጫንጮ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 94,
+          "agency_id": 2,
+          "route_short_name": "AB092",
+          "route_long_name": "ሃና ማርያም - መካኒሳ ሚሽን - ባልቻ ሆስፒታል",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 95,
+          "agency_id": 2,
+          "route_short_name": "AB028",
+          "route_long_name": "አስኮ ሳንሱዚ - መድሀኒአለም ት/ቤት - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 96,
+          "agency_id": 2,
+          "route_short_name": "AB029",
+          "route_long_name": "አዲሱ ሰፈር\nገብርኤል -  - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 97,
+          "agency_id": 2,
+          "route_short_name": "AB089",
+          "route_long_name": "መርካቶ -  - ለገዳዲ ማዞሪያ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 98,
+          "agency_id": 2,
+          "route_short_name": "AB030",
+          "route_long_name": "ሱሉልታ - ወሰርቢ - መርካቶ",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 99,
+          "agency_id": 2,
+          "route_short_name": "AB032",
+          "route_long_name": "ሃና ማርያም - መገናኛ - ለገሀር",
+          "route_type": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": null,
+        "properties": {
+          "route_id": 100,
+          "agency_id": 2,
+          "route_short_name": "AB090",
+          "route_long_name": "ቤተል\nሆስፒታል - ጣር ሃይሎች ሆስፒታል - ለገሀር",
+          "route_type": 3
+        }
+      }
+    ]
+  }

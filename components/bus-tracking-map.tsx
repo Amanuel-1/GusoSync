@@ -6,7 +6,6 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import type { Bus } from "@/types/bus"
 import { useBusTracking } from "@/hooks/use-bus-tracking"
 import { MapPin, ZoomIn, ZoomOut } from "lucide-react"
-import { anbessaBusRoutes } from "@/data/busRoutes"
 
 // Initialize Mapbox with the access token
 if (typeof window !== 'undefined') {
@@ -20,6 +19,12 @@ interface BusTrackingMapProps {
   loading: boolean
 }
 
+interface Route {
+  route_id: number
+  route_short_name: string
+  route_long_name: string
+}
+
 export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loading }: BusTrackingMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
@@ -28,6 +33,22 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
   const { busStops } = useBusTracking()
   const [showStops, setShowStops] = useState(true)
   const stopMarkers = useRef<{ [key: string]: mapboxgl.Marker }>({})
+  const [routes, setRoutes] = useState<Route[]>([])
+
+  // Load routes from JSON file
+  useEffect(() => {
+    fetch('/busRoutes.json')
+      .then(response => response.json())
+      .then(data => {
+        const routeList = data.features.map((feature: any) => ({
+          route_id: feature.properties.route_id,
+          route_short_name: feature.properties.route_short_name,
+          route_long_name: feature.properties.route_long_name
+        }))
+        setRoutes(routeList)
+      })
+      .catch(error => console.error('Error loading routes:', error))
+  }, [])
 
   const createBusMarker = (bus: Bus) => {
     const el = document.createElement("div")
@@ -205,11 +226,11 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
       {/* Map legend */}
       <div className="absolute bottom-8 left-4 bg-white bg-opacity-90 rounded-md shadow-md p-3">
         <h3 className="text-xs font-medium text-[#103a5e] mb-2">Routes</h3>
-        <div className="space-y-1">
-          {anbessaBusRoutes.map((route) => (
-            <div key={route.id} className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: route.color }}></div>
-              <span className="text-xs">{route.name}</span>
+        <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2">
+          {routes.map((route) => (
+            <div key={route.route_id} className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#0097fb' }}></div>
+              <span className="text-xs">{route.route_long_name}</span>
             </div>
           ))}
         </div>
