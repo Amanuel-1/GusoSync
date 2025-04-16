@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import type { Bus } from "@/types/bus"
 import { useBusTracking } from "@/hooks/use-bus-tracking"
 import { MapPin, ZoomIn, ZoomOut } from "lucide-react"
+import { anbessaBusRoutes } from "@/data/busRoutes"
 
 // Initialize Mapbox with the access token
 if (typeof window !== 'undefined') {
@@ -205,14 +206,8 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
       <div className="absolute bottom-8 left-4 bg-white bg-opacity-90 rounded-md shadow-md p-3">
         <h3 className="text-xs font-medium text-[#103a5e] mb-2">Routes</h3>
         <div className="space-y-1">
-          {[
-            { color: "#0097fb", name: "Bole Road - Merkato" },
-            { color: "#48c864", name: "Megenagna - Piazza" },
-            { color: "#ff8a00", name: "CMC - Mexico Square" },
-            { color: "#e92c2c", name: "Ayat - Piazza" },
-            { color: "#7d7d7d", name: "Kality - Megenagna" },
-          ].map((route) => (
-            <div key={route.name} className="flex items-center">
+          {anbessaBusRoutes.map((route) => (
+            <div key={route.id} className="flex items-center">
               <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: route.color }}></div>
               <span className="text-xs">{route.name}</span>
             </div>

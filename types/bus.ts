@@ -7,6 +7,15 @@ export interface BusRoute {
   id: string
   name: string
   color: string
+  start: string
+  passBy: string[]
+  destination: string
+  distance: number
+  stops: number
+  activeBuses: number
+  expectedLoad: "Low" | "Medium" | "High" | "Very High"
+  regulatorName: string
+  regulatorPhone: string
 }
 
 export interface BusDriver {
@@ -35,10 +44,10 @@ export interface Bus {
   vehicleType: string
   licensePlate: string
 }
-
 export interface BusStop {
   id: string
   name: string
   location: BusLocation
   routeIds: string[]
 }
+

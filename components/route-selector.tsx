@@ -2,16 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Search, X, Info } from "lucide-react"
-
-interface Route {
-  id: string
-  name: string
-  stops: number
-  activeBuses: number
-  expectedLoad: "Low" | "Medium" | "High" | "Very High"
-  regulatorName: string
-  regulatorPhone: string
-}
+import { anbessaBusRoutes } from "@/data/busRoutes"
+import { BusRoute } from "@/types/bus"
 
 interface Bus {
   id: string
@@ -23,117 +15,21 @@ interface Bus {
 
 interface RouteSelectorProps {
   selectedBus: Bus | null
-  onRouteSelect: (route: Route | null) => void
-  selectedRoute: Route | null
+  onRouteSelect: (route: BusRoute | null) => void
+  selectedRoute: BusRoute | null
 }
 
 export default function RouteSelector({ selectedBus, onRouteSelect, selectedRoute }: RouteSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [routes, setRoutes] = useState<Route[]>([])
-  const [filteredRoutes, setFilteredRoutes] = useState<Route[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [routes, setRoutes] = useState<BusRoute[]>([])
+  const [filteredRoutes, setFilteredRoutes] = useState<BusRoute[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [showInfo, setShowInfo] = useState<string | null>(null)
 
-  // Mock data for routes
+  // Load routes from data
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockRoutes: Route[] = [
-        {
-          id: "R-103",
-          name: "Bole Road - Merkato",
-          stops: 8,
-          activeBuses: 4,
-          expectedLoad: "High",
-          regulatorName: "Abebe Kebede",
-          regulatorPhone: "+251912345678",
-        },
-        {
-          id: "R-104",
-          name: "Megenagna - Piazza",
-          stops: 6,
-          activeBuses: 3,
-          expectedLoad: "Medium",
-          regulatorName: "Tigist Haile",
-          regulatorPhone: "+251912345679",
-        },
-        {
-          id: "R-105",
-          name: "CMC - Mexico Square",
-          stops: 10,
-          activeBuses: 5,
-          expectedLoad: "Very High",
-          regulatorName: "Solomon Tesfaye",
-          regulatorPhone: "+251912345680",
-        },
-        {
-          id: "R-106",
-          name: "Ayat - Piazza",
-          stops: 12,
-          activeBuses: 6,
-          expectedLoad: "High",
-          regulatorName: "Hanna Girma",
-          regulatorPhone: "+251912345681",
-        },
-        {
-          id: "R-107",
-          name: "Kality - Megenagna",
-          stops: 9,
-          activeBuses: 4,
-          expectedLoad: "Medium",
-          regulatorName: "Dawit Mengistu",
-          regulatorPhone: "+251912345682",
-        },
-        {
-          id: "R-108",
-          name: "Lebu - Meskel Square",
-          stops: 7,
-          activeBuses: 3,
-          expectedLoad: "Low",
-          regulatorName: "Kidist Alemu",
-          regulatorPhone: "+251912345683",
-        },
-        {
-          id: "R-109",
-          name: "Jemo - Piazza",
-          stops: 8,
-          activeBuses: 4,
-          expectedLoad: "Medium",
-          regulatorName: "Bereket Tadesse",
-          regulatorPhone: "+251912345684",
-        },
-        {
-          id: "R-110",
-          name: "Saris - Megenagna",
-          stops: 6,
-          activeBuses: 3,
-          expectedLoad: "High",
-          regulatorName: "Meron Hailu",
-          regulatorPhone: "+251912345685",
-        },
-        {
-          id: "R-111",
-          name: "Shiro Meda - Merkato",
-          stops: 5,
-          activeBuses: 2,
-          expectedLoad: "Low",
-          regulatorName: "Yonas Tadesse",
-          regulatorPhone: "+251912345686",
-        },
-        {
-          id: "R-112",
-          name: "Entoto - Mexico Square",
-          stops: 7,
-          activeBuses: 3,
-          expectedLoad: "Medium",
-          regulatorName: "Sara Tekle",
-          regulatorPhone: "+251912345687",
-        },
-      ]
-      setRoutes(mockRoutes)
-      setFilteredRoutes(mockRoutes)
-      setIsLoading(false)
-    }, 1000)
+    setRoutes(anbessaBusRoutes)
+    setFilteredRoutes(anbessaBusRoutes)
   }, [])
 
   // Filter routes based on search query

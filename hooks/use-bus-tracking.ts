@@ -2,15 +2,10 @@
 
 import { useState, useEffect } from "react"
 import type { Bus, BusRoute, BusStop } from "@/types/bus"
+import { anbessaBusRoutes } from "@/data/busRoutes"
 
 // Initial bus routes
-const routes: BusRoute[] = [
-  { id: "R-103", name: "Bole Road - Merkato", color: "#0097fb" },
-  { id: "R-104", name: "Megenagna - Piazza", color: "#48c864" },
-  { id: "R-105", name: "CMC - Mexico Square", color: "#ff8a00" },
-  { id: "R-106", name: "Ayat - Piazza", color: "#e92c2c" },
-  { id: "R-107", name: "Kality - Megenagna", color: "#7d7d7d" },
-]
+const routes: BusRoute[] = anbessaBusRoutes
 
 // Bus stops along routes
 const busStops: BusStop[] = [
