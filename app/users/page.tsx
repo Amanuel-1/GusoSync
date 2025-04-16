@@ -483,8 +483,8 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[#f4f9fc]">
-      <div className="p-6">
+    <div className="flex-1 flex flex-col bg-[#f4f9fc] h-full">
+      <div className="p-6 pb-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-medium text-[#103a5e]">Users</h1>
           <Link
@@ -497,7 +497,7 @@ export default function UsersPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#d9d9d9] mb-6">
+        <div className="flex border-b border-[#d9d9d9]">
           <button
             className={`py-3 px-6 text-sm font-medium ${
               activeTab === "admin" ? "bg-[#103a5e] text-white rounded-t-md" : "text-[#7d7d7d] hover:bg-gray-100"
@@ -543,7 +543,10 @@ export default function UsersPage() {
             Control Staff
           </button>
         </div>
+      </div>
 
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-auto p-6 pt-0">
         {/* Filters and Search */}
         <div className="flex justify-between mb-6">
           <div className="flex gap-2">
@@ -719,7 +722,7 @@ export default function UsersPage() {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-md shadow-sm overflow-hidden mb-4">
+        <div className="bg-white rounded-md shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>

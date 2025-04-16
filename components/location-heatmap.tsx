@@ -18,7 +18,7 @@ interface LocationHeatmapProps {
 
 export default function LocationHeatmap({ data, title }: LocationHeatmapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState(12)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null)
 
@@ -26,16 +26,20 @@ export default function LocationHeatmap({ data, title }: LocationHeatmapProps) {
   const filteredLocations = data.filter((location) => location.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 0.2, 2))
+    setZoom((prev) => Math.min(prev + 1, 18))
   }
 
   const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 0.2, 0.5))
+    setZoom((prev) => Math.max(prev - 1, 1))
   }
 
   const handleLocationClick = (location: LocationData) => {
     setSelectedLocation(location === selectedLocation ? null : location)
   }
+
+  // Calculate the center of the map based on the locations
+  const centerLat = data.reduce((sum, loc) => sum + loc.latitude, 0) / data.length
+  const centerLng = data.reduce((sum, loc) => sum + loc.longitude, 0) / data.length
 
   return (
     <div className="bg-white rounded-md shadow-sm p-4">
@@ -60,60 +64,59 @@ export default function LocationHeatmap({ data, title }: LocationHeatmapProps) {
       </div>
 
       <div className="relative h-[400px] bg-[#f4f9fc] rounded-md overflow-hidden" ref={mapRef}>
-        {/* Simulated map with dots */}
-        <div
-          className="absolute inset-0 transition-transform duration-300"
-          style={{
-            transform: `scale(${zoom})`,
-            transformOrigin: "center",
-          }}
-        >
-          {/* Map background - in a real app, this would be a real map */}
-          <div className="absolute inset-0 bg-[url('/placeholder.svg?height=800&width=1000')] bg-cover opacity-50"></div>
-
-          {/* Location markers */}
-          {filteredLocations.map((location) => (
-            <div
-              key={location.id}
-              className={`absolute cursor-pointer transition-all duration-300 ${
-                selectedLocation === location ? "z-10" : ""
-              }`}
-              style={{
-                left: `${((location.longitude + 180) / 360) * 100}%`,
-                top: `${((90 - location.latitude) / 180) * 100}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-              onClick={() => handleLocationClick(location)}
-            >
-              <div
-                className={`rounded-full ${selectedLocation === location ? "ring-2 ring-white" : ""}`}
-                style={{
-                  width: `${Math.max(20, Math.min(50, location.count / 2))}px`,
-                  height: `${Math.max(20, Math.min(50, location.count / 2))}px`,
-                  backgroundColor: `rgba(255, 138, 0, ${Math.min(0.9, location.count / 100)})`,
-                }}
-              ></div>
-              {selectedLocation === location && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white p-2 rounded-md shadow-md text-xs whitespace-nowrap">
-                  <div className="font-medium">{location.name}</div>
-                  <div className="text-[#7d7d7d]">{location.count} events</div>
-                </div>
-              )}
-            </div>
-          ))}
+        {/* OpenStreetMap transport layer */}
+        <div className="absolute inset-0">
+          <img
+            src={`https://tile.openstreetmap.org/${zoom}/${Math.floor((centerLng + 180) / 360 * Math.pow(2, zoom))}/${Math.floor((1 - Math.log(Math.tan(centerLat * Math.PI / 180) + 1 / Math.cos(centerLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))}.png`}
+            alt="Map"
+            className="w-full h-full object-cover"
+          />
         </div>
 
-        {/* Zoom controls */}
-        <div className="absolute bottom-4 right-4 flex flex-col bg-white rounded-md shadow-md">
-          <button
-            className="p-2 hover:bg-gray-100 border-b border-gray-200"
-            onClick={handleZoomIn}
-            aria-label="Zoom in"
+        {/* Location markers */}
+        {filteredLocations.map((location) => (
+          <div
+            key={location.id}
+            className={`absolute cursor-pointer transition-all duration-300 ${
+              selectedLocation === location ? "z-10" : ""
+            }`}
+            style={{
+              left: `${((location.longitude - centerLng + 180) / 360) * 100}%`,
+              top: `${((90 - location.latitude + centerLat) / 180) * 100}%`,
+              transform: "translate(-50%, -50%)",
+            }}
+            onClick={() => handleLocationClick(location)}
           >
-            <ZoomIn size={18} />
+            <div
+              className={`rounded-full ${selectedLocation === location ? "ring-2 ring-white" : ""}`}
+              style={{
+                width: `${Math.max(20, Math.min(50, location.count / 2))}px`,
+                height: `${Math.max(20, Math.min(50, location.count / 2))}px`,
+                backgroundColor: `rgba(255, 138, 0, ${Math.min(0.9, location.count / 100)})`,
+              }}
+            ></div>
+            {selectedLocation === location && (
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white p-2 rounded-md shadow-md text-xs whitespace-nowrap">
+                <div className="font-medium">{location.name}</div>
+                <div className="text-[#7d7d7d]">{location.count} events</div>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Zoom controls */}
+        <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+          <button
+            className="bg-white p-2 rounded-md shadow-md hover:bg-[#f9f9f9]"
+            onClick={handleZoomIn}
+          >
+            <ZoomIn size={16} />
           </button>
-          <button className="p-2 hover:bg-gray-100" onClick={handleZoomOut} aria-label="Zoom out">
-            <ZoomOut size={18} />
+          <button
+            className="bg-white p-2 rounded-md shadow-md hover:bg-[#f9f9f9]"
+            onClick={handleZoomOut}
+          >
+            <ZoomOut size={16} />
           </button>
         </div>
       </div>
