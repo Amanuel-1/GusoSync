@@ -6,6 +6,27 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import type { Bus } from "@/types/bus"
 import { useBusTracking } from "@/hooks/use-bus-tracking"
 import { MapPin, ZoomIn, ZoomOut } from "lucide-react"
+import BusStopMarks from './circular-marks'
+
+interface CircularMark {
+  id: string
+  location: {
+    latitude: number
+    longitude: number
+  }
+  color: string
+  radius: number
+}
+
+interface BusStop {
+  id: string
+  name?: string
+  location: {
+    latitude: number
+    longitude: number
+  }
+  properties: any
+}
 
 // Initialize Mapbox with the access token
 if (typeof window !== 'undefined') {
@@ -34,6 +55,7 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
   const [showStops, setShowStops] = useState(true)
   const stopMarkers = useRef<{ [key: string]: mapboxgl.Marker }>({})
   const [routes, setRoutes] = useState<Route[]>([])
+  const [busStopsData, setBusStopsData] = useState<BusStop[]>([])
 
   // Load routes from JSON file
   useEffect(() => {
@@ -48,6 +70,35 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
         setRoutes(routeList)
       })
       .catch(error => console.error('Error loading routes:', error))
+  }, [])
+
+  // Load bus stops from GeoJSON
+  useEffect(() => {
+    const loadBusStops = async () => {
+      try {
+        const response = await fetch('/busStops.geojson')
+        const data = await response.json()
+        
+        const stops: BusStop[] = data.features.map((feature: any) => {
+          const [longitude, latitude] = feature.geometry.coordinates
+          return {
+            id: feature.id,
+            name: feature.properties.name || feature.properties['name:en'] || feature.properties['name:am'],
+            location: {
+              latitude,
+              longitude
+            },
+            properties: feature.properties
+          }
+        })
+
+        setBusStopsData(stops)
+      } catch (error) {
+        console.error('Error loading bus stops:', error)
+      }
+    }
+
+    loadBusStops()
   }, [])
 
   const createBusMarker = (bus: Bus) => {
@@ -182,6 +233,8 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
         className="absolute inset-0 w-full h-full"
         style={{ minHeight: '500px' }}
       />
+
+      {mapLoaded && showStops && <BusStopMarks map={map.current} stops={busStopsData} />}
 
       {/* Map controls */}
       <div className="absolute bottom-8 right-8 flex flex-col space-y-2">
