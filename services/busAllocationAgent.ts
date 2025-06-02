@@ -64,7 +64,7 @@ class BusAllocationAgent {
   private processingInterval: NodeJS.Timeout | null = null;
   private expiryCheckInterval: NodeJS.Timeout | null = null; // Timer for checking expired requests
   private socket: SocketService | null = null; // Add socket instance
-  
+
   // Configuration parameters
   private allocationLimitK: number = 1; // Default: allocate 1 bus per fermata group
   private requestExpiryMinutes: number = 30; // Default: requests expire after 30 minutes
@@ -78,30 +78,30 @@ class BusAllocationAgent {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY environment variable is required');
     }
-    
+
     this.ai = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY,
     });
-    
+
     // Apply configuration if provided
     if (config?.allocationLimitK !== undefined) {
       this.allocationLimitK = config.allocationLimitK;
     }
-    
+
     if (config?.requestExpiryMinutes !== undefined) {
       this.requestExpiryMinutes = config.requestExpiryMinutes;
     }
-    
+
     if (config?.processingThreshold !== undefined) {
       this.processingThreshold = config.processingThreshold;
     }
-    
+
     // Initialize with some mock data
     this.initializeMockData();
 
     // Initialize and listen for external reallocation requests (removed socket listener)
     // Requests will now be added via a dedicated API endpoint
-    
+
     // Start the expiry check interval (every minute)
     this.startExpiryCheck();
   }
@@ -191,7 +191,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
     requiresManualReview: boolean;
   }> {
     const agentResponse = await this.processReallocationRequests(requests);
-    
+
     const decision: ReallocationDecision = {
       id: `DEC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       requestId: requests[0]?.id || 'unknown',
@@ -234,7 +234,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
     // Simulate execution logic here
     // In a real system, this would interact with the bus management system
-    
+
     decision.status = 'completed';
     decision.busId = busId;
     decision.fromRouteId = fromRouteId;
@@ -249,7 +249,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
   // Get all decisions (for history/monitoring)
   getAllDecisions(): ReallocationDecision[] {
-    return [...this.decisions].sort((a, b) => 
+    return [...this.decisions].sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   }
@@ -269,7 +269,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
     decision.status = approved ? 'completed' : 'failed';
     decision.executedBy = 'staff';
-    
+
     console.log(`✍️ Decision ${decisionId} marked as ${decision.status} by staff ${staffId}.`);
     this.emitStatusUpdate(); // Emit status update after manual review
 
@@ -335,7 +335,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
       timestamp: new Date().toISOString(),
       status: 'pending'
     };
-    
+
     this.activeRequests.push(newRequest);
     const requestId = newRequest.id;
     console.log(`🤖 Agent added new reallocation request: ${requestId} for fermata ${newRequest.fermataName}`);
@@ -356,7 +356,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
     this.isActive = true;
     console.log('🤖 Bus Allocation Agent started in autonomous mode');
-    
+
     // Process requests every 5 minutes (simulating cron job)
     this.processingInterval = setInterval(() => {
       this.processActiveRequests();
@@ -379,21 +379,21 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
       clearInterval(this.processingInterval);
       this.processingInterval = null;
     }
-    
+
     console.log('🤖 Bus Allocation Agent stopped autonomous mode');
     this.emitStatusUpdate(); // Emit status update
   }
-  
+
   // Start checking for expired requests
   private startExpiryCheck(): void {
     // Check for expired requests every minute
     this.expiryCheckInterval = setInterval(() => {
       this.removeExpiredRequests();
     }, 60000); // 1 minute = 60 * 1000 ms
-    
+
     console.log(`🕒 Started request expiry check (expiry time: ${this.requestExpiryMinutes} minutes)`);
   }
-  
+
   // Stop checking for expired requests
   private stopExpiryCheck(): void {
     if (this.expiryCheckInterval) {
@@ -402,32 +402,32 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
       console.log('🕒 Stopped request expiry check');
     }
   }
-  
+
   // Remove expired requests
   private removeExpiredRequests(): void {
     const now = new Date();
     const expiryThreshold = new Date(now.getTime() - (this.requestExpiryMinutes * 60 * 1000));
-    
+
     const initialCount = this.activeRequests.length;
-    
+
     // Filter out expired requests (only pending ones, don't expire processing ones)
     this.activeRequests = this.activeRequests.filter(req => {
       if (req.status !== 'pending') {
         return true; // Keep non-pending requests
       }
-      
+
       const requestTime = new Date(req.timestamp);
       const isExpired = requestTime < expiryThreshold;
-      
+
       if (isExpired) {
         console.log(`⏰ Request ${req.id} for ${req.fermataName} has expired (created: ${requestTime.toLocaleString()})`);
       }
-      
+
       return !isExpired; // Keep if not expired
     });
-    
+
     const removedCount = initialCount - this.activeRequests.length;
-    
+
     if (removedCount > 0) {
       console.log(`⏰ Removed ${removedCount} expired requests`);
       this.emitStatusUpdate(); // Emit status update if requests were removed
@@ -451,7 +451,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
     for (const [fermataId, requests] of Object.entries(requestsByFermata)) {
       try {
         console.log(`Processing ${requests.length} requests for fermata ${fermataId}`);
-        
+
         // Mark requests as processing
         requests.forEach(req => req.status = 'processing');
         console.log(`🤖 Agent marked requests for fermata ${fermataId} as processing.`);
@@ -464,7 +464,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
         if (!requiresManualReview && decision.agentDecision.success) {
           // Execute autonomous reallocation
           const executed = await this.executeAutonomousReallocation(decision, requests);
-          
+
           if (executed) {
             // Mark requests as completed
             requests.forEach(req => req.status = 'completed');
@@ -483,8 +483,8 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
         }
 
         // Remove completed/failed requests from active list
-        this.activeRequests = this.activeRequests.filter(req => 
-          !requests.some(processedReq => processedReq.id === req.id) || 
+        this.activeRequests = this.activeRequests.filter(req =>
+          !requests.some(processedReq => processedReq.id === req.id) ||
           req.status === 'pending'
         );
         console.log(`🤖 Agent active requests after processing: ${this.activeRequests.filter(r => r.status === 'pending' || r.status === 'processing').length}`);
@@ -513,7 +513,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
   // Execute autonomous reallocation based on agent decision
   private async executeAutonomousReallocation(
-    decision: ReallocationDecision, 
+    decision: ReallocationDecision,
     requests: ReallocationRequest[]
   ): Promise<boolean> {
     try {
@@ -523,25 +523,25 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
       // Get the prioritized request IDs
       const prioritizedIds = decision.agentDecision.prioritizedRequestIds;
-      
+
       // Limit to the top K requests based on configuration
       const topKRequestIds = prioritizedIds.slice(0, this.allocationLimitK);
       console.log(`🔢 Processing top ${topKRequestIds.length} of ${prioritizedIds.length} prioritized requests (K=${this.allocationLimitK})`);
-      
+
       let successCount = 0;
-      
+
       // Process each of the top K requests
       for (const requestId of topKRequestIds) {
         const priorityRequest = requests.find(req => req.id === requestId);
-        
+
         if (!priorityRequest) {
           console.log(`⚠️ Could not find request with ID ${requestId}`);
           continue;
         }
-        
+
         // Find available bus for reallocation
         const availableBus = this.findAvailableBusForReallocation(priorityRequest.fermataId);
-        
+
         if (!availableBus) {
           console.log(`No available bus found for fermata ${priorityRequest.fermataId}`);
           continue;
@@ -549,7 +549,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
         // Find target route for the fermata
         const targetRoute = this.findBestRouteForFermata(priorityRequest.fermataId);
-        
+
         if (!targetRoute) {
           console.log(`No suitable route found for fermata ${priorityRequest.fermataId}`);
           continue;
@@ -570,20 +570,20 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
           availableBus.routeName = targetRoute.name;
           availableBus.fermataId = priorityRequest.fermataId;
           availableBus.status = 'in_service';
-          
+
           console.log(`🚌 Bus ${availableBus.id} reallocated from route ${decision.fromRouteId} to ${targetRoute.id}`);
-          
+
           // Mark this specific request as completed
           priorityRequest.status = 'completed';
           priorityRequest.busId = availableBus.id;
           priorityRequest.routeId = targetRoute.id;
-          
+
           successCount++;
         }
       }
-      
+
       console.log(`✅ Successfully reallocated ${successCount} of ${topKRequestIds.length} top priority requests`);
-      
+
       // Return true if at least one reallocation was successful
       return successCount > 0;
     } catch (error) {
@@ -594,16 +594,39 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
 
   // Find available bus for reallocation
   private findAvailableBusForReallocation(fermataId: string): Bus | null {
-    // Prefer available buses first
-    let availableBus = this.buses.find(bus => bus.status === 'available');
-    
+    // Find the target route for the fermata
+    const targetRoute = this.routes.find(route => route.fermataIds.includes(fermataId));
+
+    // 1. Prefer available buses at the target fermata
+    let availableBus = this.buses.find(bus => bus.status === 'available' && bus.fermataId === fermataId);
+
+    if (!availableBus && targetRoute) {
+      // 2. Prefer available buses on the target route
+      availableBus = this.buses.find(bus => bus.status === 'available' && bus.routeId === targetRoute.id);
+    }
+
+    if (!availableBus) {
+      // 3. Fallback to any available bus
+      availableBus = this.buses.find(bus => bus.status === 'available');
+    }
+
     if (!availableBus) {
       // If no available buses, find one with low passenger count
+      // 4. Prefer in-service buses on the target route with low passenger count
+      if (targetRoute) {
+         availableBus = this.buses
+          .filter(bus => bus.status === 'in_service' && bus.routeId === targetRoute.id)
+          .sort((a, b) => a.currentPassengers - b.currentPassengers)[0];
+      }
+    }
+
+    if (!availableBus) {
+      // 5. Fallback to any in-service bus with low passenger count
       availableBus = this.buses
         .filter(bus => bus.status === 'in_service')
         .sort((a, b) => a.currentPassengers - b.currentPassengers)[0];
     }
-    
+
     return availableBus || null;
   }
 
@@ -625,7 +648,7 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
     processingThreshold: number;
   } {
     const today = new Date().toDateString();
-    const completedToday = this.decisions.filter(d => 
+    const completedToday = this.decisions.filter(d =>
       new Date(d.timestamp).toDateString() === today && d.status === 'completed'
     ).length;
 
@@ -639,12 +662,12 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
       processingThreshold: this.processingThreshold
     };
   }
-  
+
   // Get allocation limit K
   getAllocationLimitK(): number {
     return this.allocationLimitK;
   }
-  
+
   // Set allocation limit K
   setAllocationLimitK(k: number): void {
     if (k < 1) {
@@ -653,12 +676,12 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
     this.allocationLimitK = k;
     console.log(`🔢 Allocation limit K set to ${k}`);
   }
-  
+
   // Get request expiry time
   getRequestExpiryMinutes(): number {
     return this.requestExpiryMinutes;
   }
-  
+
   // Set request expiry time
   setRequestExpiryMinutes(minutes: number): void {
     if (minutes < 1) {
@@ -667,12 +690,12 @@ If all requests *are* for the same Fermata, set \`success\` to \`true\` and proc
     this.requestExpiryMinutes = minutes;
     console.log(`⏰ Request expiry time set to ${minutes} minutes`);
   }
-  
+
   // Get processing threshold
   getProcessingThreshold(): number {
     return this.processingThreshold;
   }
-  
+
   // Set processing threshold
   setProcessingThreshold(threshold: number): void {
     if (threshold < 1) {

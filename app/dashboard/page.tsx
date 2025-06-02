@@ -6,10 +6,12 @@ import BusListSidebar from "@/components/bus-list-sidebar"
 import BusDetailPanel from "@/components/bus-detail-panel"
 import { useBusTracking } from "@/hooks/use-bus-tracking"
 import type { Bus } from "@/types/bus"
+import ChatBox from "@/components/chat-box"
 
 export default function Dashboard() {
   const { buses, loading, error } = useBusTracking()
   const [selectedBus, setSelectedBus] = useState<Bus | null>(null)
+  const [chatActiveForBusId, setChatActiveForBusId] = useState<string | null>(null); // State to track which bus chat is active for
   const [filterActive, setFilterActive] = useState(false)
   const [filterRouteId, setFilterRouteId] = useState<string | null>(null)
 
@@ -30,6 +32,16 @@ export default function Dashboard() {
       setSelectedBus(filteredBuses[0])
     }
   }, [filteredBuses, selectedBus])
+
+  // Function to handle contact driver button click
+  const handleContactDriverClick = () => {
+    if (selectedBus) {
+      console.log("Contact Driver clicked for bus:", selectedBus.id);
+      setChatActiveForBusId(selectedBus.id);
+    } else {
+      console.log("Contact Driver clicked, but no bus selected.");
+    }
+  };
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -55,8 +67,29 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Right panel with bus details (conditionally rendered) */}
-      {selectedBus && <BusDetailPanel bus={selectedBus} onClose={() => setSelectedBus(null)} />}
+      {/* Right panels (conditionally rendered) */}
+      {selectedBus && (
+        <div className="flex h-full">
+          <BusDetailPanel
+            bus={selectedBus}
+            onClose={() => {
+              setSelectedBus(null);
+              setChatActiveForBusId(null); // Close chat when detail panel closes
+            }}
+            onContactDriverClick={handleContactDriverClick} // Pass the handler
+          />
+          {/* Add the ChatBox component */}
+          <ChatBox
+            open={!!chatActiveForBusId} // Control dialog open state
+            onOpenChange={(open) => {
+              if (!open) {
+                setChatActiveForBusId(null); // Close chat when dialog closes
+              }
+            }}
+            driverId={chatActiveForBusId} // Pass the active chat bus/driver ID
+          />
+        </div>
+      )}
     </div>
   )
 }

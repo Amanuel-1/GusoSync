@@ -3,13 +3,17 @@
 import { formatNumber, formatSpeed } from "@/lib/utils"
 import type { Bus } from "@/types/bus"
 import { ChevronRight, Clock, MapPin, Phone, X } from "lucide-react"
+import { useState, useEffect } from "react" // Import useState and useEffect
 
 interface BusDetailPanelProps {
   bus: Bus
   onClose: () => void
+  onContactDriverClick: () => void; // Add the new prop
 }
 
-export default function BusDetailPanel({ bus, onClose }: BusDetailPanelProps) {
+export default function BusDetailPanel({ bus, onClose, onContactDriverClick }: BusDetailPanelProps) {
+  const [lastUpdatedText, setLastUpdatedText] = useState(''); // State for client-side time
+
   // Format the last updated time
   const formatLastUpdated = (date: Date) => {
     const now = new Date()
@@ -24,6 +28,17 @@ export default function BusDetailPanel({ bus, onClose }: BusDetailPanelProps) {
       return date.toLocaleTimeString()
     }
   }
+
+  // Update time on client side after mount
+  useEffect(() => {
+    setLastUpdatedText(formatLastUpdated(bus.lastUpdated));
+    // Update time every minute
+    const interval = setInterval(() => {
+      setLastUpdatedText(formatLastUpdated(bus.lastUpdated));
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval); // Cleanup interval
+  }, [bus.lastUpdated]); // Re-run effect if bus.lastUpdated changes
 
   // Get status color
   const getStatusColor = (status: string) => {
@@ -53,6 +68,7 @@ export default function BusDetailPanel({ bus, onClose }: BusDetailPanelProps) {
 
   return (
     <div className="w-[350px] border-l border-[#d9d9d9] bg-white flex flex-col">
+      {/* Root container */}
       {/* Header */}
       <div className="p-4 border-b border-[#d9d9d9] flex justify-between items-center">
         <h2 className="text-lg font-medium text-[#103a5e]">Bus Details</h2>
@@ -75,7 +91,7 @@ export default function BusDetailPanel({ bus, onClose }: BusDetailPanelProps) {
             </div>
           </div>
 
-          <div className="text-sm text-[#7d7d7d] mb-4">Last updated: {formatLastUpdated(bus.lastUpdated)}</div>
+          <div className="text-sm text-[#7d7d7d] mb-4">Last updated: {lastUpdatedText}</div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#f9f9f9] p-3 rounded-md">
@@ -186,7 +202,13 @@ export default function BusDetailPanel({ bus, onClose }: BusDetailPanelProps) {
       */}
       <div className="p-4 border-t border-[#d9d9d9]">
         <div className="grid grid-cols-2 gap-2">
-          <button className="bg-[#0097fb] text-white py-2 rounded-md hover:bg-[#0088e2] transition-colors flex items-center justify-center">
+          <button
+            className="bg-[#0097fb] text-white py-2 rounded-md hover:bg-[#0088e2] transition-colors flex items-center justify-center"
+            onClick={() => {
+              console.log("Contact Driver button clicked inside BusDetailPanel");
+              onContactDriverClick();
+            }}
+          >
             <Phone size={16} className="mr-2" />
             Contact Driver
           </button>
