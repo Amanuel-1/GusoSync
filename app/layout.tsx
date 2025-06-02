@@ -1,16 +1,9 @@
+"use client"
+
 import "./globals.css"
-import "mapbox-gl/dist/mapbox-gl.css" // Add this line
-import type React from "react"
-import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import ClientLayout from "./ClientLayout"
 
 const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "GuzoSync",
-  description: "Bus Tracking and Management System"
-}
 
 export default function RootLayout({
   children,
@@ -20,11 +13,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ClientLayout>{children}</ClientLayout>
+        {children}
       </body>
     </html>
   )
 }
-
-
-import './globals.css'

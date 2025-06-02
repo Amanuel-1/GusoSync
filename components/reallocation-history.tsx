@@ -1,115 +1,53 @@
 "use client"
 
-import React from "react"
-
-import { useState, useEffect } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { Search, ChevronDown, ChevronUp, Download } from "lucide-react"
-
-interface ReallocationRecord {
-  id: string
-  busId: string
-  busName: string
-  fromRouteId: string
-  fromRouteName: string
-  toRouteId: string
-  toRouteName: string
-  requestedBy: string
-  requestedAt: string
-  status: "Completed" | "Pending" | "Cancelled"
-  priority: "Low" | "Normal" | "High"
-  reason: string
-}
+import { useSocket } from "../utils/socket"
+import { ReallocationDecision } from "../services/busAllocationAgent"
 
 export default function ReallocationHistory() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [records, setRecords] = useState<ReallocationRecord[]>([])
-  const [filteredRecords, setFilteredRecords] = useState<ReallocationRecord[]>([])
+  const [records, setRecords] = useState<ReallocationDecision[]>([])
+  const [filteredRecords, setFilteredRecords] = useState<ReallocationDecision[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [sortField, setSortField] = useState<string>("requestedAt")
+  const [sortField, setSortField] = useState<string>("timestamp")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null)
 
-  // Mock data for reallocation history
+  // Fetch history from backend
+  const fetchHistory = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/reallocation?type=decisions", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      console.log("📊 Fetched history data:", data); // Added logging
+      if (data.success) {
+        setRecords(data.decisions);
+        setFilteredRecords(sortRecords(data.decisions, sortField, sortDirection));
+        console.log("📊 History records updated:", data.decisions.length); // Added logging
+      } else {
+        console.error("Failed to fetch history:", data.error);
+        setRecords([]);
+        setFilteredRecords([]);
+      }
+    } catch (error) {
+      console.error("Error fetching history:", error);
+      setRecords([]);
+      setFilteredRecords([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sortField, sortDirection]);
+
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockRecords: ReallocationRecord[] = [
-        {
-          id: "RR-001",
-          busId: "A245",
-          busName: "Bus A245",
-          fromRouteId: "R-103",
-          fromRouteName: "Bole Road - Merkato",
-          toRouteId: "R-106",
-          toRouteName: "Ayat - Piazza",
-          requestedBy: "John Doe",
-          requestedAt: "2023-05-15 09:30:22",
-          status: "Completed",
-          priority: "High",
-          reason: "High passenger demand on Ayat - Piazza route due to construction on alternative routes.",
-        },
-        {
-          id: "RR-002",
-          busId: "B112",
-          busName: "Bus B112",
-          fromRouteId: "R-104",
-          fromRouteName: "Megenagna - Piazza",
-          toRouteId: "R-107",
-          toRouteName: "Kality - Megenagna",
-          requestedBy: "Jane Smith",
-          requestedAt: "2023-05-14 14:15:45",
-          status: "Completed",
-          priority: "Normal",
-          reason: "Balancing bus distribution across routes to improve service frequency.",
-        },
-        {
-          id: "RR-003",
-          busId: "C078",
-          busName: "Bus C078",
-          fromRouteId: "R-105",
-          fromRouteName: "CMC - Mexico Square",
-          toRouteId: "R-108",
-          toRouteName: "Lebu - Meskel Square",
-          requestedBy: "Ahmed Hassan",
-          requestedAt: "2023-05-14 10:05:18",
-          status: "Cancelled",
-          priority: "Low",
-          reason: "Bus mechanical issue detected before reallocation could be completed.",
-        },
-        {
-          id: "RR-004",
-          busId: "D156",
-          busName: "Bus D156",
-          fromRouteId: "R-106",
-          fromRouteName: "Ayat - Piazza",
-          toRouteId: "R-109",
-          toRouteName: "Jemo - Piazza",
-          requestedBy: "Sarah Johnson",
-          requestedAt: "2023-05-13 16:42:30",
-          status: "Completed",
-          priority: "High",
-          reason: "Special event at Jemo requiring additional transportation capacity.",
-        },
-        {
-          id: "RR-005",
-          busId: "E201",
-          busName: "Bus E201",
-          fromRouteId: "R-107",
-          fromRouteName: "Kality - Megenagna",
-          toRouteId: "R-110",
-          toRouteName: "Saris - Megenagna",
-          requestedBy: "Michael Brown",
-          requestedAt: "2023-05-13 08:20:15",
-          status: "Pending",
-          priority: "Normal",
-          reason: "Scheduled maintenance for buses on Saris - Megenagna route.",
-        },
-      ]
-      setRecords(mockRecords)
-      setFilteredRecords(sortRecords(mockRecords, sortField, sortDirection))
-      setIsLoading(false)
-    }, 1500)
-  }, [])
+    fetchHistory()
+  }, [fetchHistory])
+
+  // Listen for allocation history updates via socket
+  useSocket("allocation_history_update", fetchHistory)
 
   // Filter and sort records
   useEffect(() => {
@@ -119,28 +57,25 @@ export default function ReallocationHistory() {
       const query = searchQuery.toLowerCase()
       const filtered = records.filter(
         (record) =>
-          record.busId.toLowerCase().includes(query) ||
-          record.busName.toLowerCase().includes(query) ||
-          record.fromRouteId.toLowerCase().includes(query) ||
-          record.fromRouteName.toLowerCase().includes(query) ||
-          record.toRouteId.toLowerCase().includes(query) ||
-          record.toRouteName.toLowerCase().includes(query) ||
-          record.requestedBy.toLowerCase().includes(query),
+          record.busId?.toLowerCase().includes(query) ||
+          record.fromRouteId?.toLowerCase().includes(query) ||
+          record.toRouteId?.toLowerCase().includes(query) ||
+          record.agentDecision?.reasoning?.toLowerCase().includes(query) ||
+          record.id.toLowerCase().includes(query)
       )
       setFilteredRecords(sortRecords(filtered, sortField, sortDirection))
     }
   }, [searchQuery, records, sortField, sortDirection])
 
-  const sortRecords = (recordsToSort: ReallocationRecord[], field: string, direction: "asc" | "desc") => {
+  function sortRecords(recordsToSort: ReallocationDecision[], field: string, direction: "asc" | "desc") {
     return [...recordsToSort].sort((a, b) => {
-      const valueA = a[field as keyof ReallocationRecord]
-      const valueB = b[field as keyof ReallocationRecord]
-
+      const valueA = a[field as keyof ReallocationDecision]
+      const valueB = b[field as keyof ReallocationDecision]
       if (typeof valueA === "string" && typeof valueB === "string") {
         if (direction === "asc") {
           return valueA.localeCompare(valueB)
         } else {
-          return valueB.localeCompare(valueA)
+          return valueB.localeCompare(valueA) // Corrected comparison here
         }
       }
       return 0
@@ -163,32 +98,6 @@ export default function ReallocationHistory() {
     return sortDirection === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "bg-[#48c864] text-white"
-      case "Pending":
-        return "bg-[#ff8a00] text-white"
-      case "Cancelled":
-        return "bg-[#e92c2c] text-white"
-      default:
-        return "bg-[#7d7d7d] text-white"
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "Low":
-        return "text-[#48c864]"
-      case "Normal":
-        return "text-[#0097fb]"
-      case "High":
-        return "text-[#e92c2c]"
-      default:
-        return "text-[#7d7d7d]"
-    }
-  }
-
   const toggleRecordExpansion = (id: string) => {
     setExpandedRecord(expandedRecord === id ? null : id)
   }
@@ -206,7 +115,7 @@ export default function ReallocationHistory() {
       <div className="relative mb-4">
         <input
           type="text"
-          placeholder="Search by bus ID, name, route, or requester..."
+          placeholder="Search by bus ID, route, or reasoning..."
           className="w-full border border-[#d9d9d9] rounded-md py-2 pl-10 pr-3 text-sm"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -246,8 +155,8 @@ export default function ReallocationHistory() {
                   </button>
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-medium">
-                  <button className="flex items-center" onClick={() => handleSort("requestedAt")}>
-                    Date {getSortIcon("requestedAt")}
+                  <button className="flex items-center" onClick={() => handleSort("timestamp")}>
+                    Date {getSortIcon("timestamp")}
                   </button>
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-medium">
@@ -255,11 +164,7 @@ export default function ReallocationHistory() {
                     Status {getSortIcon("status")}
                   </button>
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-medium">
-                  <button className="flex items-center" onClick={() => handleSort("priority")}>
-                    Priority {getSortIcon("priority")}
-                  </button>
-                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Reasoning</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">Details</th>
               </tr>
             </thead>
@@ -268,27 +173,12 @@ export default function ReallocationHistory() {
                 <React.Fragment key={record.id}>
                   <tr className="border-b border-[#f1f1f1] hover:bg-[#f9f9f9]">
                     <td className="px-4 py-3 text-sm">{record.id}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <div>{record.busId}</div>
-                      <div className="text-xs text-[#7d7d7d]">{record.busName}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div>{record.fromRouteId}</div>
-                      <div className="text-xs text-[#7d7d7d]">{record.fromRouteName}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div>{record.toRouteId}</div>
-                      <div className="text-xs text-[#7d7d7d]">{record.toRouteName}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">{record.requestedAt}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 text-xs rounded-md ${getStatusColor(record.status)}`}>
-                        {record.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`font-medium ${getPriorityColor(record.priority)}`}>{record.priority}</span>
-                    </td>
+                    <td className="px-4 py-3 text-sm">{record.busId || "-"}</td>
+                    <td className="px-4 py-3 text-sm">{record.fromRouteId || "-"}</td>
+                    <td className="px-4 py-3 text-sm">{record.toRouteId || "-"}</td>
+                    <td className="px-4 py-3 text-sm">{new Date(record.timestamp).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm">{record.status}</td>
+                    <td className="px-4 py-3 text-sm">{record.agentDecision?.reasoning || "-"}</td>
                     <td className="px-4 py-3 text-sm">
                       <button
                         className="text-[#0097fb] hover:underline"
@@ -301,23 +191,14 @@ export default function ReallocationHistory() {
                   {expandedRecord === record.id && (
                     <tr>
                       <td colSpan={8} className="bg-[#f9f9f9] px-4 py-3">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="text-sm">
                           <div>
-                            <div className="text-sm font-medium mb-1">Reason for Reallocation:</div>
-                            <div className="text-sm text-[#7d7d7d]">{record.reason}</div>
+                            <span className="text-[#7d7d7d]">Reasoning: </span>
+                            <span>{record.agentDecision?.reasoning}</span>
                           </div>
                           <div>
-                            <div className="text-sm font-medium mb-1">Additional Information:</div>
-                            <div className="text-sm">
-                              <div>
-                                <span className="text-[#7d7d7d]">Requested by: </span>
-                                <span>{record.requestedBy}</span>
-                              </div>
-                              <div>
-                                <span className="text-[#7d7d7d]">Request time: </span>
-                                <span>{record.requestedAt}</span>
-                              </div>
-                            </div>
+                            <span className="text-[#7d7d7d]">Decision: </span>
+                            <span>{record.agentDecision?.success ? "Auto Approved" : "Manual Review"}</span>
                           </div>
                         </div>
                       </td>

@@ -88,7 +88,7 @@ export default function ClientLayout({
 
           <div className="flex flex-col gap-8 items-center">
             <Link
-              href="/"
+              href="/dashboard"
               className={`flex flex-col items-center text-white ${pathname === "/" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
@@ -103,8 +103,8 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/insights"
-              className={`flex flex-col items-center text-white ${pathname === "/insights" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/insights"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/insights" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -121,8 +121,8 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/history"
-              className={`flex flex-col items-center text-white ${pathname === "/history" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/history"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/history" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -140,8 +140,8 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/analysis"
-              className={`flex flex-col items-center text-white ${pathname === "/analysis" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/analysis"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/analysisysis" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -158,8 +158,8 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/rra"
-              className={`flex flex-col items-center text-white ${pathname === "/rra" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/rra"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/rra" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -183,8 +183,8 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/users"
-              className={`flex flex-col items-center text-white ${pathname === "/users" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/users"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/users" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

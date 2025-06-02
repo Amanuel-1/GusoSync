@@ -6,8 +6,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { authService, type RegisterRequest } from "../../../services/authService"
 
-type UserRole = "driver" | "admin" | "control"
+type UserRole = "driver" | "queueRegulator" | "control"
 
 interface FormData {
   // Common fields
@@ -16,12 +17,18 @@ interface FormData {
   confirmPassword: string
   firstName: string
   lastName: string
-  phone: string
+  fatherName: string; // Added father's name
+  phoneNumber: string // Changed from 'phone' to 'phoneNumber'
   dateOfBirth: string
   address: string
   city: string
   emergencyContact: string
+  role: string // Added role to FormData
   emergencyPhone: string
+  nationalId?: string; // Added National ID
+  tinNumber?: string; // Added TIN Number
+  photo?: File | null; // Added Photo field
+
 
   // Driver specific fields
   licenseNumber?: string
@@ -31,12 +38,8 @@ interface FormData {
   previousEmployer?: string
   vehicleTypes?: string[]
 
-  // Admin specific fields
-  department?: string
-  position?: string
-  accessLevel?: string
-  employeeId?: string
-  adminNotes?: string
+  // Queue Regulator specific fields
+  // No specific fields identified yet beyond common and legal info
 
   // Control staff specific fields
   specialization?: string
@@ -52,9 +55,10 @@ export default function RegisterPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [registrationComplete, setRegistrationComplete] = useState(false)
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null); // State for image preview
 
   const [formData, setFormData] = useState<FormData>({
     email: "",
@@ -62,12 +66,17 @@ export default function RegisterPage() {
     confirmPassword: "",
     firstName: "",
     lastName: "",
-    phone: "",
+    fatherName: "", // Added father's name
+    phoneNumber: "", // Changed from 'phone' to 'phoneNumber'
     dateOfBirth: "",
     address: "",
     city: "",
     emergencyContact: "",
     emergencyPhone: "",
+    role: "", // Added role to initial state
+    nationalId: "", // Added National ID
+    tinNumber: "", // Added TIN Number
+    photo: null, // Added Photo field
 
     // Driver specific
     licenseNumber: "",
@@ -77,12 +86,15 @@ export default function RegisterPage() {
     previousEmployer: "",
     vehicleTypes: [],
 
-    // Admin specific
-    department: "",
-    position: "",
-    accessLevel: "",
-    employeeId: "",
-    adminNotes: "",
+    // Queue Regulator specific
+    // No specific fields identified yet beyond common and legal info
+
+    // Admin specific - Removed
+    // department: "",
+    // position: "",
+    // accessLevel: "",
+    // employeeId: "",
+    // adminNotes: "",
 
     // Control staff specific
     specialization: "",
@@ -98,20 +110,45 @@ export default function RegisterPage() {
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value,
-    })
+    const { name, value, type } = e.target;
+
+    // Handle file input separately, specifically for the photo
+    if (type === 'file' && name === 'photo') {
+      const fileInput = e.target as HTMLInputElement;
+      const file = fileInput.files ? fileInput.files[0] : null;
+
+      setFormData({
+        ...formData,
+        [name]: file,
+      });
+
+      // Create and set image preview URL
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setImagePreviewUrl(null);
+      }
+    } else {
+      // Handle other input types
+      // Special handling for the phone input to map to phoneNumber state
+      const updatedFormData = name === 'phone' ? { ...formData, phoneNumber: value } : { ...formData, [name]: value };
+
+      setFormData(updatedFormData);
+    }
+
 
     // Clear error when field is edited
     if (formErrors[name]) {
       setFormErrors({
         ...formErrors,
         [name]: "",
-      })
+      });
     }
-  }
+  };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, arrayName: string) => {
     const { value, checked } = e.target
@@ -144,12 +181,17 @@ export default function RegisterPage() {
       if (!formData.confirmPassword) errors.confirmPassword = "Please confirm your password"
       else if (formData.password !== formData.confirmPassword) errors.confirmPassword = "Passwords do not match"
 
-      if (!formData.firstName) errors.firstName = "First name is required"
-      if (!formData.lastName) errors.lastName = "Last name is required"
-      if (!formData.phone) errors.phone = "Phone number is required"
+      if (!formData.firstName) errors.firstName = "First name is required";
+      if (!formData.lastName) errors.lastName = "Last name is required";
+      if (!formData.phoneNumber) errors.phone = "Phone number is required"; // Changed from formData.phone to formData.phoneNumber
     }
 
     if (currentStep === 3) {
+      // Validate common legal/photo info for all roles in step 3
+      if (!formData.nationalId) errors.nationalId = "National ID is required";
+      if (!formData.tinNumber) errors.tinNumber = "TIN Number is required";
+      if (!formData.photo) errors.photo = "Photo is required";
+
       // Validate role-specific info
       if (selectedRole === "driver") {
         if (!formData.licenseNumber) errors.licenseNumber = "License number is required"
@@ -158,11 +200,8 @@ export default function RegisterPage() {
         if (!formData.vehicleTypes?.length) errors.vehicleTypes = "Select at least one vehicle type"
       }
 
-      if (selectedRole === "admin") {
-        if (!formData.department) errors.department = "Department is required"
-        if (!formData.position) errors.position = "Position is required"
-        if (!formData.accessLevel) errors.accessLevel = "Access level is required"
-        if (!formData.employeeId) errors.employeeId = "Employee ID is required"
+      if (selectedRole === "queueRegulator") {
+        if (!formData.fatherName) errors.fatherName = "Father's Name is required";
       }
 
       if (selectedRole === "control") {
@@ -193,25 +232,55 @@ export default function RegisterPage() {
       return
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
+    setFormErrors({}); // Clear previous errors
+
+    // Prepare data for registration
+    const registrationData: RegisterRequest = {
+      email: formData.email,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      fatherName: formData.fatherName, // Added father's name
+      phoneNumber: formData.phoneNumber,
+      role: selectedRole === 'driver' ? 'PASSENGER' : selectedRole === 'queueRegulator' ? 'QUEUE_REGULATOR' : 'CONTROL_CENTER', // Map queueRegulator to a new role type
+      dateOfBirth: formData.dateOfBirth || undefined,
+      address: formData.address && formData.city ? {
+        street: formData.address,
+        city: formData.city
+      } : undefined,
+      emergencyContact: formData.emergencyContact && formData.emergencyPhone ? {
+        name: formData.emergencyContact,
+        phoneNumber: formData.emergencyPhone
+      } : undefined,
+      nationalId: formData.nationalId || undefined, // Added National ID
+      tinNumber: formData.tinNumber || undefined, // Added TIN Number
+      // Note: File upload requires different handling, not directly included in this JSON structure.
+      // The backend API needs to be updated to handle file uploads.
+      // photo: formData.photo // Placeholder - actual file upload needs separate logic
+    };
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const result = await authService.register(registrationData);
 
-      // Registration successful
-      setRegistrationComplete(true)
+      if (result.success) {
+        console.log('Registration successful:', result.data);
+        setRegistrationComplete(true);
 
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        router.push("/login")
-      }, 3000)
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
+      } else {
+        setFormErrors({ general: result.message || "An error occurred during registration. Please try again." });
+      }
     } catch (error) {
-      console.error("Registration failed:", error)
+      console.error("Error during registration:", error);
+      setFormErrors({ general: "An unexpected error occurred. Please try again." });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (registrationComplete) {
     return (
@@ -293,40 +362,22 @@ export default function RegisterPage() {
 
                 <div
                   className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                    selectedRole === "admin"
+                    selectedRole === "queueRegulator"
                       ? "border-[#0097fb] bg-[#f0f9ff]"
                       : "border-[#d9d9d9] hover:border-[#0097fb]"
                   }`}
-                  onClick={() => handleRoleSelect("admin")}
+                  onClick={() => handleRoleSelect("queueRegulator")}
                 >
                   <div className="w-16 h-16 bg-[#f0f9ff] rounded-full flex items-center justify-center mb-4 mx-auto">
+                    {/* Placeholder icon for Queue Regulator - replace with appropriate icon */}
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M12 4L4 8l8 4 8-4-8-4z"
-                        stroke="#0097fb"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M4 12l8 4 8-4"
-                        stroke="#0097fb"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M4 16l8 4 8-4"
-                        stroke="#0097fb"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9.00001 10.9999L11 12.9999L15 8.99994" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <h3 className="font-medium text-center mb-2">Administrator</h3>
+                  <h3 className="font-medium text-center mb-2">Queue Regulator</h3>
                   <p className="text-sm text-[#7d7d7d] text-center">
-                    Register as an administrator to manage the system and users.
+                    Register as a queue regulator to manage queues at bus stations.
                   </p>
                 </div>
 
@@ -413,9 +464,9 @@ export default function RegisterPage() {
                   </label>
                   <input
                     type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
+                    id="phoneNumber" // Changed id to phoneNumber
+                    name="phoneNumber" // Changed name to phoneNumber
+                    value={formData.phoneNumber} // Changed value to formData.phoneNumber
                     onChange={handleInputChange}
                     className={`w-full border ${
                       formErrors.phone ? "border-[#e92c2c]" : "border-[#d9d9d9]"
@@ -616,13 +667,97 @@ export default function RegisterPage() {
             <div className="space-y-6">
               <h2 className="text-xl font-medium text-[#103a5e] mb-4">
                 {selectedRole === "driver" && "Driver Information"}
-                {selectedRole === "admin" && "Administrator Information"}
+                {selectedRole === "queueRegulator" && "Queue Regulator Information"}
                 {selectedRole === "control" && "Control Staff Information"}
               </h2>
 
+              {/* Common Legal and Photo Information for all roles */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
+                 {/* Photo Upload Section (Top-Left) */}
+                 <div>
+                    <label htmlFor="photo" className="block text-sm font-medium text-[#103a5e] mb-1">
+                      Upload Photo <span className="text-[#e92c2c]">*</span>
+                    </label>
+                    <div className={`relative w-40 h-auto aspect-[3/4] border ${
+                        formErrors.photo ? "border-[#e92c2c]" : "border-[#d9d9d9]"
+                      } rounded-md overflow-hidden cursor-pointer group hover:border-[#0097fb] transition-colors`}>
+                      <input
+                        type="file"
+                        id="photo"
+                        name="photo"
+                        onChange={handleInputChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        accept="image/*" // Accept image files
+                      />
+                      {imagePreviewUrl ? (
+                        <img src={imagePreviewUrl} alt="Photo Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center w-full h-full text-[#7d7d7d] text-sm">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2 group-hover:text-[#0097fb] transition-colors">
+                            <path d="M15 10L17.5 12.5L20 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M17.5 12.5V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M20 15C20 16.8754 20 17.8131 19.6213 18.3966C19.2961 18.9111 18.7911 19.2961 18.2036 19.6213C17.6201 20 16.6824 20 14.8129 20H9.18711C7.31762 20 6.37987 20 5.79636 19.6213C5.20886 19.2961 4.70394 18.9111 4.37868 18.3966C4 17.8131 4 16.8754 4 15V9C4 7.12459 4 6.1869 4.37868 5.60341C4.70394 5.08891 5.20886 4.70394 5.79636 4.37868C6.37987 4 7.31762 4 9.18711 4H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M15 4H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M17 4V2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Click to Upload
+                        </div>
+                      )}
+                    </div>
+                    {formErrors.photo && (
+                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.photo}</p>
+                    )}
+                     <p className="text-xs text-[#7d7d7d] mt-1">Please upload a photo with a 3:4 aspect ratio.</p>
+                  </div>
+
+                 {/* National ID and TIN Number fields */}
+                 <div className="grid grid-cols-1 gap-6 content-start"> {/* Use content-start to align items to the top */}
+                    <div>
+                       <label htmlFor="nationalId" className="block text-sm font-medium text-[#103a5e] mb-1">
+                         National ID Number <span className="text-[#e92c2c]">*</span>
+                       </label>
+                       <input
+                         type="text"
+                         id="nationalId"
+                         name="nationalId"
+                         value={formData.nationalId || ''}
+                         onChange={handleInputChange}
+                         className={`w-full border ${
+                           formErrors.nationalId ? "border-[#e92c2c]" : "border-[#d9d9d9]"
+                         } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
+                         placeholder="National ID Number"
+                       />
+                       {formErrors.nationalId && (
+                         <p className="text-[#e92c2c] text-xs mt-1">{formErrors.nationalId}</p>
+                       )}
+                     </div>
+
+                     <div>
+                       <label htmlFor="tinNumber" className="block text-sm font-medium text-[#103a5e] mb-1">
+                         TIN Number <span className="text-[#e92c2c]">*</span>
+                       </label>
+                       <input
+                         type="text"
+                         id="tinNumber"
+                         name="tinNumber"
+                         value={formData.tinNumber || ''}
+                         onChange={handleInputChange}
+                         className={`w-full border ${
+                           formErrors.tinNumber ? "border-[#e92c2c]" : "border-[#d9d9d9]"
+                         } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
+                         placeholder="TIN Number"
+                       />
+                       {formErrors.tinNumber && (
+                         <p className="text-[#e92c2c] text-xs mt-1">{formErrors.tinNumber}</p>
+                       )}
+                     </div>
+                 </div>
+              </div>
+
+
               {/* Driver-specific fields */}
               {selectedRole === "driver" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
                   <div>
                     <label htmlFor="licenseNumber" className="block text-sm font-medium text-[#103a5e] mb-1">
                       Driver's License Number <span className="text-[#e92c2c]">*</span>
@@ -631,7 +766,7 @@ export default function RegisterPage() {
                       type="text"
                       id="licenseNumber"
                       name="licenseNumber"
-                      value={formData.licenseNumber}
+                      value={formData.licenseNumber || ''}
                       onChange={handleInputChange}
                       className={`w-full border ${
                         formErrors.licenseNumber ? "border-[#e92c2c]" : "border-[#d9d9d9]"
@@ -651,7 +786,7 @@ export default function RegisterPage() {
                       type="date"
                       id="licenseExpiry"
                       name="licenseExpiry"
-                      value={formData.licenseExpiry}
+                      value={formData.licenseExpiry || ''}
                       onChange={handleInputChange}
                       className={`w-full border ${
                         formErrors.licenseExpiry ? "border-[#e92c2c]" : "border-[#d9d9d9]"
@@ -669,7 +804,7 @@ export default function RegisterPage() {
                     <select
                       id="licenseClass"
                       name="licenseClass"
-                      value={formData.licenseClass}
+                      value={formData.licenseClass || ''}
                       onChange={handleInputChange}
                       className={`w-full border ${
                         formErrors.licenseClass ? "border-[#e92c2c]" : "border-[#d9d9d9]"
@@ -695,7 +830,7 @@ export default function RegisterPage() {
                       type="number"
                       id="drivingExperience"
                       name="drivingExperience"
-                      value={formData.drivingExperience}
+                      value={formData.drivingExperience || ''}
                       onChange={handleInputChange}
                       min="0"
                       className="w-full border border-[#d9d9d9] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
@@ -710,7 +845,7 @@ export default function RegisterPage() {
                       type="text"
                       id="previousEmployer"
                       name="previousEmployer"
-                      value={formData.previousEmployer}
+                      value={formData.previousEmployer || ''}
                       onChange={handleInputChange}
                       className="w-full border border-[#d9d9d9] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
                       placeholder="Previous Employer"
@@ -770,112 +905,34 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* Admin-specific fields */}
-              {selectedRole === "admin" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Queue Regulator-specific fields */}
+              {selectedRole === "queueRegulator" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
                   <div>
-                    <label htmlFor="department" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Department <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <select
-                      id="department"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.department ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                    >
-                      <option value="">Select Department</option>
-                      <option value="Operations">Operations</option>
-                      <option value="Human Resources">Human Resources</option>
-                      <option value="Finance">Finance</option>
-                      <option value="IT">IT</option>
-                      <option value="Maintenance">Maintenance</option>
-                      <option value="Customer Service">Customer Service</option>
-                    </select>
-                    {formErrors.department && <p className="text-[#e92c2c] text-xs mt-1">{formErrors.department}</p>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="position" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Position <span className="text-[#e92c2c]">*</span>
+                    <label htmlFor="fatherName" className="block text-sm font-medium text-[#103a5e] mb-1">
+                      Father's Name <span className="text-[#e92c2c]">*</span>
                     </label>
                     <input
                       type="text"
-                      id="position"
-                      name="position"
-                      value={formData.position}
+                      id="fatherName"
+                      name="fatherName"
+                      value={formData.fatherName || ''}
                       onChange={handleInputChange}
                       className={`w-full border ${
-                        formErrors.position ? "border-[#e92c2c]" : "border-[#d9d9d9]"
+                        formErrors.fatherName ? "border-[#e92c2c]" : "border-[#d9d9d9]"
                       } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                      placeholder="Your Position"
+                      placeholder="Father's Name"
                     />
-                    {formErrors.position && <p className="text-[#e92c2c] text-xs mt-1">{formErrors.position}</p>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="employeeId" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Employee ID <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="employeeId"
-                      name="employeeId"
-                      value={formData.employeeId}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.employeeId ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                      placeholder="Employee ID"
-                    />
-                    {formErrors.employeeId && <p className="text-[#e92c2c] text-xs mt-1">{formErrors.employeeId}</p>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="accessLevel" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Access Level <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <select
-                      id="accessLevel"
-                      name="accessLevel"
-                      value={formData.accessLevel}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.accessLevel ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                    >
-                      <option value="">Select Access Level</option>
-                      <option value="Level 1">Level 1 - Basic</option>
-                      <option value="Level 2">Level 2 - Standard</option>
-                      <option value="Level 3">Level 3 - Advanced</option>
-                      <option value="Level 4">Level 4 - Full Access</option>
-                      <option value="Level 5">Level 5 - System Administrator</option>
-                    </select>
-                    {formErrors.accessLevel && <p className="text-[#e92c2c] text-xs mt-1">{formErrors.accessLevel}</p>}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label htmlFor="adminNotes" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Additional Notes
-                    </label>
-                    <textarea
-                      id="adminNotes"
-                      name="adminNotes"
-                      value={formData.adminNotes}
-                      onChange={handleInputChange}
-                      rows={4}
-                      className="w-full border border-[#d9d9d9] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
-                      placeholder="Any additional information..."
-                    ></textarea>
+                    {formErrors.fatherName && (
+                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.fatherName}</p>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Control Staff-specific fields */}
               {selectedRole === "control" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
                   <div>
                     <label htmlFor="specialization" className="block text-sm font-medium text-[#103a5e] mb-1">
                       Specialization <span className="text-[#e92c2c]">*</span>
@@ -883,7 +940,7 @@ export default function RegisterPage() {
                     <select
                       id="specialization"
                       name="specialization"
-                      value={formData.specialization}
+                      value={formData.specialization || ''}
                       onChange={handleInputChange}
                       className={`w-full border ${
                         formErrors.specialization ? "border-[#e92c2c]" : "border-[#d9d9d9]"
@@ -908,7 +965,7 @@ export default function RegisterPage() {
                     <select
                       id="shiftPreference"
                       name="shiftPreference"
-                      value={formData.shiftPreference}
+                      value={formData.shiftPreference || ''}
                       onChange={handleInputChange}
                       className={`w-full border ${
                         formErrors.shiftPreference ? "border-[#e92c2c]" : "border-[#d9d9d9]"

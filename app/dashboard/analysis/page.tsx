@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { Calendar, ChevronDown, Download, Filter } from "lucide-react"
-import EventChart from "../../components/event-chart"
-import EventDistribution from "../../components/event-distribution"
-import LocationHeatmap from "../../components/location-heatmap"
+import EventChart from "../../../components/event-chart"
+import EventDistribution from "../../../components/event-distribution"
+import LocationHeatmap from "../../../components/location-heatmap"
 
 export default function AnalysisPage() {
   const [dateFilter, setDateFilter] = useState("Last 30 days")

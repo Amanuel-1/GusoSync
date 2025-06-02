@@ -6,6 +6,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { authService } from "../../../services/authService"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -24,21 +25,25 @@ export default function LoginPage() {
       return
     }
 
-    setIsSubmitting(true)
-    setError(null)
+    setIsSubmitting(true);
+    setError(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const result = await authService.login({ email, password });
 
-      // Redirect to dashboard
-      router.push("/")
+      if (result.success) {
+        console.log('Login successful:', result.data);
+        router.push("/dashboard"); // Redirect to dashboard
+      } else {
+        setError(result.message || "An error occurred during login. Please try again.");
+      }
     } catch (err) {
-      setError("Invalid email or password. Please try again.")
+      console.error('Error during login:', err);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#f4f9fc] flex items-center justify-center p-4">
