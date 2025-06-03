@@ -29,6 +29,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      // Use the updated authService.login method that uses the direct API endpoint
       const result = await authService.login({ email, password });
 
       if (result.success) {

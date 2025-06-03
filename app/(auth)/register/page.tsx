@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle, AlertCircle } from "lucide-react"
-import Link from "next/link"
-import { authService, type RegisterRequest } from "../../../services/authService"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { authService, type RegisterRequest } from "../../../services/authService";
 
-type UserRole = "driver" | "queueRegulator" | "control"
+type UserRole = "queueRegulator" | "control"; // Removed "driver"
 
 interface FormData {
   // Common fields
@@ -51,10 +51,10 @@ interface FormData {
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [step, setStep] = useState(1);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -78,23 +78,8 @@ export default function RegisterPage() {
     tinNumber: "", // Added TIN Number
     photo: null, // Added Photo field
 
-    // Driver specific
-    licenseNumber: "",
-    licenseExpiry: "",
-    licenseClass: "",
-    drivingExperience: 0,
-    previousEmployer: "",
-    vehicleTypes: [],
-
     // Queue Regulator specific
     // No specific fields identified yet beyond common and legal info
-
-    // Admin specific - Removed
-    // department: "",
-    // position: "",
-    // accessLevel: "",
-    // employeeId: "",
-    // adminNotes: "",
 
     // Control staff specific
     specialization: "",
@@ -102,12 +87,12 @@ export default function RegisterPage() {
     shiftPreference: "",
     languages: [],
     technicalSkills: [],
-  })
+  });
 
   const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role)
-    setStep(2)
-  }
+    setSelectedRole(role);
+    setStep(2);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -193,43 +178,36 @@ export default function RegisterPage() {
       if (!formData.photo) errors.photo = "Photo is required";
 
       // Validate role-specific info
-      if (selectedRole === "driver") {
-        if (!formData.licenseNumber) errors.licenseNumber = "License number is required"
-        if (!formData.licenseExpiry) errors.licenseExpiry = "License expiry date is required"
-        if (!formData.licenseClass) errors.licenseClass = "License class is required"
-        if (!formData.vehicleTypes?.length) errors.vehicleTypes = "Select at least one vehicle type"
-      }
-
       if (selectedRole === "queueRegulator") {
         if (!formData.fatherName) errors.fatherName = "Father's Name is required";
       }
 
       if (selectedRole === "control") {
-        if (!formData.specialization) errors.specialization = "Specialization is required"
-        if (!formData.certifications?.length) errors.certifications = "Select at least one certification"
-        if (!formData.shiftPreference) errors.shiftPreference = "Shift preference is required"
+        if (!formData.specialization) errors.specialization = "Specialization is required";
+        if (!formData.certifications?.length) errors.certifications = "Select at least one certification";
+        if (!formData.shiftPreference) errors.shiftPreference = "Shift preference is required";
       }
     }
 
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleNextStep = () => {
     if (validateStep(step)) {
-      setStep(step + 1)
+      setStep(step + 1);
     }
-  }
+  };
 
   const handlePrevStep = () => {
-    setStep(step - 1)
-  }
+    setStep(step - 1);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateStep(step)) {
-      return
+      return;
     }
 
     setIsSubmitting(true);
@@ -239,11 +217,12 @@ export default function RegisterPage() {
     const registrationData: RegisterRequest = {
       email: formData.email,
       password: formData.password,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      fatherName: formData.fatherName, // Added father's name
-      phoneNumber: formData.phoneNumber,
-      role: selectedRole === 'driver' ? 'PASSENGER' : selectedRole === 'queueRegulator' ? 'QUEUE_REGULATOR' : 'CONTROL_CENTER', // Map queueRegulator to a new role type
+      firstName: formData.firstName, // Reverted to camelCase
+      lastName: formData.lastName,   // Reverted to camelCase
+      fatherName: formData.fatherName,
+      phoneNumber: formData.phoneNumber, // Reverted to camelCase
+      // Map both queueRegulator and control to CONTROL_STAFF as per backend expectation
+      role: 'CONTROL_STAFF',
       dateOfBirth: formData.dateOfBirth || undefined,
       address: formData.address && formData.city ? {
         street: formData.address,
@@ -255,12 +234,11 @@ export default function RegisterPage() {
       } : undefined,
       nationalId: formData.nationalId || undefined, // Added National ID
       tinNumber: formData.tinNumber || undefined, // Added TIN Number
-      // Note: File upload requires different handling, not directly included in this JSON structure.
-      // The backend API needs to be updated to handle file uploads.
-      // photo: formData.photo // Placeholder - actual file upload needs separate logic
+      photo: formData.photo || undefined, // Include the photo file for upload
     };
 
     try {
+      // The updated authService.register method will handle the photo upload
       const result = await authService.register(registrationData);
 
       if (result.success) {
@@ -326,40 +304,7 @@ export default function RegisterPage() {
             <div className="space-y-6">
               <h2 className="text-xl font-medium text-[#103a5e] mb-4">Select Your Role</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div
-                  className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                    selectedRole === "driver"
-                      ? "border-[#0097fb] bg-[#f0f9ff]"
-                      : "border-[#d9d9d9] hover:border-[#0097fb]"
-                  }`}
-                  onClick={() => handleRoleSelect("driver")}
-                >
-                  <div className="w-16 h-16 bg-[#f0f9ff] rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M8 11V7a4 4 0 0 1 8 0v4"
-                        stroke="#0097fb"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path d="M10 11h4" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" />
-                      <path
-                        d="M19 11a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14Z"
-                        stroke="#0097fb"
-                        strokeWidth="2"
-                      />
-                      <path d="M6 18v2" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M18 18v2" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <h3 className="font-medium text-center mb-2">Bus Driver</h3>
-                  <p className="text-sm text-[#7d7d7d] text-center">
-                    Register as a bus driver to manage routes and transport passengers.
-                  </p>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Adjusted grid for 2 options */}
                 <div
                   className={`border rounded-lg p-6 cursor-pointer transition-all ${
                     selectedRole === "queueRegulator"
@@ -666,7 +611,6 @@ export default function RegisterPage() {
           {step === 3 && (
             <div className="space-y-6">
               <h2 className="text-xl font-medium text-[#103a5e] mb-4">
-                {selectedRole === "driver" && "Driver Information"}
                 {selectedRole === "queueRegulator" && "Queue Regulator Information"}
                 {selectedRole === "control" && "Control Staff Information"}
               </h2>
@@ -755,155 +699,6 @@ export default function RegisterPage() {
               </div>
 
 
-              {/* Driver-specific fields */}
-              {selectedRole === "driver" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
-                  <div>
-                    <label htmlFor="licenseNumber" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Driver's License Number <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="licenseNumber"
-                      name="licenseNumber"
-                      value={formData.licenseNumber || ''}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.licenseNumber ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                      placeholder="License Number"
-                    />
-                    {formErrors.licenseNumber && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.licenseNumber}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="licenseExpiry" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      License Expiry Date <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="licenseExpiry"
-                      name="licenseExpiry"
-                      value={formData.licenseExpiry || ''}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.licenseExpiry ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                    />
-                    {formErrors.licenseExpiry && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.licenseExpiry}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="licenseClass" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      License Class <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <select
-                      id="licenseClass"
-                      name="licenseClass"
-                      value={formData.licenseClass || ''}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.licenseClass ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                    >
-                      <option value="">Select License Class</option>
-                      <option value="A">Class A - Heavy Vehicles</option>
-                      <option value="B">Class B - Medium Vehicles</option>
-                      <option value="C">Class C - Light Vehicles</option>
-                      <option value="D">Class D - Public Transport</option>
-                      <option value="E">Class E - Special Vehicles</option>
-                    </select>
-                    {formErrors.licenseClass && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.licenseClass}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="drivingExperience" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Years of Driving Experience
-                    </label>
-                    <input
-                      type="number"
-                      id="drivingExperience"
-                      name="drivingExperience"
-                      value={formData.drivingExperience || ''}
-                      onChange={handleInputChange}
-                      min="0"
-                      className="w-full border border-[#d9d9d9] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="previousEmployer" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Previous Employer
-                    </label>
-                    <input
-                      type="text"
-                      id="previousEmployer"
-                      name="previousEmployer"
-                      value={formData.previousEmployer || ''}
-                      onChange={handleInputChange}
-                      className="w-full border border-[#d9d9d9] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
-                      placeholder="Previous Employer"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Vehicle Types You Can Operate <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="Standard Bus"
-                          checked={formData.vehicleTypes?.includes("Standard Bus")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>Standard Bus</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="Articulated Bus"
-                          checked={formData.vehicleTypes?.includes("Articulated Bus")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>Articulated Bus</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="Double-Decker"
-                          checked={formData.vehicleTypes?.includes("Double-Decker")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>Double-Decker</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="Minibus"
-                          checked={formData.vehicleTypes?.includes("Minibus")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>Minibus</span>
-                      </label>
-                    </div>
-                    {formErrors.vehicleTypes && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.vehicleTypes}</p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Queue Regulator-specific fields */}
               {selectedRole === "queueRegulator" && (

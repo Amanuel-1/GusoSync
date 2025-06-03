@@ -9,7 +9,7 @@ interface RegisterRequest {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  role: 'PASSENGER' | 'CONTROL_CENTER' | 'QUEUE_REGULATOR';
+  role: 'PASSENGER' | 'CONTROL_STAFF'; // Updated role types
   dateOfBirth?: string;
   address?: {
     street: string;
@@ -22,6 +22,8 @@ interface RegisterRequest {
   fatherName?: string; // Added father's name
   nationalId?: string; // Added National ID
   tinNumber?: string; // Added TIN Number
+  photo?: File; // Photo file for upload
+  photoUrl?: string; // URL of the uploaded photo
 }
 
 interface AuthResponse {
@@ -41,9 +43,12 @@ interface AuthResponse {
 
 class AuthService {
   private baseUrl = '/api/accounts';
+  private apiBaseUrl = 'https://guzosync-fastapi.onrender.com';
+  private backendApiBaseUrl = 'https://guzosync-backend.onrender.com';
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
+      // Use the local API endpoint for login
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
@@ -81,12 +86,30 @@ class AuthService {
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
+      // Handle file upload if photo is provided
+      if (userData.photo) {
+        const photoData = await this.uploadPhoto(userData.photo);
+        if (photoData.success && photoData.photoUrl) {
+          // Add the photo URL to the user data
+          userData = { ...userData, photoUrl: photoData.photoUrl };
+        } else {
+          return {
+            success: false,
+            message: 'Failed to upload photo. Please try again.',
+          };
+        }
+      }
+
+      // Remove the photo file from the request as it can't be serialized to JSON
+      const { photo, ...userDataWithoutPhoto } = userData;
+
+      // Use the local API endpoint for registration
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(userDataWithoutPhoto),
       });
 
       const data = await response.json();
@@ -107,6 +130,39 @@ class AuthService {
       return {
         success: false,
         message: 'Network error. Please check your connection and try again.',
+      };
+    }
+  }
+
+  async uploadPhoto(file: File): Promise<{ success: boolean; photoUrl?: string; message?: string }> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        return {
+          success: true,
+          photoUrl: data.photoUrl,
+        };
+      } else {
+        return {
+          success: false,
+          message: data.message || 'Failed to upload photo',
+        };
+      }
+
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      return {
+        success: false,
+        message: 'Network error during photo upload',
       };
     }
   }
