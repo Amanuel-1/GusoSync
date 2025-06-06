@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://guzosync-fastapi.onrender.com';
+const API_BASE_URL = 'https://guzosync-fastapi.onrender.com';
 
 export async function GET(request: NextRequest) {
   try {
