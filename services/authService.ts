@@ -351,7 +351,4 @@ function decodeJwtPayload(token: string): any | null {
 }
 
 export const authService = new AuthService();
-import { v4 as uuidv4 } from 'uuid';
-import { emailService } from './emailService';
-
 export type { User, LoginRequest, RegisterRequest, AuthResponse };
