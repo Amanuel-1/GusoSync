@@ -1,8 +1,33 @@
 import { NextResponse } from 'next/server';
+import { nanoid } from 'nanoid';
+import { sendRegistrationEmail } from '@/services/emailService';
 
 const BACKEND_API_BASE_URL = 'https://guzosync-fastapi.onrender.com';
 
+// Helper function to determine if it's a logout request
+function isLogoutRequest(url: string): boolean {
+  return url.endsWith('/logout');
+}
+
 export async function POST(request: Request) {
+  // Check if it's a logout request
+  if (isLogoutRequest(request.url)) {
+    // Create a response that clears the auth cookie
+    const response = NextResponse.json({ success: true, message: 'Logged out successfully' });
+    
+    // Clear the auth cookie
+    response.cookies.set({
+      name: 'authToken',
+      value: '',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 0, // Expire immediately
+      path: '/',
+    });
+    
+    return response;
+  }
   try {
     const body = await request.json();
     let backendUrl = '';
@@ -16,10 +41,18 @@ export async function POST(request: Request) {
       requestType = 'registration';
       console.log('Forwarding registration request to:', backendUrl);
 
+      let generatedPassword = body.password; // Default to provided password
+
+      // Generate password for specific roles
+      if (body.role === 'driver' || body.role === 'queue regulator') {
+        generatedPassword = `Guzo${nanoid()}`;
+        console.log(`Generated password for ${body.role}: ${generatedPassword}`);
+      }
+
       // Transform camelCase to snake_case for backend registration
       const backendBody = {
         email: body.email,
-        password: body.password,
+        password: generatedPassword, // Use generated or provided password
         first_name: body.firstName,
         last_name: body.lastName,
         father_name: body.fatherName, // Assuming backend expects snake_case for fatherName too
@@ -66,6 +99,17 @@ export async function POST(request: Request) {
 
       if (backendResponse.ok) {
         console.log(`${requestType} successful:`, responseBody);
+
+        // Send email with credentials if password was generated
+        if (body.role === 'driver' || body.role === 'queue regulator') {
+          try {
+            await sendRegistrationEmail(body.email, body.email, generatedPassword);
+          } catch (emailError) {
+            console.error('Failed to send registration email:', emailError);
+            // Log the error but still return success for the registration
+          }
+        }
+
         return NextResponse.json(responseBody, { status: backendResponse.status });
       } else {
         console.error(`${requestType} failed:`, responseBody);
@@ -111,6 +155,32 @@ export async function POST(request: Request) {
 
       if (backendResponse.ok) {
         console.log(`${requestType} successful:`, responseBody);
+        
+        // For login requests, ensure we have user data to store in sessionStorage
+        if (requestType === 'login') {
+          // Set the token in an HTTP-only cookie
+          const response = NextResponse.json(responseBody, { status: backendResponse.status });
+          
+          // Get the token from the response body
+          const token = responseBody.token || responseBody.access_token;
+          
+          if (token) {
+            // Set the token in an HTTP-only cookie
+            // maxAge is set to 7 days (in seconds)
+            response.cookies.set({
+              name: 'authToken',
+              value: token,
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production', // Only use secure in production
+              sameSite: 'strict',
+              maxAge: 60 * 60 * 24 * 7, // 7 days
+              path: '/',
+            });
+          }
+          
+          return response;
+        }
+        
         return NextResponse.json(responseBody, { status: backendResponse.status });
       } else {
         console.error(`${requestType} failed:`, responseBody);
@@ -136,10 +206,16 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-  } catch (error) {
+  } catch (error: unknown) { // Explicitly type error as unknown
     console.error('Error in API route:', error);
 
-    // Check if it's a network error
+    // Check for specific network errors
+    if (error instanceof Error && error.cause && typeof error.cause === 'object' && 'code' in error.cause && error.cause.code === 'UND_ERR_HEADERS_TIMEOUT') {
+      return NextResponse.json({
+        message: 'The authentication service is taking too long to respond. It might be temporarily unavailable. Please try again later.'
+      }, { status: 504 }); // Use 504 Gateway Timeout status code
+    }
+    // Check if it's a generic fetch error
     if (error instanceof TypeError && error.message.includes('fetch')) {
       return NextResponse.json({
         message: 'Unable to connect to the authentication service. Please check your internet connection and try again.'

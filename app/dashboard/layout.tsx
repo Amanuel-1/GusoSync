@@ -2,10 +2,11 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Bell, Mail, X, Check, AlertTriangle, Info } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { authService, User } from "@/services/authService" // Import authService and User type
 // No CSS import needed here
 
 export default function ClientLayout({
@@ -16,7 +17,10 @@ export default function ClientLayout({
   const [showUserPopup, setShowUserPopup] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showInbox, setShowInbox] = useState(false)
+  const [user, setUser] = useState<User | null>(null); // State to hold user data
+  const [loading, setLoading] = useState(true); // Add loading state
   const pathname = usePathname()
+  const router = useRouter(); // Get router instance
 
   // Sample notifications data
   const notifications = [
@@ -73,6 +77,50 @@ export default function ClientLayout({
       read: true
     }
   ]
+
+  useEffect(() => {
+    // Function to load user data
+    const loadUser = async () => {
+      if (!authService.isAuthenticated()) {
+        // If not authenticated, redirect to login
+        router.push('/login');
+        return; // Stop execution
+      }
+
+      const fetchedUser = authService.getUser();
+
+      if (fetchedUser) {
+        setUser(fetchedUser);
+      } else {
+        // If authenticated but no user data in sessionStorage (shouldn't happen if login worked),
+        // redirect to login as a fallback
+        console.error('Authenticated but no user data found in sessionStorage.');
+        await authService.logout();
+        router.push('/login');
+      }
+      setLoading(false); // Set loading to false after auth check and data load attempt
+    };
+
+    loadUser();
+  }, [router]); // Dependency array includes router
+
+  const handleLogout = async () => {
+    await authService.logout(); // This will clear the HTTP-only cookie and sessionStorage
+    router.push('/login'); // Redirect to login page after logout
+  };
+
+
+  // Show loading state or redirect if user is null
+  if (loading) {
+    return <div>Loading...</div>; // Show loading indicator while checking auth
+  }
+
+  if (!user) {
+     // If not loading but no user, it means the auth check failed or user data is missing/invalid
+     // The useEffect should have already redirected, but this is a fallback
+     return null; // Or a message indicating authentication failed
+  }
+
 
   return (
     <div className="flex h-screen w-full bg-[#f4f9fc] overflow-hidden">
@@ -218,7 +266,7 @@ export default function ClientLayout({
           <div className="flex items-center gap-4">
             {/* Notifications Dropdown */}
             <div className="relative">
-              <button 
+              <button
                 className="relative"
                 onClick={() => {
                   setShowNotifications(!showNotifications)
@@ -276,67 +324,16 @@ export default function ClientLayout({
               )}
             </div>
 
-            {/* Inbox Dropdown */}
-            <div className="relative">
-              <button 
-                className="relative"
-                onClick={() => {
-                  setShowInbox(!showInbox)
-                  setShowNotifications(false)
-                }}
-              >
-                <Mail size={20} />
-                <span className="absolute -top-1 -right-1 bg-[#e92c2c] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  3
-                </span>
-              </button>
-
-              {showInbox && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowInbox(false)}></div>
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-20 overflow-hidden">
-                    <div className="p-3 border-b border-gray-100 flex justify-between items-center">
-                      <h3 className="font-medium text-[#103a5e]">Messages</h3>
-                      <button className="text-xs text-[#0097fb]">Mark all as read</button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                            !message.read ? "bg-[#f8f9ff]" : ""
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-sm">{message.sender}</h4>
-                                {!message.read && (
-                                  <span className="w-2 h-2 rounded-full bg-[#0097fb]"></span>
-                                )}
-                              </div>
-                              <div className="text-sm mt-1">{message.subject}</div>
-                              <p className="text-xs text-[#7d7d7d] mt-1">{message.preview}</p>
-                            </div>
-                            <span className="text-xs text-[#7d7d7d]">{message.time}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="p-3 border-t border-gray-100 text-center">
-                      <button className="text-xs text-[#0097fb]">View all messages</button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
             <div className="relative">
               <button className="flex items-center gap-2" onClick={() => setShowUserPopup(!showUserPopup)}>
-                <div className="w-8 h-8 rounded-full bg-[#f1f1f1] flex items-center justify-center text-[#103a5e]">
-                  P
-                </div>
-                <span className="font-medium">John Doe</span>
+                {(user?.profile_image || user?.photoUrl) ? (
+                  <img src={user.profile_image || user.photoUrl} alt={`${user.first_name || user.firstName} ${user.last_name || user.lastName}'s avatar`} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#f1f1f1] flex items-center justify-center text-[#103a5e]">
+                    {(user?.first_name || user?.firstName) ? (user.first_name || user.firstName)!.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
+                <span className="font-medium">{user ? `${user.first_name || user.firstName} ${user.last_name || user.lastName}` : 'Guest'}</span>
                 <svg
                   width="16"
                   height="16"
@@ -360,8 +357,10 @@ export default function ClientLayout({
                   <div className="fixed inset-0 z-10" onClick={() => setShowUserPopup(false)}></div>
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20 overflow-hidden">
                     <div className="p-3 border-b border-gray-100">
-                      <div className="font-medium">John Doe</div>
-                      <div className="text-xs text-[#7d7d7d]">Administrator</div>
+                      <div className="font-medium">{user ? `${user.first_name || user.firstName} ${user.last_name || user.lastName}` : 'Guest'}</div>
+                      <div className="text-xs text-[#7d7d7d]">{user?.email || 'N/A'}</div> {/* Display email */}
+                      <div className="text-xs text-[#7d7d7d]">{user?.role || 'N/A'}</div> {/* Display role */}
+                      {user?.phone_number && <div className="text-xs text-[#7d7d7d]">{user.phone_number}</div>} {/* Display phone if available */}
                     </div>
                     <ul>
                       <li>
@@ -401,7 +400,7 @@ export default function ClientLayout({
                         </a>
                       </li>
                       <li>
-                        <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <button onClick={handleLogout} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
                           <svg
                             className="mr-2 h-4 w-4 text-[#7d7d7d]"
                             xmlns="http://www.w3.org/2000/svg"
@@ -417,7 +416,7 @@ export default function ClientLayout({
                             <line x1="21" y1="12" x2="9" y2="12"></line>
                           </svg>
                           Logout
-                        </a>
+                        </button>
                       </li>
                     </ul>
                   </div>

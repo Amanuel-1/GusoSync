@@ -1,3 +1,23 @@
+import { v4 as uuidv4 } from 'uuid';
+import { sendRegistrationEmail } from './emailService';
+
+interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  phone_number?: string;
+  profile_image?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // Keep legacy fields for backward compatibility
+  firstName?: string;
+  lastName?: string;
+  photoUrl?: string;
+}
+
 interface LoginRequest {
   email: string;
   password: string;
@@ -9,7 +29,7 @@ interface RegisterRequest {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  role: 'PASSENGER' | 'CONTROL_STAFF'; // Updated role types
+  role: 'CONTROL_STAFF' | 'DRIVER' | 'QUEUE_REGULATOR'; // Updated role types
   dateOfBirth?: string;
   address?: {
     street: string;
@@ -46,6 +66,44 @@ class AuthService {
   private apiBaseUrl = 'https://guzosync-fastapi.onrender.com';
   private backendApiBaseUrl = 'https://guzosync-backend.onrender.com';
 
+  // Method to fetch current user details using access token
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const response = await fetch('/api/account/me', {
+        method: 'GET',
+        credentials: 'include', // Include cookies for authentication
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        // Transform backend response to match our User interface
+        const user: User = {
+          id: userData.id,
+          email: userData.email,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          role: userData.role,
+          phone_number: userData.phone_number,
+          profile_image: userData.profile_image,
+          is_active: userData.is_active,
+          created_at: userData.created_at,
+          updated_at: userData.updated_at,
+          // Legacy fields for backward compatibility
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          photoUrl: userData.profile_image,
+        };
+        return user;
+      } else {
+        console.error('Failed to fetch user details:', response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      return null;
+    }
+  }
+
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
       // Use the local API endpoint for login
@@ -55,19 +113,28 @@ class AuthService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(credentials),
+        // Include credentials to allow cookies to be set
+        credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store token if provided
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
+        const token = data.access_token || data.token; // Get token from response
+
+        if (token) {
+          // After successful login, fetch complete user details
+          // Wait a brief moment for the cookie to be set, then fetch user data
+          await new Promise(resolve => setTimeout(resolve, 100));
+          const user = await this.getCurrentUser();
+          if (user) {
+            sessionStorage.setItem('currentUser', JSON.stringify(user));
+          }
         }
-        
+
         return {
           success: true,
-          data: data,
+          data: data, // Return original data including token
         };
       } else {
         return {
@@ -167,21 +234,124 @@ class AuthService {
     }
   }
 
-  logout(): void {
-    localStorage.removeItem('authToken');
+  async requestPasswordReset(email: string): Promise<void> {
+    // try {
+    //   const response = await fetch(`${this.apiBaseUrl}/api/accounts/password/reset/request`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({ email }),
+    //   });
+
+    //   if (!response.ok) {
+    //     const errorData = await response.json();
+    //     throw new Error(errorData.detail?.[0]?.msg || 'Failed to request password reset.');
+    //   }
+    // } catch (error: any) {
+    //   console.error('Request password reset error:', error);
+    //   throw new Error(error.message || 'An error occurred during password reset request.');
+    // }
   }
 
-  getToken(): string | null {
+  async confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+    // try {
+    //   const response = await fetch(`${this.apiBaseUrl}/api/accounts/password/reset/confirm`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({ token, new_password: newPassword }),
+    //   });
+
+    //   if (!response.ok) {
+    //     const errorData = await response.json();
+    //     throw new Error(errorData.detail?.[0]?.msg || 'Failed to confirm password reset.');
+    //   }
+    // } catch (error: any) {
+    //   console.error('Confirm password reset error:', error);
+    //   throw new Error(error.message || 'An error occurred during password reset confirmation.');
+    // }
+  }
+
+  async logout(): Promise<void> {
+    // Call logout endpoint to clear the HTTP-only cookie
+    try {
+      await fetch(`${this.baseUrl}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+    
+    // Clear user data from sessionStorage
+    sessionStorage.removeItem('currentUser');
+  }
+
+  getUser(): User | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken');
+      const userData = sessionStorage.getItem('currentUser');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          // Ensure backward compatibility by adding legacy fields if missing
+          if (user.first_name && !user.firstName) {
+            user.firstName = user.first_name;
+          }
+          if (user.last_name && !user.lastName) {
+            user.lastName = user.last_name;
+          }
+          if (user.profile_image && !user.photoUrl) {
+            user.photoUrl = user.profile_image;
+          }
+          return user;
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          return null;
+        }
+      }
     }
     return null;
   }
 
+  // Method to refresh user data from the server
+  async refreshUserData(): Promise<User | null> {
+    const user = await this.getCurrentUser();
+    if (user) {
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+    }
+    return user;
+  }
+
   isAuthenticated(): boolean {
-    return this.getToken() !== null;
+    // We'll check if we have user data in sessionStorage
+    // The actual authentication is handled by the server via HTTP-only cookies
+    return this.getUser() !== null;
+  }
+}
+
+// Helper function to decode JWT payload
+function decodeJwtPayload(token: string): any | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT structure');
+    }
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Failed to decode JWT payload:', error);
+    return null;
   }
 }
 
 export const authService = new AuthService();
-export type { LoginRequest, RegisterRequest, AuthResponse };
+import { v4 as uuidv4 } from 'uuid';
+import { emailService } from './emailService';
+
+export type { User, LoginRequest, RegisterRequest, AuthResponse };
