@@ -15,14 +15,14 @@ interface Location {
 // =========================================================================
 
 // --- User ---
-// DB: User (id: UUID, firstName: string, lastName: string, email: string (unique), password: string, role: string (enum: 'PASSENGER', 'BUS_DRIVER', 'QUEUE_REGULATOR', 'CONTROL_CENTER_ADMIN', 'REGULATOR'), phoneNumber: string, profileImage: string (optional), createdAt: Date, updatedAt: Date, passwordResetToken: string (unique, optional), passwordResetExpires: Date (optional), isActive: boolean)
+// DB: User (id: UUID, firstName: string, lastName: string, email: string (unique), password: string, role: string (enum: 'PASSENGER', 'BUS_DRIVER', 'QUEUE_REGULATOR', 'CONTROL_STAFF', 'REGULATOR'), phoneNumber: string, profileImage: string (optional), createdAt: Date, updatedAt: Date, passwordResetToken: string (unique, optional), passwordResetExpires: Date (optional), isActive: boolean)
 
 interface RegisterUserRequest { // POST /api/accounts/register, POST /api/control-center/personnel/register
   first_name: string;
   last_name: string;
   email: string;
   password: string;
-  role: 'PASSENGER' | 'BUS_DRIVER' | 'QUEUE_REGULATOR' | 'CONTROL_CENTER_ADMIN' | 'REGULATOR';
+  role: 'PASSENGER' | 'BUS_DRIVER' | 'QUEUE_REGULATOR' | 'CONTROL_STAFF' | 'REGULATOR';
   phone_number: string;
   profile_image?: string;
 }
@@ -54,7 +54,7 @@ interface UserResponse { // GET /api/account/me, returned in lists like personne
   first_name: string;
   last_name: string;
   email: string;
-  role: 'PASSENGER' | 'BUS_DRIVER' | 'QUEUE_REGULATOR' | 'CONTROL_CENTER_ADMIN' | 'REGULATOR';
+  role: 'PASSENGER' | 'BUS_DRIVER' | 'QUEUE_REGULATOR' | 'CONTROL_STAFF' | 'REGULATOR';
   phone_number: string;
   profile_image?: string;
   is_active: boolean;
@@ -178,7 +178,7 @@ interface BroadcastNotificationRequest { // POST /api/notifications/broadcast
   message: string;
   type: 'ALERT' | 'UPDATE' | 'PROMOTION' | 'REMINDER';
   target_user_ids?: UUID[]; // Optional: for targeting specific users
-  target_roles?: ('PASSENGER' | 'BUS_DRIVER' | 'QUEUE_REGULATOR' | 'CONTROL_CENTER_ADMIN' | 'REGULATOR')[]; // Optional: for targeting roles
+  target_roles?: ('PASSENGER' | 'BUS_DRIVER' | 'QUEUE_REGULATOR' | 'CONTROL_STAFF' | 'REGULATOR')[]; // Optional: for targeting roles
   related_entity?: RelatedEntity;
 }
 

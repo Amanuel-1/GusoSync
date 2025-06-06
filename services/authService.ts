@@ -29,7 +29,7 @@ interface RegisterRequest {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  role: 'CONTROL_STAFF' | 'DRIVER' | 'QUEUE_REGULATOR'; // Updated role types
+  role: 'CONTROL_STAFF' | 'BUS_DRIVER' | 'QUEUE_REGULATOR'; // Updated role types to match backend
   dateOfBirth?: string;
   address?: {
     street: string;
@@ -44,6 +44,19 @@ interface RegisterRequest {
   tinNumber?: string; // Added TIN Number
   photo?: File; // Photo file for upload
   photoUrl?: string; // URL of the uploaded photo
+  // Driver-specific fields
+  licenseNumber?: string;
+  licenseExpiry?: string;
+  licenseClass?: string;
+  drivingExperience?: number;
+  previousEmployer?: string;
+  vehicleTypes?: string[];
+  // Control staff fields
+  specialization?: string;
+  certifications?: string[];
+  shiftPreference?: string;
+  languages?: string[];
+  technicalSkills?: string[];
 }
 
 interface AuthResponse {

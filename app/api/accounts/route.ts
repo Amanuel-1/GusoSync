@@ -63,7 +63,7 @@ export async function POST(request: Request) {
         emergency_contact: body.emergencyContact, // Assuming backend expects snake_case
         national_id: body.nationalId, // Assuming backend expects snake_case
         tin_number: body.tinNumber, // Assuming backend expects snake_case
-        photo_url: body.photoUrl, // Assuming backend expects snake_case
+        profile_image: body.photoUrl, // Map photoUrl to profile_image for backend
         // Include other potential fields from FormData if needed by backend
         license_number: body.licenseNumber,
         license_expiry: body.licenseExpiry,
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         console.log(`${requestType} successful:`, responseBody);
 
         // Send email with credentials if password was generated
-        if (body.role === 'driver' || body.role === 'queue regulator') {
+        if (body.role === 'BUS_DRIVER' || body.role === 'QUEUE_REGULATOR') {
           try {
             await sendRegistrationEmail(body.email, body.email, generatedPassword);
           } catch (emailError) {

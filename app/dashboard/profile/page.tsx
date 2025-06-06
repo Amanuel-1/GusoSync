@@ -54,7 +54,7 @@ export default function ProfilePage() {
       'PASSENGER': 'Passenger',
       'BUS_DRIVER': 'Bus Driver',
       'QUEUE_REGULATOR': 'Queue Regulator',
-      'CONTROL_CENTER_ADMIN': 'Control Center Admin',
+      'CONTROL_STAFF': 'Control Center Admin',
       'REGULATOR': 'Regulator'
     }
     return roleMap[role] || role
