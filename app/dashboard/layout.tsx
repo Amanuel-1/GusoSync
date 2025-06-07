@@ -231,20 +231,36 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/dashboard/users"
-              className={`flex flex-col items-center text-white ${pathname === "/dashboard/users" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/personnel"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/personnel" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="8" r="4" stroke="white" strokeWidth="2" />
                   <path
-                    d="M20 19C20 16.2386 16.4183 14 12 14C7.58172 14 4 16.2386 4 19"
+                    d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
                     stroke="white"
                     strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="9" cy="7" r="4" stroke="white" strokeWidth="2" />
+                  <path
+                    d="M22 21v-2a4 4 0 0 0-3-3.87"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16 3.13a4 4 0 0 1 0 7.75"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </div>
-              <span className="text-xs mt-1">Users</span>
+              <span className="text-xs mt-1">Personnel</span>
             </Link>
           </div>
         </div>

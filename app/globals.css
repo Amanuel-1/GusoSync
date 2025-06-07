@@ -102,4 +102,142 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Custom styles for react-calendar-heatmap with blue theme */
+.react-calendar-heatmap text {
+  font-size: 10px;
+  fill: #6b7280;
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-small-text {
+  font-size: 5px;
+}
+
+.react-calendar-heatmap rect:hover {
+  stroke: #103a5e !important;
+  stroke-width: 1px !important;
+  stroke-opacity: 0.8 !important;
+}
+
+/* Custom blue color scale for attendance */
+.react-calendar-heatmap .color-empty {
+  fill: #f8fafc; /* Very light gray for no data */
+  stroke: #103a5e;
+  stroke-width: 0.5px;
+  stroke-opacity: 0.2;
+}
+
+.react-calendar-heatmap .color-blue-1 {
+  fill: #e0f2fe; /* Very light blue for absent */
+  stroke: #103a5e;
+  stroke-width: 0.5px;
+  stroke-opacity: 0.3;
+}
+
+.react-calendar-heatmap .color-blue-2 {
+  fill: #7dd3fc; /* Light blue for late */
+  stroke: #103a5e;
+  stroke-width: 0.5px;
+  stroke-opacity: 0.3;
+}
+
+.react-calendar-heatmap .color-blue-3 {
+  fill: #0097fb; /* Main theme blue for present */
+  stroke: #103a5e;
+  stroke-width: 0.5px;
+  stroke-opacity: 0.3;
+}
+
+.react-calendar-heatmap .color-blue-4 {
+  fill: #103a5e; /* Dark theme blue for perfect attendance */
+  stroke: #103a5e;
+  stroke-width: 0.5px;
+  stroke-opacity: 0.3;
+}
+
+/* Ensure our custom blue colors have high specificity */
+.react-calendar-heatmap rect.color-blue-1 {
+  fill: #e0f2fe !important;
+  stroke: #103a5e !important;
+  stroke-width: 0.5px !important;
+  stroke-opacity: 0.3 !important;
+}
+
+.react-calendar-heatmap rect.color-blue-2 {
+  fill: #7dd3fc !important;
+  stroke: #103a5e !important;
+  stroke-width: 0.5px !important;
+  stroke-opacity: 0.3 !important;
+}
+
+.react-calendar-heatmap rect.color-blue-3 {
+  fill: #0097fb !important;
+  stroke: #103a5e !important;
+  stroke-width: 0.5px !important;
+  stroke-opacity: 0.3 !important;
+}
+
+.react-calendar-heatmap rect.color-blue-4 {
+  fill: #103a5e !important;
+  stroke: #103a5e !important;
+  stroke-width: 0.5px !important;
+  stroke-opacity: 0.3 !important;
+}
+
+.react-calendar-heatmap rect.color-empty {
+  fill: #f8fafc !important;
+  stroke: #103a5e !important;
+  stroke-width: 0.5px !important;
+  stroke-opacity: 0.2 !important;
+}
+
+/* Month and weekday labels styling */
+.react-calendar-heatmap .react-calendar-heatmap-month-label {
+  font-size: 10px;
+  fill: #6b7280;
+  font-weight: 500;
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-weekday-label {
+  font-size: 9px;
+  fill: #6b7280;
+  font-weight: 500;
+}
+
+/* Tooltip styling */
+.react-calendar-heatmap rect {
+  cursor: pointer;
+}
+
+.react-calendar-heatmap rect:hover {
+  opacity: 0.8;
 }

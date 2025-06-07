@@ -342,6 +342,27 @@ class AuthService {
     // The actual authentication is handled by the server via HTTP-only cookies
     return this.getUser() !== null;
   }
+
+  // Permission checking methods
+  hasRole(role: string): boolean {
+    const user = this.getUser();
+    return user?.role === role;
+  }
+
+  canManageControlStaff(): boolean {
+    // Only CONTROL_ADMIN can manage control staff
+    return this.hasRole('CONTROL_ADMIN');
+  }
+
+  canManagePersonnel(): boolean {
+    // CONTROL_ADMIN and CONTROL_STAFF can manage personnel (drivers and queue regulators)
+    const user = this.getUser();
+    return user?.role === 'CONTROL_ADMIN' || user?.role === 'CONTROL_STAFF';
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('CONTROL_ADMIN');
+  }
 }
 
 // Helper function to decode JWT payload

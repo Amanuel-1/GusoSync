@@ -5,7 +5,7 @@ const { Server } = require('socket.io');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
-const port = process.env.PORT || 3001; // Use port 3001 as 3000 might be in use
+const port = process.env.PORT || 3000; // Use port 3001 as 3000 might be in use
 // when using a custom server, we need to define the Next.js app
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();

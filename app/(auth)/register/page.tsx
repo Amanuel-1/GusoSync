@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { authService, type RegisterRequest } from "../../../services/authService";
 
-type UserRole = "queueRegulator" | "control" | "driver";
+type UserRole = "control";
 
 interface FormData {
   // Common fields
@@ -94,6 +94,13 @@ export default function RegisterPage() {
     setStep(2);
   };
 
+  // Auto-select control role since it's the only option
+  useEffect(() => {
+    if (!selectedRole) {
+      setSelectedRole("control");
+    }
+  }, [selectedRole]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
@@ -177,18 +184,7 @@ export default function RegisterPage() {
       if (!formData.tinNumber) errors.tinNumber = "TIN Number is required";
       if (!formData.photo) errors.photo = "Photo is required";
 
-      // Validate role-specific info
-      if (selectedRole === "queueRegulator") {
-        if (!formData.fatherName) errors.fatherName = "Father's Name is required";
-      }
-
-      if (selectedRole === "driver") {
-        if (!formData.licenseNumber) errors.licenseNumber = "License Number is required";
-        if (!formData.licenseExpiry) errors.licenseExpiry = "License Expiry Date is required";
-        if (!formData.licenseClass) errors.licenseClass = "License Class is required";
-        if (!formData.drivingExperience) errors.drivingExperience = "Driving Experience is required";
-      }
-
+      // Validate control staff specific info
       if (selectedRole === "control") {
         if (!formData.specialization) errors.specialization = "Specialization is required";
         if (!formData.certifications?.length) errors.certifications = "Select at least one certification";
@@ -228,10 +224,8 @@ export default function RegisterPage() {
       lastName: formData.lastName,
       fatherName: formData.fatherName,
       phoneNumber: formData.phoneNumber,
-      // Map roles to backend expectations
-      role: selectedRole === "driver" ? 'BUS_DRIVER' :
-            selectedRole === "queueRegulator" ? 'QUEUE_REGULATOR' :
-            'CONTROL_STAFF',
+      // Map role to backend expectations
+      role: 'CONTROL_STAFF',
       dateOfBirth: formData.dateOfBirth || undefined,
       address: formData.address && formData.city ? {
         street: formData.address,
@@ -244,19 +238,12 @@ export default function RegisterPage() {
       nationalId: formData.nationalId || undefined,
       tinNumber: formData.tinNumber || undefined,
       photo: formData.photo || undefined,
-      // Include driver-specific fields if driver role
-      licenseNumber: selectedRole === "driver" ? formData.licenseNumber : undefined,
-      licenseExpiry: selectedRole === "driver" ? formData.licenseExpiry : undefined,
-      licenseClass: selectedRole === "driver" ? formData.licenseClass : undefined,
-      drivingExperience: selectedRole === "driver" ? formData.drivingExperience : undefined,
-      previousEmployer: selectedRole === "driver" ? formData.previousEmployer : undefined,
-      vehicleTypes: selectedRole === "driver" ? formData.vehicleTypes : undefined,
-      // Include control staff fields if control role
-      specialization: selectedRole === "control" ? formData.specialization : undefined,
-      certifications: selectedRole === "control" ? formData.certifications : undefined,
-      shiftPreference: selectedRole === "control" ? formData.shiftPreference : undefined,
-      languages: selectedRole === "control" ? formData.languages : undefined,
-      technicalSkills: selectedRole === "control" ? formData.technicalSkills : undefined,
+      // Include control staff fields
+      specialization: formData.specialization,
+      certifications: formData.certifications,
+      shiftPreference: formData.shiftPreference,
+      languages: formData.languages,
+      technicalSkills: formData.technicalSkills,
     };
 
     try {
@@ -326,57 +313,9 @@ export default function RegisterPage() {
             <div className="space-y-6">
               <h2 className="text-xl font-medium text-[#103a5e] mb-4">Select Your Role</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4"> {/* Adjusted grid for 3 options */}
+              <div className="max-w-md mx-auto">
                 <div
-                  className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                    selectedRole === "queueRegulator"
-                      ? "border-[#0097fb] bg-[#f0f9ff]"
-                      : "border-[#d9d9d9] hover:border-[#0097fb]"
-                  }`}
-                  onClick={() => handleRoleSelect("queueRegulator")}
-                >
-                  <div className="w-16 h-16 bg-[#f0f9ff] rounded-full flex items-center justify-center mb-4 mx-auto">
-                    {/* Queue Regulator icon */}
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9.00001 10.9999L11 12.9999L15 8.99994" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <h3 className="font-medium text-center mb-2">Queue Regulator</h3>
-                  <p className="text-sm text-[#7d7d7d] text-center">
-                    Register as a queue regulator to manage queues at bus stations.
-                  </p>
-                </div>
-
-                <div
-                  className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                    selectedRole === "driver"
-                      ? "border-[#0097fb] bg-[#f0f9ff]"
-                      : "border-[#d9d9d9] hover:border-[#0097fb]"
-                  }`}
-                  onClick={() => handleRoleSelect("driver")}
-                >
-                  <div className="w-16 h-16 bg-[#f0f9ff] rounded-full flex items-center justify-center mb-4 mx-auto">
-                    {/* Driver icon */}
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10V6c0-2-2-4-4-4H4c-2 0-4 2-4 4v10c0 .6.4 1 1 1h2" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="7" cy="17" r="2" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9 17h6" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="17" cy="17" r="2" stroke="#0097fb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <h3 className="font-medium text-center mb-2">Bus Driver</h3>
-                  <p className="text-sm text-[#7d7d7d] text-center">
-                    Register as a bus driver to operate public transportation vehicles.
-                  </p>
-                </div>
-
-                <div
-                  className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                    selectedRole === "control"
-                      ? "border-[#0097fb] bg-[#f0f9ff]"
-                      : "border-[#d9d9d9] hover:border-[#0097fb]"
-                  }`}
+                  className="border-[#0097fb] bg-[#f0f9ff] border rounded-lg p-6 cursor-pointer"
                   onClick={() => handleRoleSelect("control")}
                 >
                   <div className="w-16 h-16 bg-[#f0f9ff] rounded-full flex items-center justify-center mb-4 mx-auto">
@@ -404,10 +343,38 @@ export default function RegisterPage() {
                       />
                     </svg>
                   </div>
-                  <h3 className="font-medium text-center mb-2">Control Staff</h3>
+                  <h3 className="font-medium text-center mb-2">Control Staff Registration</h3>
                   <p className="text-sm text-[#7d7d7d] text-center">
-                    Register as control staff to monitor and coordinate operations.
+                    Register as control staff to monitor and coordinate bus operations. Your registration will require admin approval.
                   </p>
+                </div>
+
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-medium text-yellow-800">Admin Approval Required</h4>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Control staff registrations require approval from an administrator. You will be notified once your application is reviewed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-medium text-blue-800">Looking to register as a Driver or Queue Regulator?</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Bus drivers and queue regulators are registered by control staff through the personnel management system.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -655,11 +622,7 @@ export default function RegisterPage() {
           {/* Step 3: Role-Specific Information */}
           {step === 3 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-medium text-[#103a5e] mb-4">
-                {selectedRole === "queueRegulator" && "Queue Regulator Information"}
-                {selectedRole === "driver" && "Driver Information"}
-                {selectedRole === "control" && "Control Staff Information"}
-              </h2>
+              <h2 className="text-xl font-medium text-[#103a5e] mb-4">Control Staff Information</h2>
 
               {/* Common Legal and Photo Information for all roles */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
@@ -745,182 +708,6 @@ export default function RegisterPage() {
               </div>
 
 
-
-              {/* Queue Regulator-specific fields */}
-              {selectedRole === "queueRegulator" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
-                  <div>
-                    <label htmlFor="fatherName" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Father's Name <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="fatherName"
-                      name="fatherName"
-                      value={formData.fatherName || ''}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.fatherName ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                      placeholder="Father's Name"
-                    />
-                    {formErrors.fatherName && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.fatherName}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Driver-specific fields */}
-              {selectedRole === "driver" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 border-[#d9d9d9]">
-                  <div>
-                    <label htmlFor="licenseNumber" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      License Number <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="licenseNumber"
-                      name="licenseNumber"
-                      value={formData.licenseNumber || ''}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.licenseNumber ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                      placeholder="License Number"
-                    />
-                    {formErrors.licenseNumber && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.licenseNumber}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="licenseExpiry" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      License Expiry Date <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="licenseExpiry"
-                      name="licenseExpiry"
-                      value={formData.licenseExpiry || ''}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.licenseExpiry ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                    />
-                    {formErrors.licenseExpiry && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.licenseExpiry}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="licenseClass" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      License Class <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <select
-                      id="licenseClass"
-                      name="licenseClass"
-                      value={formData.licenseClass || ''}
-                      onChange={handleInputChange}
-                      className={`w-full border ${
-                        formErrors.licenseClass ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                    >
-                      <option value="">Select License Class</option>
-                      <option value="Class A">Class A - Heavy Trucks</option>
-                      <option value="Class B">Class B - Large Trucks & Buses</option>
-                      <option value="Class C">Class C - Regular Vehicles</option>
-                      <option value="Class D">Class D - Commercial Passenger</option>
-                    </select>
-                    {formErrors.licenseClass && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.licenseClass}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="drivingExperience" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Driving Experience (Years) <span className="text-[#e92c2c]">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      id="drivingExperience"
-                      name="drivingExperience"
-                      value={formData.drivingExperience || ''}
-                      onChange={handleInputChange}
-                      min="0"
-                      max="50"
-                      className={`w-full border ${
-                        formErrors.drivingExperience ? "border-[#e92c2c]" : "border-[#d9d9d9]"
-                      } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]`}
-                      placeholder="Years of experience"
-                    />
-                    {formErrors.drivingExperience && (
-                      <p className="text-[#e92c2c] text-xs mt-1">{formErrors.drivingExperience}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="previousEmployer" className="block text-sm font-medium text-[#103a5e] mb-1">
-                      Previous Employer (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      id="previousEmployer"
-                      name="previousEmployer"
-                      value={formData.previousEmployer || ''}
-                      onChange={handleInputChange}
-                      className="w-full border border-[#d9d9d9] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
-                      placeholder="Previous employer name"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-[#103a5e] mb-1">Vehicle Types Experience</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="City Bus"
-                          checked={formData.vehicleTypes?.includes("City Bus")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>City Bus</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="Intercity Bus"
-                          checked={formData.vehicleTypes?.includes("Intercity Bus")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>Intercity Bus</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="Minibus"
-                          checked={formData.vehicleTypes?.includes("Minibus")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>Minibus</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value="Articulated Bus"
-                          checked={formData.vehicleTypes?.includes("Articulated Bus")}
-                          onChange={(e) => handleCheckboxChange(e, "vehicleTypes")}
-                          className="rounded text-[#0097fb] focus:ring-[#0097fb]"
-                        />
-                        <span>Articulated Bus</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Control Staff-specific fields */}
               {selectedRole === "control" && (
