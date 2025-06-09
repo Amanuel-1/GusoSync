@@ -68,6 +68,24 @@ export default function UserModal({
           phone_number: user.phone_number || '',
           role: user.role as 'BUS_DRIVER' | 'QUEUE_REGULATOR' | 'CONTROL_STAFF',
           profile_image: user.profile_image || '',
+          // Driver-specific fields
+          licenseNumber: '',
+          licenseExpiry: '',
+          licenseClass: '',
+          drivingExperience: '',
+          previousEmployer: '',
+          vehicleTypes: [],
+          // Queue Regulator-specific fields
+          fatherName: '',
+          // Control Staff-specific fields
+          specialization: '',
+          shiftPreference: '',
+          certifications: [],
+          languages: [],
+          technicalSkills: [],
+          // Common additional fields
+          nationalId: '',
+          tinNumber: '',
         });
       } else {
         setFormData({
@@ -131,7 +149,7 @@ export default function UserModal({
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const { value, checked } = e.target;
     setFormData(prev => {
-      const currentArray = prev[fieldName as keyof typeof prev] as string[] || [];
+      const currentArray = (prev[fieldName as keyof typeof prev] as string[]) || [];
       if (checked) {
         return { ...prev, [fieldName]: [...currentArray, value] };
       } else {
@@ -586,7 +604,7 @@ export default function UserModal({
                         <input
                           type="checkbox"
                           value={type}
-                          checked={formData.vehicleTypes.includes(type)}
+                          checked={formData.vehicleTypes?.includes(type) || false}
                           onChange={(e) => handleCheckboxChange(e, 'vehicleTypes')}
                           className="rounded text-[#0097fb] focus:ring-[#0097fb]"
                         />
@@ -681,7 +699,7 @@ export default function UserModal({
                         <input
                           type="checkbox"
                           value={cert}
-                          checked={formData.certifications.includes(cert)}
+                          checked={formData.certifications?.includes(cert) || false}
                           onChange={(e) => handleCheckboxChange(e, 'certifications')}
                           className="rounded text-[#0097fb] focus:ring-[#0097fb]"
                         />
@@ -700,7 +718,7 @@ export default function UserModal({
                         <input
                           type="checkbox"
                           value={lang}
-                          checked={formData.languages.includes(lang)}
+                          checked={formData.languages?.includes(lang) || false}
                           onChange={(e) => handleCheckboxChange(e, 'languages')}
                           className="rounded text-[#0097fb] focus:ring-[#0097fb]"
                         />
@@ -718,7 +736,7 @@ export default function UserModal({
                         <input
                           type="checkbox"
                           value={skill}
-                          checked={formData.technicalSkills.includes(skill)}
+                          checked={formData.technicalSkills?.includes(skill) || false}
                           onChange={(e) => handleCheckboxChange(e, 'technicalSkills')}
                           className="rounded text-[#0097fb] focus:ring-[#0097fb]"
                         />

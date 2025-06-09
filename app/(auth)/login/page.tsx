@@ -2,19 +2,30 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { authService } from "../../../services/authService"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Check for error parameters in URL
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'unauthorized') {
+      setError("Access denied. Only control staff and administrators can access the control system.")
+    } else if (errorParam === 'authentication_required') {
+      setError("Please sign in to access the control system.")
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +45,14 @@ export default function LoginPage() {
 
       if (result.success) {
         console.log('Login successful:', result.data);
+
+        // Check if user has permission to access control system
+        if (!authService.canAccessControlSystem()) {
+          await authService.logout();
+          setError("Access denied. Only control staff and administrators can access the control system.");
+          return;
+        }
+
         router.push("/dashboard"); // Redirect to dashboard
       } else {
         setError(result.message || "An error occurred during login. Please try again.");

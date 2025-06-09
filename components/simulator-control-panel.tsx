@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { Play, Square, RefreshCcw, Zap } from "lucide-react"
+import { showToast } from "@/lib/toast"
 
 interface SimulatorStatus {
   isRunning: boolean;
@@ -55,14 +56,14 @@ export default function SimulatorControlPanel() {
       })
       const data = await res.json()
       if (data.success) {
-        alert(data.message)
+        showToast.success("Simulator Started", data.message)
         fetchSimulatorStatus() // Refresh status after action
       } else {
-        alert(`Failed to start simulator: ${data.error}`)
+        showToast.error("Failed to Start Simulator", data.error)
       }
     } catch (error) {
       console.error("Error starting simulator:", error)
-      alert("An error occurred while trying to start the simulator.")
+      showToast.error("Error", "An error occurred while trying to start the simulator.")
     } finally {
       setIsStarting(false)
     }
@@ -78,14 +79,14 @@ export default function SimulatorControlPanel() {
       })
       const data = await res.json()
       if (data.success) {
-        alert(data.message)
+        showToast.success("Simulator Stopped", data.message)
         fetchSimulatorStatus() // Refresh status after action
       } else {
-        alert(`Failed to stop simulator: ${data.error}`)
+        showToast.error("Failed to Stop Simulator", data.error)
       }
     } catch (error) {
       console.error("Error stopping simulator:", error)
-      alert("An error occurred while trying to stop the simulator.")
+      showToast.error("Error", "An error occurred while trying to stop the simulator.")
     } finally {
       setIsStopping(false)
     }
@@ -97,20 +98,20 @@ export default function SimulatorControlPanel() {
       const res = await fetch("/api/simulator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "generate_bulk",
           count: bulkCount
         }),
       })
       const data = await res.json()
       if (data.success) {
-        alert(data.message)
+        showToast.success("Bulk Requests Generated", data.message)
       } else {
-        alert(`Failed to generate requests: ${data.error}`)
+        showToast.error("Failed to Generate Requests", data.error)
       }
     } catch (error) {
       console.error("Error generating bulk requests:", error)
-      alert("An error occurred while trying to generate bulk requests.")
+      showToast.error("Error", "An error occurred while trying to generate bulk requests.")
     } finally {
       setIsGenerating(false)
     }
@@ -122,21 +123,21 @@ export default function SimulatorControlPanel() {
       const res = await fetch("/api/simulator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "update_config",
           requestFrequencyMs: frequency
         }),
       })
       const data = await res.json()
       if (data.success) {
-        alert(data.message)
+        showToast.success("Configuration Updated", data.message)
         fetchSimulatorStatus() // Refresh status after action
       } else {
-        alert(`Failed to update configuration: ${data.error}`)
+        showToast.error("Failed to Update Configuration", data.error)
       }
     } catch (error) {
       console.error("Error updating configuration:", error)
-      alert("An error occurred while trying to update the configuration.")
+      showToast.error("Error", "An error occurred while trying to update the configuration.")
     } finally {
       setIsUpdatingConfig(false)
     }

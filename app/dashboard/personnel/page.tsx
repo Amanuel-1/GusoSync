@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Download, Filter, Search, UserPlus, Edit, Trash2, Key, ToggleLeft, ToggleRight, Users, UserCheck, UserX, Clock, Eye } from "lucide-react"
+import { Download, Filter, Search, UserPlus, Edit, Trash2, Key, ToggleLeft, ToggleRight, Users, UserCheck, UserX, Clock, Eye } from "lucide-react"
 import { useUserManagement } from "@/hooks/useUserManagement"
 import { useApprovalManagement } from "@/hooks/useApprovalManagement"
 import { authService } from "@/services/authService"
@@ -10,6 +10,8 @@ import PasswordResetModal from "@/components/UserManagement/PasswordResetModal"
 import ApprovalModal from "@/components/UserManagement/ApprovalModal"
 import UserDetailsModal from "@/components/UserManagement/UserDetailsModal"
 import { type User } from "@/services/userService"
+import { showToast } from "@/lib/toast"
+import SmartPagination from "@/components/ui/SmartPagination"
 
 type UserRole = "driver" | "queueRegulator" | "controlStaff"
 
@@ -130,9 +132,9 @@ export default function PersonnelPage() {
     if (window.confirm(`Are you sure you want to delete ${user.first_name} ${user.last_name}?`)) {
       const result = await deleteUser(user.id)
       if (result.success) {
-        alert('Personnel deleted successfully')
+        showToast.success('Personnel Deleted', 'Personnel deleted successfully')
       } else {
-        alert(result.message || 'Failed to delete personnel')
+        showToast.error('Delete Failed', result.message || 'Failed to delete personnel')
       }
     }
   }
@@ -145,19 +147,22 @@ export default function PersonnelPage() {
   const handleToggleStatus = async (user: User) => {
     const result = await toggleStatus(user.id)
     if (result.success) {
-      alert(`Personnel ${user.is_active ? 'deactivated' : 'activated'} successfully`)
+      showToast.success(
+        'Status Updated',
+        `Personnel ${user.is_active ? 'deactivated' : 'activated'} successfully`
+      )
     } else {
-      alert(result.message || 'Failed to update personnel status')
+      showToast.error('Status Update Failed', result.message || 'Failed to update personnel status')
     }
   }
 
   const handlePasswordReset = async (userId: string) => {
     const result = await resetPassword(userId)
     if (result.success) {
-      alert('Password reset successfully')
+      showToast.success('Password Reset', 'Password reset successfully')
       setPasswordResetModalOpen(false)
     } else {
-      alert(result.message || 'Failed to reset password')
+      showToast.error('Password Reset Failed', result.message || 'Failed to reset password')
     }
     return result
   }
@@ -180,10 +185,16 @@ export default function PersonnelPage() {
     }
 
     if (result?.success) {
-      alert(`Personnel ${modalMode === 'create' ? 'created' : 'updated'} successfully`)
+      showToast.success(
+        `Personnel ${modalMode === 'create' ? 'Created' : 'Updated'}`,
+        `Personnel ${modalMode === 'create' ? 'created' : 'updated'} successfully`
+      )
       setUserModalOpen(false)
     } else {
-      alert(result?.message || `Failed to ${modalMode} personnel`)
+      showToast.error(
+        `${modalMode === 'create' ? 'Create' : 'Update'} Failed`,
+        result?.message || `Failed to ${modalMode} personnel`
+      )
     }
 
     return result || { success: false }
@@ -600,42 +611,13 @@ export default function PersonnelPage() {
                   </div>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t bg-white flex-shrink-0">
-                      <div className="text-sm text-[#7d7d7d]">
-                        Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} results
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => paginate(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className="p-2 border border-[#d9d9d9] rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <ChevronLeft size={16} />
-                        </button>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => paginate(page)}
-                            className={`px-3 py-2 border rounded-md ${
-                              currentPage === page
-                                ? "bg-[#0097fb] text-white border-[#0097fb]"
-                                : "border-[#d9d9d9] text-[#7d7d7d] hover:bg-gray-50"
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-                        <button
-                          onClick={() => paginate(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className="p-2 border border-[#d9d9d9] rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <ChevronRight size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <SmartPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredData.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={paginate}
+                  />
                 </>
               )}
             </>

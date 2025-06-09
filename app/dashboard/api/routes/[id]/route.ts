@@ -27,12 +27,40 @@ async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
 
     if (response.ok) {
       const user = await response.json();
-      // Check if user has permission to manage routes (control staff or admin)
-      const hasPermission = ['CONTROL_STAFF', 'ADMIN'].includes(user.role);
+      // Check if user has permission to view routes (control staff or admin)
+      const hasPermission = ['CONTROL_STAFF', 'CONTROL_ADMIN'].includes(user.role);
       return { authorized: hasPermission, user };
     }
   } catch (error) {
     console.error('Error checking permission:', error);
+  }
+
+  return { authorized: false };
+}
+
+// Helper function to check if user can modify routes (CONTROL_ADMIN only)
+async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any }> {
+  const token = await getAuthToken();
+  if (!token) {
+    return { authorized: false };
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_API_BASE_URL}/api/account/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const user = await response.json();
+      // Only CONTROL_ADMIN can create, modify, or delete routes
+      const hasPermission = user.role === 'CONTROL_ADMIN';
+      return { authorized: hasPermission, user };
+    }
+  } catch (error) {
+    console.error('Error checking admin permission:', error);
   }
 
   return { authorized: false };
@@ -57,7 +85,7 @@ export async function GET(
 
     // Fetch route from backend
     console.log('Fetching route from backend:', id);
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/routes/${id}`, {
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -116,10 +144,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { authorized } = await checkPermission();
+    const { authorized } = await checkAdminPermission();
     if (!authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized. Control staff or admin access required.' },
+        { error: 'Unauthorized. Only administrators can update routes.' },
         { status: 403 }
       );
     }
@@ -142,7 +170,7 @@ export async function PUT(
     if (body.is_active !== undefined) backendUpdateData.is_active = body.is_active;
 
     console.log('Attempting to update route on backend with data:', backendUpdateData);
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/routes/${id}`, {
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -203,10 +231,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { authorized } = await checkPermission();
+    const { authorized } = await checkAdminPermission();
     if (!authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized. Control staff or admin access required.' },
+        { error: 'Unauthorized. Only administrators can delete routes.' },
         { status: 403 }
       );
     }
@@ -217,7 +245,7 @@ export async function DELETE(
 
     // Delete route from backend
     console.log('Attempting to delete route from backend:', id);
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/routes/${id}`, {
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -524,7 +524,358 @@
     }
     }
     },
+    "/api/buses/": {
+    "post": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Create Bus",
+    "description": "Create a new bus (admin only)",
+    "operationId": "create_bus_api_buses__post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/CreateBusRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "201": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "get": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Get All Buses",
+    "description": "Get all buses with optional search, filtering, and pagination",
+    "operationId": "get_all_buses_api_buses__get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "search",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Search"
+    }
+    },
+    {
+    "name": "filter_by",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Filter By"
+    }
+    },
+    {
+    "name": "status",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Status"
+    }
+    },
+    {
+    "name": "pn",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "minimum": 1,
+    "default": 1,
+    "title": "Pn"
+    }
+    },
+    {
+    "name": "ps",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "maximum": 100,
+    "minimum": 1,
+    "default": 10,
+    "title": "Ps"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "type": "array",
+    "items": {
+    "$ref": "#/components/schemas/BusResponse"
+    },
+    "title": "Response Get All Buses Api Buses  Get"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/buses/{bus_id}": {
+    "get": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Get Bus",
+    "operationId": "get_bus_api_buses__bus_id__get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "put": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Update Bus",
+    "description": "Update an existing bus (admin only)",
+    "operationId": "update_bus_api_buses__bus_id__put",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/UpdateBusRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "delete": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Delete Bus",
+    "description": "Delete a bus (admin only)",
+    "operationId": "delete_bus_api_buses__bus_id__delete",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
     "/api/buses/stops": {
+    "post": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Create Bus Stop",
+    "description": "Create a new bus stop (admin only)",
+    "operationId": "create_bus_stop_api_buses_stops_post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/CreateBusStopRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "201": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusStopResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
     "get": {
     "tags": [
     "buses"
@@ -666,6 +1017,106 @@
     }
     }
     }
+    },
+    "put": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Update Bus Stop",
+    "description": "Update an existing bus stop (admin only)",
+    "operationId": "update_bus_stop_api_buses_stops__bus_stop_id__put",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_stop_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Stop Id"
+    }
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/UpdateBusStopRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusStopResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "delete": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Delete Bus Stop",
+    "description": "Delete a bus stop (admin only)",
+    "operationId": "delete_bus_stop_api_buses_stops__bus_stop_id__delete",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_stop_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Stop Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
     }
     },
     "/api/buses/stops/{bus_stop_id}/incoming-buses": {
@@ -702,53 +1153,6 @@
     "$ref": "#/components/schemas/SimplifiedTripResponse"
     },
     "title": "Response Get Incoming Buses Api Buses Stops  Bus Stop Id  Incoming Buses Get"
-    }
-    }
-    }
-    },
-    "422": {
-    "description": "Validation Error",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/HTTPValidationError"
-    }
-    }
-    }
-    }
-    }
-    }
-    },
-    "/api/buses/{bus_id}": {
-    "get": {
-    "tags": [
-    "buses"
-    ],
-    "summary": "Get Bus",
-    "operationId": "get_bus_api_buses__bus_id__get",
-    "security": [
-    {
-    "CustomHTTPBearer": []
-    }
-    ],
-    "parameters": [
-    {
-    "name": "bus_id",
-    "in": "path",
-    "required": true,
-    "schema": {
-    "type": "string",
-    "title": "Bus Id"
-    }
-    }
-    ],
-    "responses": {
-    "200": {
-    "description": "Successful Response",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/BusResponse"
     }
     }
     }
@@ -962,6 +1366,157 @@
     }
     }
     },
+    "/api/routes/": {
+    "post": {
+    "tags": [
+    "routes"
+    ],
+    "summary": "Create Route",
+    "description": "Create a new route (admin only)",
+    "operationId": "create_route_api_routes__post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/CreateRouteRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "201": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/RouteResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "get": {
+    "tags": [
+    "routes"
+    ],
+    "summary": "Get All Routes",
+    "description": "Get all routes with search, filtering, and pagination",
+    "operationId": "get_all_routes_api_routes__get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "search",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Search routes by name or description",
+    "title": "Search"
+    },
+    "description": "Search routes by name or description"
+    },
+    {
+    "name": "page",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "minimum": 1,
+    "description": "Page number",
+    "default": 1,
+    "title": "Page"
+    },
+    "description": "Page number"
+    },
+    {
+    "name": "limit",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "maximum": 100,
+    "minimum": 1,
+    "description": "Number of routes per page",
+    "default": 10,
+    "title": "Limit"
+    },
+    "description": "Number of routes per page"
+    },
+    {
+    "name": "is_active",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by active status",
+    "title": "Is Active"
+    },
+    "description": "Filter by active status"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "type": "array",
+    "items": {
+    "$ref": "#/components/schemas/RouteResponse"
+    },
+    "title": "Response Get All Routes Api Routes  Get"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
     "/api/routes/{route_id}": {
     "get": {
     "tags": [
@@ -993,6 +1548,106 @@
     "schema": {
     "$ref": "#/components/schemas/RouteResponse"
     }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "put": {
+    "tags": [
+    "routes"
+    ],
+    "summary": "Update Route",
+    "description": "Update an existing route (admin only)",
+    "operationId": "update_route_api_routes__route_id__put",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "route_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Route Id"
+    }
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/UpdateRouteRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/RouteResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "delete": {
+    "tags": [
+    "routes"
+    ],
+    "summary": "Delete Route",
+    "description": "Delete a route (admin only)",
+    "operationId": "delete_route_api_routes__route_id__delete",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "route_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Route Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
     }
     }
     },
@@ -1576,7 +2231,7 @@
     "alerts"
     ],
     "summary": "Create Alert",
-    "description": "Create a new alert (admin only)",
+    "description": "Create a new alert (admin/regulator only)",
     "operationId": "create_alert_api_alerts_post",
     "security": [
     {
@@ -1623,7 +2278,7 @@
     "alerts"
     ],
     "summary": "Update Alert",
-    "description": "Update an existing alert (admin only)",
+    "description": "Update an existing alert (admin/regulator only)",
     "operationId": "update_alert_api_alerts__alert_id__put",
     "security": [
     {
@@ -1679,7 +2334,7 @@
     "alerts"
     ],
     "summary": "Delete Alert",
-    "description": "Delete an alert (admin only)",
+    "description": "Delete an alert (admin/regulator only)",
     "operationId": "delete_alert_api_alerts__alert_id__delete",
     "security": [
     {
@@ -3238,6 +3893,72 @@
     "$ref": "#/components/schemas/UserResponse"
     },
     "title": "Response Get All Personnel Api Control Center Personnel Get"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/control-center/passengers": {
+    "get": {
+    "tags": [
+    "control-center"
+    ],
+    "summary": "Get All Passengers",
+    "description": "Get all passengers (CONTROL_ADMIN and CONTROL_STAFF can access)",
+    "operationId": "get_all_passengers_api_control_center_passengers_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "skip",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "minimum": 0,
+    "default": 0,
+    "title": "Skip"
+    }
+    },
+    {
+    "name": "limit",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "maximum": 100,
+    "minimum": 1,
+    "default": 10,
+    "title": "Limit"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "type": "array",
+    "items": {
+    "$ref": "#/components/schemas/UserResponse"
+    },
+    "title": "Response Get All Passengers Api Control Center Passengers Get"
     }
     }
     }
@@ -4986,6 +5707,194 @@
     }
     }
     },
+    "/api/realtime/demo/bus-location-update": {
+    "post": {
+    "tags": [
+    "realtime-demo"
+    ],
+    "summary": "Demo Bus Location Update",
+    "description": "Demo endpoint to test real-time bus location updates",
+    "operationId": "demo_bus_location_update_api_realtime_demo_bus_location_update_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
+    "schema": {
+    "additionalProperties": true,
+    "type": "object",
+    "title": "Demo Data"
+    }
+    }
+    },
+    "required": true
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
+    "/api/realtime/demo/notification": {
+    "post": {
+    "tags": [
+    "realtime-demo"
+    ],
+    "summary": "Demo Notification",
+    "description": "Demo endpoint to test real-time notifications",
+    "operationId": "demo_notification_api_realtime_demo_notification_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
+    "schema": {
+    "additionalProperties": true,
+    "type": "object",
+    "title": "Demo Data"
+    }
+    }
+    },
+    "required": true
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
+    "/api/realtime/demo/chat-message": {
+    "post": {
+    "tags": [
+    "realtime-demo"
+    ],
+    "summary": "Demo Chat Message",
+    "description": "Demo endpoint to test real-time chat messages",
+    "operationId": "demo_chat_message_api_realtime_demo_chat_message_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
+    "schema": {
+    "additionalProperties": true,
+    "type": "object",
+    "title": "Demo Data"
+    }
+    }
+    },
+    "required": true
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
+    "/api/realtime/demo/trip-update": {
+    "post": {
+    "tags": [
+    "realtime-demo"
+    ],
+    "summary": "Demo Trip Update",
+    "description": "Demo endpoint to test real-time trip updates",
+    "operationId": "demo_trip_update_api_realtime_demo_trip_update_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
+    "schema": {
+    "additionalProperties": true,
+    "type": "object",
+    "title": "Demo Data"
+    }
+    }
+    },
+    "required": true
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
     "/": {
     "get": {
     "summary": "Root",
@@ -5738,6 +6647,54 @@
     "type"
     ],
     "title": "CreateAttendanceRecordRequest"
+    },
+    "CreateBusRequest": {
+    "properties": {
+    "license_plate": {
+    "type": "string",
+    "title": "License Plate"
+    },
+    "bus_type": {
+    "$ref": "#/components/schemas/BusType"
+    },
+    "capacity": {
+    "type": "integer",
+    "title": "Capacity"
+    },
+    "manufacture_year": {
+    "anyOf": [
+    {
+    "type": "integer"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Manufacture Year"
+    },
+    "bus_model": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Bus Model"
+    },
+    "bus_status": {
+    "$ref": "#/components/schemas/BusStatus"
+    }
+    },
+    "type": "object",
+    "required": [
+    "license_plate",
+    "bus_type",
+    "capacity",
+    "bus_status"
+    ],
+    "title": "CreateBusRequest"
     },
     "CreateBusStopRequest": {
     "properties": {

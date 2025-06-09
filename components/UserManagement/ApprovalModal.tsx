@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, XCircle, Clock, User, Mail, Phone, Shield, Calendar } from 'lucide-react';
 import { approvalService, type PendingRegistration } from '@/services/approvalService';
+import { showToast } from '@/lib/toast';
 
 interface ApprovalModalProps {
   isOpen: boolean;
@@ -55,13 +56,16 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
       if (response.success) {
         // Remove from pending list
         setPendingRegistrations(prev => prev.filter(r => r.id !== registration.id));
-        alert(`${registration.first_name} ${registration.last_name} has been approved and activated.`);
+        showToast.success(
+          'Registration Approved',
+          `${registration.first_name} ${registration.last_name} has been approved and activated.`
+        );
       } else {
-        alert(response.message || 'Failed to approve registration. Please try again.');
+        showToast.error('Approval Failed', response.message || 'Failed to approve registration. Please try again.');
       }
     } catch (error) {
       console.error('Error approving registration:', error);
-      alert('Failed to approve registration. Please try again.');
+      showToast.error('Approval Failed', 'Failed to approve registration. Please try again.');
     }
   };
 
@@ -73,13 +77,16 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
         if (response.success) {
           // Remove from pending list
           setPendingRegistrations(prev => prev.filter(r => r.id !== registration.id));
-          alert(`${registration.first_name} ${registration.last_name}'s registration has been rejected.`);
+          showToast.success(
+            'Registration Rejected',
+            `${registration.first_name} ${registration.last_name}'s registration has been rejected.`
+          );
         } else {
-          alert(response.message || 'Failed to reject registration. Please try again.');
+          showToast.error('Rejection Failed', response.message || 'Failed to reject registration. Please try again.');
         }
       } catch (error) {
         console.error('Error rejecting registration:', error);
-        alert('Failed to reject registration. Please try again.');
+        showToast.error('Rejection Failed', 'Failed to reject registration. Please try again.');
       }
     }
   };

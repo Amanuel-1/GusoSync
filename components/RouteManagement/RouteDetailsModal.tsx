@@ -1,46 +1,47 @@
 "use client"
 
 import React from 'react';
-import { X, MapPin, Clock, Route as RouteIcon, Calendar, Activity } from 'lucide-react';
-import { type BusRoute } from '@/services/routeService';
+import { X, MapPin, Clock, Route as RouteIcon, Calendar, Activity, Navigation } from 'lucide-react';
+import { type RouteData } from '@/hooks/useRouteManagementAPI';
 
 interface RouteDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  route: BusRoute | null;
+  route: RouteData | null;
 }
 
-export default function RouteDetailsModal({ 
-  isOpen, 
-  onClose, 
-  route 
+export default function RouteDetailsModal({
+  isOpen,
+  onClose,
+  route
 }: RouteDetailsModalProps) {
-  
   if (!isOpen || !route) return null;
 
-  const formatDistance = (distance: number) => {
-    return `${distance.toFixed(2)} km`;
+  const getStatusColor = (isActive: boolean) => {
+    return isActive
+      ? 'bg-green-100 text-green-800'
+      : 'bg-red-100 text-red-800';
   };
 
-  const formatDuration = (duration: number) => {
-    const minutes = Math.round(duration);
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    
-    if (hours > 0) {
-      return `${hours}h ${remainingMinutes}m`;
-    }
-    return `${remainingMinutes}m`;
-  };
-
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const formatDuration = (minutes?: number) => {
+    if (!minutes) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
   };
 
   return (
@@ -67,22 +68,9 @@ export default function RouteDetailsModal({
         <div className="p-6 space-y-6">
           {/* Status Badge */}
           <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 text-sm rounded-full ${
-              route.is_active !== false
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}>
+            <span className={`px-3 py-1 text-sm rounded-full ${getStatusColor(route.is_active)}`}>
               <Activity size={14} className="inline mr-1" />
-              {route.is_active !== false ? 'Active' : 'Inactive'}
-            </span>
-            <span className={`px-3 py-1 text-sm rounded-full ${
-              route.expectedLoad === 'High' || route.expectedLoad === 'Very High'
-                ? "bg-red-100 text-red-800"
-                : route.expectedLoad === 'Medium'
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-green-100 text-green-800"
-            }`}>
-              Load: {route.expectedLoad}
+              {route.is_active ? 'Active' : 'Inactive'}
             </span>
           </div>
 
@@ -97,27 +85,15 @@ export default function RouteDetailsModal({
                     <p className="text-[#103a5e] font-medium">{route.name}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#7d7d7d]">Route Path</label>
-                    <p className="text-[#103a5e]">{route.start} → {route.destination}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-[#7d7d7d]">Via</label>
-                    <p className="text-[#103a5e]">{route.passBy.join(', ') || 'Direct route'}</p>
-                  </div>
-                  <div>
                     <label className="text-sm font-medium text-[#7d7d7d]">Route ID</label>
                     <p className="text-[#103a5e] font-mono text-sm">{route.id}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-[#7d7d7d]">Route Color</label>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-full border border-gray-300"
-                        style={{ backgroundColor: route.color }}
-                      ></div>
-                      <span className="text-[#103a5e] font-mono text-sm">{route.color}</span>
+                  {route.description && (
+                    <div>
+                      <label className="text-sm font-medium text-[#7d7d7d]">Description</label>
+                      <p className="text-[#103a5e]">{route.description}</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -127,31 +103,26 @@ export default function RouteDetailsModal({
                 <h3 className="text-lg font-medium text-[#103a5e] mb-3">Route Metrics</h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-[#7d7d7d]" />
+                    <Navigation size={16} className="text-[#7d7d7d]" />
                     <div>
                       <label className="text-sm font-medium text-[#7d7d7d]">Total Distance</label>
-                      <p className="text-[#103a5e] font-medium">{formatDistance(route.distance)}</p>
+                      <p className="text-[#103a5e] font-medium">
+                        {route.total_distance ? `${route.total_distance.toFixed(1)} km` : 'N/A'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock size={16} className="text-[#7d7d7d]" />
                     <div>
                       <label className="text-sm font-medium text-[#7d7d7d]">Estimated Duration</label>
-                      <p className="text-[#103a5e] font-medium">~{Math.round(route.distance * 4)}m</p>
+                      <p className="text-[#103a5e] font-medium">{formatDuration(route.estimated_duration || undefined)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin size={16} className="text-[#7d7d7d]" />
                     <div>
                       <label className="text-sm font-medium text-[#7d7d7d]">Number of Stops</label>
-                      <p className="text-[#103a5e] font-medium">{route.stops} stops</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                    <div>
-                      <label className="text-sm font-medium text-[#7d7d7d]">Active Buses</label>
-                      <p className="text-[#103a5e] font-medium">{route.activeBuses} buses</p>
+                      <p className="text-[#103a5e] font-medium">{route.stop_ids?.length || 0} stops</p>
                     </div>
                   </div>
                 </div>
@@ -159,115 +130,79 @@ export default function RouteDetailsModal({
             </div>
           </div>
 
-          {/* Route Path */}
+          {/* Bus Stops */}
           <div>
-            <h3 className="text-lg font-medium text-[#103a5e] mb-3">Route Path</h3>
+            <h3 className="text-lg font-medium text-[#103a5e] mb-3">
+              Bus Stops ({route.stop_ids?.length || 0})
+            </h3>
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="space-y-3">
-                {/* Start */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                      S
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <MapPin size={14} className="text-[#7d7d7d]" />
-                      <span className="text-[#103a5e] font-medium">Start</span>
-                    </div>
-                    <p className="text-sm text-[#7d7d7d]">{route.start}</p>
-                  </div>
-                </div>
-
-                {/* Pass By locations */}
-                {route.passBy.map((location, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-[#0097fb] text-white rounded-full flex items-center justify-center text-sm font-medium">
-                        {index + 1}
+              {route.stop_ids && route.stop_ids.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {route.stop_ids.map((stopId, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-white rounded border">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-[#0097fb] text-white rounded-full flex items-center justify-center text-sm font-medium">
+                          {index + 1}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <MapPin size={14} className="text-[#7d7d7d]" />
+                          <span className="text-[#103a5e] font-medium text-sm">{stopId}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-[#7d7d7d]" />
-                        <span className="text-[#103a5e] font-medium">Via</span>
-                      </div>
-                      <p className="text-sm text-[#7d7d7d]">{location}</p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <div className="w-6 h-0.5 bg-[#d9d9d9]"></div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Destination */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                      D
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <MapPin size={14} className="text-[#7d7d7d]" />
-                      <span className="text-[#103a5e] font-medium">Destination</span>
-                    </div>
-                    <p className="text-sm text-[#7d7d7d]">{route.destination}</p>
-                  </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8">
+                  <MapPin className="mx-auto h-12 w-12 text-[#7d7d7d] mb-4" />
+                  <p className="text-[#7d7d7d]">No stops defined for this route</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Regulator Information */}
+          {/* Route Performance */}
           <div>
-            <h3 className="text-lg font-medium text-[#103a5e] mb-3">Queue Regulator</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-[#7d7d7d]">Regulator Name</label>
-                  <p className="text-[#103a5e] font-medium">{route.regulatorName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-[#7d7d7d]">Contact Number</label>
-                  <p className="text-[#103a5e] font-medium">{route.regulatorPhone}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Route Statistics */}
-          <div>
-            <h3 className="text-lg font-medium text-[#103a5e] mb-3">Route Statistics</h3>
+            <h3 className="text-lg font-medium text-[#103a5e] mb-3">Route Performance</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="text-blue-600" size={20} />
-                  <span className="text-sm font-medium text-blue-800">Average Distance per Stop</span>
+                  <Navigation className="text-blue-600" size={20} />
+                  <span className="text-sm font-medium text-blue-800">Avg Speed</span>
                 </div>
                 <p className="text-xl font-semibold text-blue-900">
-                  {formatDistance(route.distance / Math.max(route.stops - 1, 1))}
+                  {route.total_distance && route.estimated_duration
+                    ? `${(route.total_distance / (route.estimated_duration / 60)).toFixed(1)} km/h`
+                    : 'N/A'
+                  }
                 </p>
               </div>
 
               <div className="bg-green-50 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <Clock className="text-green-600" size={20} />
-                  <span className="text-sm font-medium text-green-800">Average Time per Stop</span>
+                  <MapPin className="text-green-600" size={20} />
+                  <span className="text-sm font-medium text-green-800">Avg Distance/Stop</span>
                 </div>
                 <p className="text-xl font-semibold text-green-900">
-                  ~{Math.round((route.distance * 4) / Math.max(route.stops - 1, 1))}m
+                  {route.total_distance && route.stop_ids?.length
+                    ? `${(route.total_distance / route.stop_ids.length).toFixed(2)} km`
+                    : 'N/A'
+                  }
                 </p>
               </div>
 
               <div className="bg-purple-50 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <RouteIcon className="text-purple-600" size={20} />
-                  <span className="text-sm font-medium text-purple-800">Average Speed</span>
+                  <Clock className="text-purple-600" size={20} />
+                  <span className="text-sm font-medium text-purple-800">Avg Time/Stop</span>
                 </div>
                 <p className="text-xl font-semibold text-purple-900">
-                  {(route.distance / (route.distance * 4 / 60) || 0).toFixed(1)} km/h
+                  {route.estimated_duration && route.stop_ids?.length
+                    ? `${Math.round(route.estimated_duration / route.stop_ids.length)} min`
+                    : 'N/A'
+                  }
                 </p>
               </div>
             </div>

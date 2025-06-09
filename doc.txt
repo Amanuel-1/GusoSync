@@ -210,7 +210,7 @@ interface NotificationSettingsResponse {
 // --- Route ---
 // DB: Route (id: UUID, name: string, description: string (optional), stopIds: array of UUID, totalDistance: number (optional), estimatedDuration: number (optional), isActive: boolean, createdAt: Date, updatedAt: Date)
 
-interface CreateRouteRequest { // POST /api/control-center/routes
+interface CreateRouteRequest { // POST /api/routes
   name: string;
   description?: string;
   stop_ids: UUID[];
@@ -219,7 +219,7 @@ interface CreateRouteRequest { // POST /api/control-center/routes
   is_active: boolean;
 }
 
-interface UpdateRouteRequest { // PUT /api/control-center/routes/{routeId}
+interface UpdateRouteRequest { // PUT /api/routes/{routeId}
   name?: string;
   description?: string;
   stop_ids?: UUID[];
@@ -228,7 +228,7 @@ interface UpdateRouteRequest { // PUT /api/control-center/routes/{routeId}
   is_active?: boolean;
 }
 
-interface RouteResponse { // GET /api/routes/{routeId}, GET /api/control-center/routes
+interface RouteResponse { // GET /api/routes/{routeId}, GET /api/routes
   id: UUID;
   name: string;
   description?: string;
@@ -336,7 +336,7 @@ interface CreateBusRequest { // POST /api/control-center/buses
   bus_status: 'OPERATIONAL' | 'MAINTENANCE' | 'BREAKDOWN' | 'IDLE'; // Initial status
 }
 
-interface UpdateBusRequest { // PUT /api/control-center/buses/{busId}
+interface UpdateBusRequest { // PUT /api/buses/{busId}
   license_plate?: string;
   bus_type?: 'STANDARD' | 'ARTICULATED' | 'MINIBUS';
   capacity?: number;
@@ -354,18 +354,18 @@ interface UpdateBusRequest { // PUT /api/control-center/buses/{busId}
 }
 
 // Specific requests for assignments/reallocation where ID is in URL
-interface AssignBusRouteRequest { // PUT /api/control-center/buses/{busId}/assign-route/{routeId}
+interface AssignBusRouteRequest { // PUT /api/buses/{busId}/assign-route/{routeId}
   // No body needed if routeId is solely from URL, but can specify any additional info.
   // For now, assuming only path params:
   // route_id: UUID; // Passed as path parameter
 }
 
-interface ReallocateBusRouteRequest { // PUT /api/control-center/buses/{busId}/reallocate-route/{routeId}
+interface ReallocateBusRouteRequest { // PUT /api/buses/{busId}/reallocate-route/{routeId}
   // No body needed if routeId is solely from URL, but can specify additional info.
   reason?: string; // e.g., Reason for reallocation
 }
 
-interface DeployStationaryBusRequest { // POST /api/control-center/buses/deploy-stationary
+interface DeployStationaryBusRequest { // POST /api/buses/deploy-stationary
   bus_id: UUID;
   location: Location;
   current_address?: string;

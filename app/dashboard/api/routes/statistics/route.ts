@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const token = await getAuthToken();
 
     // Fetch routes from backend
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/routes`, {
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

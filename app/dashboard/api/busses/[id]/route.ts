@@ -10,7 +10,7 @@ async function getAuthToken(): Promise<string | null> {
   return authToken?.value || null;
 }
 
-// Helper function to check if user has permission to view routes
+// Helper function to check if user has permission
 async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
   const token = await getAuthToken();
   if (!token) {
@@ -27,7 +27,7 @@ async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
 
     if (response.ok) {
       const user = await response.json();
-      // Both CONTROL_STAFF and CONTROL_ADMIN can view routes
+      // Check if user has permission to access busses (control staff or admin)
       const hasPermission = ['CONTROL_STAFF', 'CONTROL_ADMIN'].includes(user.role);
       return { authorized: hasPermission, user };
     }
@@ -38,7 +38,7 @@ async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
   return { authorized: false };
 }
 
-// Helper function to check if user can modify routes (CONTROL_ADMIN only)
+// Helper function to check if user can modify busses (CONTROL_ADMIN only)
 async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any }> {
   const token = await getAuthToken();
   if (!token) {
@@ -55,7 +55,7 @@ async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any
 
     if (response.ok) {
       const user = await response.json();
-      // Only CONTROL_ADMIN can create, modify, or delete routes
+      // Only CONTROL_ADMIN can create, modify, or delete busses
       const hasPermission = user.role === 'CONTROL_ADMIN';
       return { authorized: hasPermission, user };
     }
@@ -66,10 +66,13 @@ async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any
   return { authorized: false };
 }
 
-// GET /dashboard/api/routes - Get all routes
-export async function GET(request: NextRequest) {
+// GET /dashboard/api/busses/[id] - Get specific bus
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { authorized, user } = await checkPermission();
+    const { authorized } = await checkPermission();
     if (!authorized) {
       return NextResponse.json(
         { error: 'Unauthorized. Control staff or admin access required.' },
@@ -77,23 +80,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { id } = params;
     const token = await getAuthToken();
-    const { searchParams } = new URL(request.url);
 
-    // Extract query parameters for pagination
-    const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '10';
-
-    // Build query string - ensure limit doesn't exceed maximum allowed (100)
-    const queryParams = new URLSearchParams();
-    queryParams.append('page', page);
-    queryParams.append('limit', Math.min(parseInt(limit), 100).toString()); // Max limit is 100
-
-    // Use routes endpoint
-    const endpoint = `${BACKEND_API_BASE_URL}/api/routes?${queryParams.toString()}`;
-
-    console.log('Fetching routes from backend:', endpoint);
-    const backendResponse = await fetch(endpoint, {
+    // Fetch bus from backend
+    console.log('Fetching bus from backend:', id);
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/buses/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -104,26 +96,23 @@ export async function GET(request: NextRequest) {
     console.log('Backend response status:', backendResponse.status);
 
     if (backendResponse.ok) {
-      const routes = await backendResponse.json();
-      console.log('Successfully fetched routes:', routes.length);
-      return NextResponse.json({
-        data: routes,
-        user_role: user?.role // Include user role for frontend permission checks
-      });
+      const bus = await backendResponse.json();
+      console.log('Successfully fetched bus:', bus);
+      return NextResponse.json({ data: bus });
     } else {
       const errorData = await backendResponse.json().catch(() => ({}));
-      console.error('Failed to fetch routes:', {
+      console.error('Failed to fetch bus:', {
         status: backendResponse.status,
         statusText: backendResponse.statusText,
         errorData
       });
       return NextResponse.json(
-        { error: 'Failed to fetch routes', details: errorData },
+        { error: 'Failed to fetch bus', details: errorData },
         { status: backendResponse.status }
       );
     }
   } catch (error) {
-    console.error('Error in GET /dashboard/api/routes:', error);
+    console.error('Error in GET /dashboard/api/busses/[id]:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -131,25 +120,29 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /dashboard/api/routes - Create new route
-export async function POST(request: NextRequest) {
+// PUT /dashboard/api/busses/[id] - Update bus
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const { authorized } = await checkAdminPermission();
     if (!authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized. Only administrators can create routes.' },
+        { error: 'Unauthorized. Only administrators can update busses.' },
         { status: 403 }
       );
     }
 
+    const { id } = params;
     const token = await getAuthToken();
     const body = await request.json();
 
-    console.log('Creating route with data:', body);
+    console.log('Updating bus:', id, 'with data:', body);
 
-    // Create route in backend
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes`, {
-      method: 'POST',
+    // Update bus in backend
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/buses/${id}`, {
+      method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -157,29 +150,83 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    console.log('Backend create response status:', backendResponse.status);
+    console.log('Backend update response status:', backendResponse.status);
 
     if (backendResponse.ok) {
-      const route = await backendResponse.json();
-      console.log('Successfully created route:', route);
-      return NextResponse.json({
-        data: route,
-        message: 'Route created successfully'
+      const bus = await backendResponse.json();
+      console.log('Successfully updated bus:', bus);
+      return NextResponse.json({ 
+        data: bus, 
+        message: 'Bus updated successfully' 
       });
     } else {
       const errorData = await backendResponse.json().catch(() => ({}));
-      console.error('Failed to create route:', {
+      console.error('Failed to update bus:', {
         status: backendResponse.status,
         statusText: backendResponse.statusText,
         errorData
       });
       return NextResponse.json(
-        { error: 'Failed to create route', details: errorData },
+        { error: 'Failed to update bus', details: errorData },
         { status: backendResponse.status }
       );
     }
   } catch (error) {
-    console.error('Error in POST /dashboard/api/routes:', error);
+    console.error('Error in PUT /dashboard/api/busses/[id]:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /dashboard/api/busses/[id] - Delete bus (Admin only)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { authorized } = await checkAdminPermission();
+    if (!authorized) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Only administrators can delete buses.' },
+        { status: 403 }
+      );
+    }
+
+    const { id } = params;
+    const token = await getAuthToken();
+
+    console.log('Deleting bus:', id);
+
+    // Delete bus in backend using control-center endpoint
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/buses/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('Backend response status:', backendResponse.status);
+
+    if (backendResponse.ok) {
+      console.log('Successfully deleted bus:', id);
+      return NextResponse.json({ message: 'Bus deleted successfully' });
+    } else {
+      const errorData = await backendResponse.json().catch(() => ({}));
+      console.error('Failed to delete bus:', {
+        status: backendResponse.status,
+        statusText: backendResponse.statusText,
+        errorData
+      });
+      return NextResponse.json(
+        { error: 'Failed to delete bus', details: errorData },
+        { status: backendResponse.status }
+      );
+    }
+  } catch (error) {
+    console.error('Error in DELETE /dashboard/api/busses/[id]:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

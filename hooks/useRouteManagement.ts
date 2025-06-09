@@ -53,11 +53,16 @@ export function useRouteManagement(): UseRouteManagementReturn {
   const fetchRoutes = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await routeService.getRoutes();
-      if (response.success && response.data) {
-        setRoutes(response.data);
+      if (response.success) {
+        setRoutes(response.data || []);
+
+        // Check if this is a backend limitation
+        if (response.backend_limitation) {
+          showToast.warning('Limited Access', response.message || 'Backend API restricts route viewing to administrators only.');
+        }
       } else {
         setError(response.message || 'Failed to fetch routes');
         setRoutes([]);

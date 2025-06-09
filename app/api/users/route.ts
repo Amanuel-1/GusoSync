@@ -388,11 +388,9 @@ export async function POST(request: NextRequest) {
       profile_image: body.profile_image,
     };
 
-    // Use the appropriate endpoint
-    let apiUrl = `${BACKEND_API_BASE_URL}/api/accounts/register`;
-    if (body.role === 'CONTROL_STAFF') {
-      apiUrl = `${BACKEND_API_BASE_URL}/api/control-center/personnel/register`;
-    }
+   
+     let apiUrl = `${BACKEND_API_BASE_URL}/api/control-center/personnel/register`;
+  
 
     console.log(`[${requestId}] Making user creation request to: ${apiUrl}`);
     console.log(`[${requestId}] Backend request body:`, {

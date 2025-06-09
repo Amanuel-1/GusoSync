@@ -10,8 +10,8 @@ async function getAuthToken(): Promise<string | null> {
   return authToken?.value || null;
 }
 
-// Helper function to check if user has permission
-async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
+// Helper function to check if user can modify routes (CONTROL_ADMIN only)
+async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any }> {
   const token = await getAuthToken();
   if (!token) {
     return { authorized: false };
@@ -27,12 +27,12 @@ async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
 
     if (response.ok) {
       const user = await response.json();
-      // Check if user has permission to manage routes (control staff or admin)
-      const hasPermission = ['CONTROL_STAFF', 'ADMIN'].includes(user.role);
+      // Only CONTROL_ADMIN can modify route status
+      const hasPermission = user.role === 'CONTROL_ADMIN';
       return { authorized: hasPermission, user };
     }
   } catch (error) {
-    console.error('Error checking permission:', error);
+    console.error('Error checking admin permission:', error);
   }
 
   return { authorized: false };
@@ -44,10 +44,10 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { authorized } = await checkPermission();
+    const { authorized } = await checkAdminPermission();
     if (!authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized. Control staff or admin access required.' },
+        { error: 'Unauthorized. Only administrators can change route status.' },
         { status: 403 }
       );
     }
@@ -57,7 +57,7 @@ export async function POST(
     console.log('Toggling status for route:', id);
 
     // First get the current route to know its current status
-    const getResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/routes/${id}`, {
+    const getResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -77,7 +77,7 @@ export async function POST(
     const currentRoute = await getResponse.json();
 
     // Toggle the status
-    const updateResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/routes/${id}`, {
+    const updateResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,

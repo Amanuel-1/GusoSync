@@ -49,6 +49,7 @@ interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
+  backend_limitation?: boolean;
 }
 
 class RouteService {
@@ -65,6 +66,18 @@ class RouteService {
       const data = await response.json();
 
       if (response.ok) {
+        // Check if this is a backend limitation response
+        if (data.backend_limitation) {
+          console.warn('Backend limitation:', data.message);
+          // Still return success but with empty data and the limitation message
+          return {
+            success: true,
+            data: data.data || [],
+            message: data.message,
+            backend_limitation: true,
+          };
+        }
+
         return {
           success: true,
           data: data.data || data,

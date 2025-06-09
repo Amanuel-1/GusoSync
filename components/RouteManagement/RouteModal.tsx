@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Clock, Route as RouteIcon, Plus, Trash2 } from 'lucide-react';
-import { type BusRoute, type CreateRouteRequest, type UpdateRouteRequest } from '@/services/routeService';
+import { type RouteData, type CreateRouteRequest, type UpdateRouteRequest } from '@/hooks/useRouteManagementAPI';
 
 interface RouteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (routeData: CreateRouteRequest | UpdateRouteRequest) => Promise<{ success: boolean; message?: string }>;
-  route?: BusRoute | null;
+  route?: RouteData | null;
   mode: 'create' | 'edit';
 }
 
@@ -21,15 +21,10 @@ export default function RouteModal({
 }: RouteModalProps) {
   const [formData, setFormData] = useState({
     name: '',
-    color: '#0097fb',
-    start: '',
-    passBy: [''],
-    destination: '',
-    distance: 0,
-    stops: 2,
-    expectedLoad: 'Medium' as "Low" | "Medium" | "High" | "Very High",
-    regulatorName: '',
-    regulatorPhone: '',
+    description: '',
+    stop_ids: [''],
+    total_distance: 0,
+    estimated_duration: 0,
     is_active: true,
   });
 
@@ -41,30 +36,20 @@ export default function RouteModal({
     if (isOpen) {
       if (mode === 'edit' && route) {
         setFormData({
-          name: route.name,
-          color: route.color,
-          start: route.start,
-          passBy: route.passBy.length > 0 ? route.passBy : [''],
-          destination: route.destination,
-          distance: route.distance,
-          stops: route.stops,
-          expectedLoad: route.expectedLoad,
-          regulatorName: route.regulatorName,
-          regulatorPhone: route.regulatorPhone,
+          name: route.name || '',
+          description: route.description || '',
+          stop_ids: route.stop_ids && route.stop_ids.length > 0 ? route.stop_ids : [''],
+          total_distance: route.total_distance || 0,
+          estimated_duration: route.estimated_duration || 0,
           is_active: route.is_active !== false,
         });
       } else {
         setFormData({
           name: '',
-          color: '#0097fb',
-          start: '',
-          passBy: [''],
-          destination: '',
-          distance: 0,
-          stops: 2,
-          expectedLoad: 'Medium' as "Low" | "Medium" | "High" | "Very High",
-          regulatorName: '',
-          regulatorPhone: '',
+          description: '',
+          stop_ids: [''],
+          total_distance: 0,
+          estimated_duration: 0,
           is_active: true,
         });
       }
@@ -90,28 +75,28 @@ export default function RouteModal({
     }
   };
 
-  const handlePassByChange = (index: number, value: string) => {
-    const newPassBy = [...formData.passBy];
-    newPassBy[index] = value;
-    setFormData(prev => ({ ...prev, passBy: newPassBy }));
+  const handleStopChange = (index: number, value: string) => {
+    const newStopIds = [...formData.stop_ids];
+    newStopIds[index] = value;
+    setFormData(prev => ({ ...prev, stop_ids: newStopIds }));
 
     // Clear error when user starts typing
-    if (errors.passBy) {
-      setErrors(prev => ({ ...prev, passBy: '' }));
+    if (errors.stop_ids) {
+      setErrors(prev => ({ ...prev, stop_ids: '' }));
     }
   };
 
-  const addPassBy = () => {
+  const addStop = () => {
     setFormData(prev => ({
       ...prev,
-      passBy: [...prev.passBy, '']
+      stop_ids: [...prev.stop_ids, '']
     }));
   };
 
-  const removePassBy = (index: number) => {
-    if (formData.passBy.length > 1) {
-      const newPassBy = formData.passBy.filter((_, i) => i !== index);
-      setFormData(prev => ({ ...prev, passBy: newPassBy }));
+  const removeStop = (index: number) => {
+    if (formData.stop_ids.length > 1) {
+      const newStopIds = formData.stop_ids.filter((_, i) => i !== index);
+      setFormData(prev => ({ ...prev, stop_ids: newStopIds }));
     }
   };
 
@@ -122,28 +107,17 @@ export default function RouteModal({
       newErrors.name = 'Route name is required';
     }
 
-    if (!formData.start.trim()) {
-      newErrors.start = 'Start location is required';
+    if (formData.total_distance <= 0) {
+      newErrors.total_distance = 'Distance must be greater than 0';
     }
 
-    if (!formData.destination.trim()) {
-      newErrors.destination = 'Destination is required';
+    if (formData.estimated_duration <= 0) {
+      newErrors.estimated_duration = 'Estimated duration must be greater than 0';
     }
 
-    if (formData.distance <= 0) {
-      newErrors.distance = 'Distance must be greater than 0';
-    }
-
-    if (formData.stops < 2) {
-      newErrors.stops = 'At least 2 stops are required';
-    }
-
-    if (!formData.regulatorName.trim()) {
-      newErrors.regulatorName = 'Regulator name is required';
-    }
-
-    if (!formData.regulatorPhone.trim()) {
-      newErrors.regulatorPhone = 'Regulator phone is required';
+    const validStops = formData.stop_ids.filter(stop => stop.trim() !== '');
+    if (validStops.length < 2) {
+      newErrors.stop_ids = 'At least 2 stops are required';
     }
 
     setErrors(newErrors);
@@ -152,24 +126,28 @@ export default function RouteModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    
+
     try {
-      // Filter out empty pass-by locations
-      const validPassBy = formData.passBy.filter(location => location.trim() !== '');
+      // Filter out empty stop IDs
+      const validStopIds = formData.stop_ids.filter(stop => stop.trim() !== '');
 
       const routeData = {
-        ...formData,
-        passBy: validPassBy,
+        name: formData.name,
+        description: formData.description || null,
+        stop_ids: validStopIds,
+        total_distance: formData.total_distance || null,
+        estimated_duration: formData.estimated_duration || null,
+        is_active: formData.is_active,
       };
 
       const result = await onSubmit(routeData);
-      
+
       if (result.success) {
         onClose();
       } else {
@@ -209,7 +187,7 @@ export default function RouteModal({
           {/* Route Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Route Name
+              Route Name *
             </label>
             <input
               type="text"
@@ -224,99 +202,53 @@ export default function RouteModal({
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
           </div>
 
-          {/* Route Color */}
+          {/* Route Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Route Color
+              Description
             </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                name="color"
-                value={formData.color}
-                onChange={handleInputChange}
-                className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
-              />
-              <input
-                type="text"
-                name="color"
-                value={formData.color}
-                onChange={handleInputChange}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
-                placeholder="#0097fb"
-              />
-            </div>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
+              placeholder="Enter route description (optional)"
+            />
           </div>
 
-          {/* Start and Destination */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Location
-              </label>
-              <input
-                type="text"
-                name="start"
-                value={formData.start}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb] ${
-                  errors.start ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter start location"
-              />
-              {errors.start && <p className="text-red-500 text-sm mt-1">{errors.start}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Destination
-              </label>
-              <input
-                type="text"
-                name="destination"
-                value={formData.destination}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb] ${
-                  errors.destination ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter destination"
-              />
-              {errors.destination && <p className="text-red-500 text-sm mt-1">{errors.destination}</p>}
-            </div>
-          </div>
-
-          {/* Pass By Locations */}
+          {/* Stop IDs */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Pass By Locations (Optional)
+                Bus Stops * (At least 2 required)
               </label>
               <button
                 type="button"
-                onClick={addPassBy}
+                onClick={addStop}
                 className="flex items-center gap-1 text-sm text-[#0097fb] hover:text-[#0088e2]"
               >
                 <Plus size={16} />
-                Add Location
+                Add Stop
               </button>
             </div>
             <div className="space-y-2">
-              {formData.passBy.map((location, index) => (
+              {formData.stop_ids.map((stopId, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="flex-1 relative">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                     <input
                       type="text"
-                      value={location}
-                      onChange={(e) => handlePassByChange(index, e.target.value)}
+                      value={stopId}
+                      onChange={(e) => handleStopChange(index, e.target.value)}
                       className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
-                      placeholder={`Pass by location ${index + 1}`}
+                      placeholder={`Stop ID ${index + 1}`}
                     />
                   </div>
-                  {formData.passBy.length > 1 && (
+                  {formData.stop_ids.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removePassBy(index)}
+                      onClick={() => removeStop(index)}
                       className="p-2 text-red-500 hover:text-red-600"
                     >
                       <Trash2 size={16} />
@@ -325,7 +257,7 @@ export default function RouteModal({
                 </div>
               ))}
             </div>
-            {errors.passBy && <p className="text-red-500 text-sm mt-1">{errors.passBy}</p>}
+            {errors.stop_ids && <p className="text-red-500 text-sm mt-1">{errors.stop_ids}</p>}
           </div>
 
           {/* Distance and Stops */}
@@ -336,92 +268,39 @@ export default function RouteModal({
               </label>
               <input
                 type="number"
-                name="distance"
-                value={formData.distance}
+                name="total_distance"
+                value={formData.total_distance}
                 onChange={handleInputChange}
                 step="0.1"
                 min="0"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb] ${
-                  errors.distance ? 'border-red-500' : 'border-gray-300'
+                  errors.total_distance ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="0.0"
               />
-              {errors.distance && <p className="text-red-500 text-sm mt-1">{errors.distance}</p>}
+              {errors.total_distance && <p className="text-red-500 text-sm mt-1">{errors.total_distance}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Stops
+                Estimated Duration (minutes) *
               </label>
               <input
                 type="number"
-                name="stops"
-                value={formData.stops}
+                name="estimated_duration"
+                value={formData.estimated_duration}
                 onChange={handleInputChange}
-                min="2"
+                min="0"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb] ${
-                  errors.stops ? 'border-red-500' : 'border-gray-300'
+                  errors.estimated_duration ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="2"
+                placeholder="Enter estimated duration in minutes"
               />
-              {errors.stops && <p className="text-red-500 text-sm mt-1">{errors.stops}</p>}
+              {errors.estimated_duration && <p className="text-red-500 text-sm mt-1">{errors.estimated_duration}</p>}
             </div>
           </div>
 
-          {/* Expected Load */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Expected Load
-            </label>
-            <select
-              name="expectedLoad"
-              value={formData.expectedLoad}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb]"
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Very High">Very High</option>
-            </select>
-          </div>
 
-          {/* Regulator Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Queue Regulator Name
-              </label>
-              <input
-                type="text"
-                name="regulatorName"
-                value={formData.regulatorName}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb] ${
-                  errors.regulatorName ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter regulator name"
-              />
-              {errors.regulatorName && <p className="text-red-500 text-sm mt-1">{errors.regulatorName}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Regulator Phone
-              </label>
-              <input
-                type="tel"
-                name="regulatorPhone"
-                value={formData.regulatorPhone}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb] ${
-                  errors.regulatorPhone ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="+251911234567"
-              />
-              {errors.regulatorPhone && <p className="text-red-500 text-sm mt-1">{errors.regulatorPhone}</p>}
-            </div>
-          </div>
 
           {/* Status */}
           <div>

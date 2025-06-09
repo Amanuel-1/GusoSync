@@ -10,7 +10,7 @@ async function getAuthToken(): Promise<string | null> {
   return authToken?.value || null;
 }
 
-// Helper function to check if user has permission to view routes
+// Helper function to check if user has permission
 async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
   const token = await getAuthToken();
   if (!token) {
@@ -27,7 +27,7 @@ async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
 
     if (response.ok) {
       const user = await response.json();
-      // Both CONTROL_STAFF and CONTROL_ADMIN can view routes
+      // Check if user has permission to access busses (control staff or admin)
       const hasPermission = ['CONTROL_STAFF', 'CONTROL_ADMIN'].includes(user.role);
       return { authorized: hasPermission, user };
     }
@@ -38,7 +38,7 @@ async function checkPermission(): Promise<{ authorized: boolean; user?: any }> {
   return { authorized: false };
 }
 
-// Helper function to check if user can modify routes (CONTROL_ADMIN only)
+// Helper function to check if user can modify busses (CONTROL_ADMIN only)
 async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any }> {
   const token = await getAuthToken();
   if (!token) {
@@ -55,7 +55,7 @@ async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any
 
     if (response.ok) {
       const user = await response.json();
-      // Only CONTROL_ADMIN can create, modify, or delete routes
+      // Only CONTROL_ADMIN can create, modify, or delete busses
       const hasPermission = user.role === 'CONTROL_ADMIN';
       return { authorized: hasPermission, user };
     }
@@ -66,7 +66,7 @@ async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any
   return { authorized: false };
 }
 
-// GET /dashboard/api/routes - Get all routes
+// GET /dashboard/api/busses - Get all busses
 export async function GET(request: NextRequest) {
   try {
     const { authorized, user } = await checkPermission();
@@ -80,19 +80,25 @@ export async function GET(request: NextRequest) {
     const token = await getAuthToken();
     const { searchParams } = new URL(request.url);
 
-    // Extract query parameters for pagination
-    const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '10';
+    // Extract query parameters for filtering and pagination
+    const search = searchParams.get('search');
+    const filter_by = searchParams.get('filter_by');
+    const status = searchParams.get('status');
+    const pn = searchParams.get('pn') || '1';
+    const ps = searchParams.get('ps') || '10';
 
-    // Build query string - ensure limit doesn't exceed maximum allowed (100)
+    // Build query string
     const queryParams = new URLSearchParams();
-    queryParams.append('page', page);
-    queryParams.append('limit', Math.min(parseInt(limit), 100).toString()); // Max limit is 100
+    if (search) queryParams.append('search', search);
+    if (filter_by) queryParams.append('filter_by', filter_by);
+    if (status) queryParams.append('status', status);
+    queryParams.append('pn', pn);
+    queryParams.append('ps', ps);
 
-    // Use routes endpoint
-    const endpoint = `${BACKEND_API_BASE_URL}/api/routes?${queryParams.toString()}`;
+    // Use control-center endpoint for both admin and staff (both can view)
+    const endpoint = `${BACKEND_API_BASE_URL}/api/buses?${queryParams.toString()}`;
 
-    console.log('Fetching routes from backend:', endpoint);
+    console.log('Fetching buses from backend:', endpoint);
     const backendResponse = await fetch(endpoint, {
       method: 'GET',
       headers: {
@@ -104,26 +110,26 @@ export async function GET(request: NextRequest) {
     console.log('Backend response status:', backendResponse.status);
 
     if (backendResponse.ok) {
-      const routes = await backendResponse.json();
-      console.log('Successfully fetched routes:', routes.length);
+      const busses = await backendResponse.json();
+      console.log('Successfully fetched buses:', busses.length);
       return NextResponse.json({
-        data: routes,
+        data: busses,
         user_role: user?.role // Include user role for frontend permission checks
       });
     } else {
       const errorData = await backendResponse.json().catch(() => ({}));
-      console.error('Failed to fetch routes:', {
+      console.error('Failed to fetch busses:', {
         status: backendResponse.status,
         statusText: backendResponse.statusText,
         errorData
       });
       return NextResponse.json(
-        { error: 'Failed to fetch routes', details: errorData },
+        { error: 'Failed to fetch buses', details: errorData },
         { status: backendResponse.status }
       );
     }
   } catch (error) {
-    console.error('Error in GET /dashboard/api/routes:', error);
+    console.error('Error in GET /dashboard/api/busses:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -131,13 +137,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /dashboard/api/routes - Create new route
+// POST /dashboard/api/busses - Create new bus (Admin only)
 export async function POST(request: NextRequest) {
   try {
     const { authorized } = await checkAdminPermission();
     if (!authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized. Only administrators can create routes.' },
+        { error: 'Unauthorized. Only administrators can create buses.' },
         { status: 403 }
       );
     }
@@ -145,10 +151,10 @@ export async function POST(request: NextRequest) {
     const token = await getAuthToken();
     const body = await request.json();
 
-    console.log('Creating route with data:', body);
+    console.log('Creating bus with data:', body);
 
-    // Create route in backend
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/routes`, {
+    // Create bus in backend using control-center endpoint
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/buses`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -157,29 +163,26 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    console.log('Backend create response status:', backendResponse.status);
+    console.log('Backend response status:', backendResponse.status);
 
     if (backendResponse.ok) {
-      const route = await backendResponse.json();
-      console.log('Successfully created route:', route);
-      return NextResponse.json({
-        data: route,
-        message: 'Route created successfully'
-      });
+      const newBus = await backendResponse.json();
+      console.log('Successfully created bus:', newBus.id);
+      return NextResponse.json({ data: newBus }, { status: 201 });
     } else {
       const errorData = await backendResponse.json().catch(() => ({}));
-      console.error('Failed to create route:', {
+      console.error('Failed to create bus:', {
         status: backendResponse.status,
         statusText: backendResponse.statusText,
         errorData
       });
       return NextResponse.json(
-        { error: 'Failed to create route', details: errorData },
+        { error: 'Failed to create bus', details: errorData },
         { status: backendResponse.status }
       );
     }
   } catch (error) {
-    console.error('Error in POST /dashboard/api/routes:', error);
+    console.error('Error in POST /dashboard/api/busses:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

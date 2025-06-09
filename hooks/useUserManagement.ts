@@ -21,10 +21,10 @@ interface UseUserManagementReturn {
   controlStaffError: string | null;
   
   // Actions
-  fetchUsers: (role?: string) => Promise<void>;
-  fetchDrivers: () => Promise<void>;
-  fetchQueueRegulators: () => Promise<void>;
-  fetchControlStaff: () => Promise<void>;
+  fetchUsers: (params?: { role?: string; search?: string; is_active?: boolean }) => Promise<void>;
+  fetchDrivers: (params?: { search?: string; is_active?: boolean }) => Promise<void>;
+  fetchQueueRegulators: (params?: { search?: string; is_active?: boolean }) => Promise<void>;
+  fetchControlStaff: (params?: { search?: string; is_active?: boolean }) => Promise<void>;
   createUser: (userData: CreateUserRequest) => Promise<{ success: boolean; data?: User; message?: string }>;
   updateUser: (id: string, userData: UpdateUserRequest) => Promise<{ success: boolean; data?: User; message?: string }>;
   deleteUser: (id: string) => Promise<{ success: boolean; message?: string }>;
@@ -55,12 +55,12 @@ export function useUserManagement(): UseUserManagementReturn {
   const [controlStaffError, setControlStaffError] = useState<string | null>(null);
 
   // Fetch users with optional role filter
-  const fetchUsers = useCallback(async (role?: string) => {
+  const fetchUsers = useCallback(async (params?: { role?: string; search?: string; is_active?: boolean }) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await userService.getUsers({ role });
+      const response = await userService.getUsers(params);
       if (response.success && response.data) {
         setUsers(response.data.users || response.data);
       } else {
@@ -76,14 +76,14 @@ export function useUserManagement(): UseUserManagementReturn {
   }, []);
 
   // Fetch drivers
-  const fetchDrivers = useCallback(async () => {
+  const fetchDrivers = useCallback(async (params?: { search?: string; is_active?: boolean }) => {
     setDriversLoading(true);
     setDriversError(null);
-    
+
     try {
-      const response = await userService.getDrivers();
+      const response = await userService.getUsers({ role: 'BUS_DRIVER', ...params });
       if (response.success && response.data) {
-        setDrivers(response.data);
+        setDrivers(response.data.users || response.data);
       } else {
         setDriversError(response.message || 'Failed to fetch drivers');
         console.log('Failed to fetch drivers, using empty array');

@@ -7,6 +7,7 @@ import { Bell, Mail, X, Check, AlertTriangle, Info } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { authService, User } from "@/services/authService" // Import authService and User type
+import { Toaster } from "@/components/ui/sonner"
 // No CSS import needed here
 
 export default function ClientLayout({
@@ -90,6 +91,13 @@ export default function ClientLayout({
       const fetchedUser = authService.getUser();
 
       if (fetchedUser) {
+        // Check if user has permission to access control system
+        if (!authService.canAccessControlSystem()) {
+          console.error('User does not have permission to access control system:', fetchedUser.role);
+          await authService.logout();
+          router.push('/login?error=unauthorized');
+          return;
+        }
         setUser(fetchedUser);
       } else {
         // If authenticated but no user data in sessionStorage (shouldn't happen if login worked),
@@ -151,13 +159,20 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/dashboard/insights"
-              className={`flex flex-col items-center text-white ${pathname === "/dashboard/insights" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/routes"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/routes" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
-                    d="M3 12L6 6L10 18L14 9L18 15L21 12"
+                    d="M3 6h18M3 12h18M3 18h18"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 6v12M15 6v12"
                     stroke="white"
                     strokeWidth="2"
                     strokeLinecap="round"
@@ -165,26 +180,27 @@ export default function ClientLayout({
                   />
                 </svg>
               </div>
-              <span className="text-xs mt-1">Insights</span>
+              <span className="text-xs mt-1">Routes</span>
             </Link>
 
             <Link
-              href="/dashboard/history"
-              className={`flex flex-col items-center text-white ${pathname === "/dashboard/history" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              href="/dashboard/busses"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/busses" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
-                    d="M12 8V12L15 15"
+                    d="M8 6v6M16 6v6M6 8h12M6 18h12M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
                     stroke="white"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                  <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="2" />
+                  <circle cx="8" cy="20" r="1" stroke="white" strokeWidth="2" />
+                  <circle cx="16" cy="20" r="1" stroke="white" strokeWidth="2" />
                 </svg>
               </div>
-              <span className="text-xs mt-1">History</span>
+              <span className="text-xs mt-1">Busses</span>
             </Link>
 
             <Link
@@ -428,6 +444,9 @@ export default function ClientLayout({
         {/* Page Content */}
         {children}
       </div>
+
+      {/* Toaster for notifications */}
+      <Toaster />
     </div>
   )
 }

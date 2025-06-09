@@ -363,6 +363,12 @@ class AuthService {
   isAdmin(): boolean {
     return this.hasRole('CONTROL_ADMIN');
   }
+
+  canAccessControlSystem(): boolean {
+    // Only CONTROL_ADMIN and CONTROL_STAFF can access the control system
+    const user = this.getUser();
+    return user?.role === 'CONTROL_ADMIN' || user?.role === 'CONTROL_STAFF';
+  }
 }
 
 // Helper function to decode JWT payload

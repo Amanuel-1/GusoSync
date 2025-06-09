@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { Bot, Play, Square, RefreshCcw, CheckCircle, AlertTriangle, Clock } from "lucide-react"
 import { useSocket } from "../utils/socket"
 import { ReallocationDecision } from "../services/busAllocationAgent"
+import { showToast } from "@/lib/toast"
 
 interface AgentReallocationPanelProps {
   onClose: () => void
@@ -106,14 +107,14 @@ export default function AgentReallocationPanel({ onClose }: AgentReallocationPan
       })
       const data = await res.json()
       if (data.success) {
-        alert(data.message)
+        showToast.success("Agent Started", data.message)
         fetchAgentStatus() // Refresh status after action
       } else {
-        alert(`Failed to start agent: ${data.error}`)
+        showToast.error("Failed to Start Agent", data.error)
       }
     } catch (error) {
       console.error("Error starting agent:", error)
-      alert("An error occurred while trying to start the agent.")
+      showToast.error("Error", "An error occurred while trying to start the agent.")
     } finally {
       setIsStarting(false)
     }
@@ -129,14 +130,14 @@ export default function AgentReallocationPanel({ onClose }: AgentReallocationPan
       })
       const data = await res.json()
       if (data.success) {
-        alert(data.message)
+        showToast.success("Agent Stopped", data.message)
         fetchAgentStatus() // Refresh status after action
       } else {
-        alert(`Failed to stop agent: ${data.error}`)
+        showToast.error("Failed to Stop Agent", data.error)
       }
     } catch (error) {
       console.error("Error stopping agent:", error)
-      alert("An error occurred while trying to stop the agent.")
+      showToast.error("Error", "An error occurred while trying to stop the agent.")
     } finally {
       setIsStopping(false)
     }
@@ -152,14 +153,14 @@ export default function AgentReallocationPanel({ onClose }: AgentReallocationPan
       const data = await res.json();
       if (data.success) {
         console.log("Simulated request added:", data.requestId);
-        // Optionally show a toast notification
+        showToast.success("Request Simulated", `Request ${data.requestId} has been added to the queue`)
       } else {
         console.error("Failed to simulate request:", data.error);
-        alert(`Failed to simulate request: ${data.error}`);
+        showToast.error("Failed to Simulate Request", data.error);
       }
     } catch (error) {
       console.error("Error simulating request:", error);
-      alert("An error occurred while trying to simulate a request.");
+      showToast.error("Error", "An error occurred while trying to simulate a request.");
     }
   };
   
@@ -169,7 +170,7 @@ export default function AgentReallocationPanel({ onClose }: AgentReallocationPan
       const res = await fetch("/api/reallocation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "update_configuration",
           config: {
             allocationLimitK: allocationK,
@@ -180,15 +181,15 @@ export default function AgentReallocationPanel({ onClose }: AgentReallocationPan
       });
       const data = await res.json();
       if (data.success) {
-        alert("Configuration updated successfully");
+        showToast.success("Configuration Updated", "Agent configuration has been updated successfully");
         fetchAgentStatus(); // Refresh status to confirm changes
       } else {
         console.error("Failed to update configuration:", data.error);
-        alert(`Failed to update configuration: ${data.error}`);
+        showToast.error("Failed to Update Configuration", data.error);
       }
     } catch (error) {
       console.error("Error updating configuration:", error);
-      alert("An error occurred while trying to update the configuration.");
+      showToast.error("Error", "An error occurred while trying to update the configuration.");
     } finally {
       setIsUpdatingConfig(false);
     }
