@@ -1,14 +1,24 @@
+// Updated interfaces to match backend API schema
 interface PendingRegistration {
   id: string;
   email: string;
   first_name: string;
   last_name: string;
-  phone_number?: string;
+  phone_number: string;
   role: string;
-  profile_image?: string;
+  profile_image?: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  requested_at: string;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  review_notes?: string | null;
   created_at: string;
-  submitted_by?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  updated_at: string;
+}
+
+interface ApprovalActionRequest {
+  action: 'APPROVED' | 'REJECTED';
+  review_notes?: string | null;
 }
 
 interface ApprovalRequest {
@@ -35,9 +45,14 @@ class ApprovalService {
   private baseUrl = '/api/personnel/approvals';
 
   // Get all pending registrations
-  async getPendingRegistrations(): Promise<ApiResponse<PendingRegistration[]>> {
+  async getPendingRegistrations(statusFilter?: string): Promise<ApiResponse<PendingRegistration[]>> {
     try {
-      const response = await fetch(this.baseUrl, {
+      const url = new URL(this.baseUrl, window.location.origin);
+      if (statusFilter) {
+        url.searchParams.append('status_filter', statusFilter);
+      }
+
+      const response = await fetch(url.toString(), {
         method: 'GET',
         credentials: 'include',
       });
@@ -47,7 +62,7 @@ class ApprovalService {
       if (response.ok) {
         return {
           success: true,
-          data: data.data,
+          data: data.data || data, // Handle both wrapped and direct array responses
         };
       } else {
         return {
@@ -64,19 +79,48 @@ class ApprovalService {
     }
   }
 
-  // Approve a registration
-  async approveRegistration(registrationId: string, userData: ApprovalRequest['userData']): Promise<ApiResponse<any>> {
+  // Get specific approval request
+  async getApprovalRequest(requestId: string): Promise<ApiResponse<PendingRegistration>> {
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(`${this.baseUrl}/${requestId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return {
+          success: true,
+          data: data.data || data,
+        };
+      } else {
+        return {
+          success: false,
+          message: data.message || 'Failed to fetch approval request',
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching approval request:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection and try again.',
+      };
+    }
+  }
+
+  // Approve a registration
+  async approveRegistration(registrationId: string, _userData?: ApprovalRequest['userData'], reviewNotes?: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/${registrationId}/action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          registrationId,
-          action: 'approve',
-          userData,
+          action: 'APPROVED',
+          review_notes: reviewNotes || null,
         }),
       });
 
@@ -85,13 +129,13 @@ class ApprovalService {
       if (response.ok) {
         return {
           success: true,
-          data: data.data,
-          message: data.message,
+          data: data.data || data,
+          message: data.message || 'Registration approved successfully',
         };
       } else {
         return {
           success: false,
-          message: data.message || 'Failed to approve registration',
+          message: data.error || data.message || 'Failed to approve registration',
         };
       }
     } catch (error) {
@@ -104,17 +148,17 @@ class ApprovalService {
   }
 
   // Reject a registration
-  async rejectRegistration(registrationId: string): Promise<ApiResponse<any>> {
+  async rejectRegistration(registrationId: string, reviewNotes?: string): Promise<ApiResponse<any>> {
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(`${this.baseUrl}/${registrationId}/action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          registrationId,
-          action: 'reject',
+          action: 'REJECTED',
+          review_notes: reviewNotes || null,
         }),
       });
 
@@ -123,12 +167,13 @@ class ApprovalService {
       if (response.ok) {
         return {
           success: true,
-          message: data.message,
+          data: data.data || data,
+          message: data.message || 'Registration rejected successfully',
         };
       } else {
         return {
           success: false,
-          message: data.message || 'Failed to reject registration',
+          message: data.error || data.message || 'Failed to reject registration',
         };
       }
     } catch (error) {
@@ -140,48 +185,13 @@ class ApprovalService {
     }
   }
 
-  // Update a pending registration
-  async updatePendingRegistration(registrationId: string, updates: Partial<PendingRegistration>): Promise<ApiResponse<any>> {
+
+
+  // Get pending requests count
+  async getPendingRequestsCount(): Promise<ApiResponse<{ count: number }>> {
     try {
-      const response = await fetch(this.baseUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          registrationId,
-          updates,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        return {
-          success: true,
-          message: data.message,
-        };
-      } else {
-        return {
-          success: false,
-          message: data.message || 'Failed to update pending registration',
-        };
-      }
-    } catch (error) {
-      console.error('Error updating pending registration:', error);
-      return {
-        success: false,
-        message: 'Network error. Please check your connection and try again.',
-      };
-    }
-  }
-
-  // Delete a pending registration
-  async deletePendingRegistration(registrationId: string): Promise<ApiResponse<any>> {
-    try {
-      const response = await fetch(`${this.baseUrl}?id=${registrationId}`, {
-        method: 'DELETE',
+      const response = await fetch(`${this.baseUrl}/pending/count`, {
+        method: 'GET',
         credentials: 'include',
       });
 
@@ -190,16 +200,16 @@ class ApprovalService {
       if (response.ok) {
         return {
           success: true,
-          message: data.message,
+          data: data.data || data,
         };
       } else {
         return {
           success: false,
-          message: data.message || 'Failed to delete pending registration',
+          message: data.message || 'Failed to fetch pending count',
         };
       }
     } catch (error) {
-      console.error('Error deleting pending registration:', error);
+      console.error('Error fetching pending count:', error);
       return {
         success: false,
         message: 'Network error. Please check your connection and try again.',
@@ -215,18 +225,22 @@ class ApprovalService {
     pendingByRole: Record<string, number>;
   }>> {
     try {
-      // This would typically be a separate endpoint
-      // For now, we'll calculate from pending registrations
-      const pendingResponse = await this.getPendingRegistrations();
-      
-      if (!pendingResponse.success || !pendingResponse.data) {
+      // Get all requests to calculate statistics
+      const allPendingResponse = await this.getPendingRegistrations('PENDING');
+      const allApprovedResponse = await this.getPendingRegistrations('APPROVED');
+      const allRejectedResponse = await this.getPendingRegistrations('REJECTED');
+
+      if (!allPendingResponse.success) {
         return {
           success: false,
           message: 'Failed to fetch statistics',
         };
       }
 
-      const pending = pendingResponse.data;
+      const pending = allPendingResponse.data || [];
+      const approved = allApprovedResponse.data || [];
+      const rejected = allRejectedResponse.data || [];
+
       const pendingByRole = pending.reduce((acc, registration) => {
         acc[registration.role] = (acc[registration.role] || 0) + 1;
         return acc;
@@ -236,8 +250,8 @@ class ApprovalService {
         success: true,
         data: {
           totalPending: pending.length,
-          totalApproved: 0, // Would come from database
-          totalRejected: 0, // Would come from database
+          totalApproved: approved.length,
+          totalRejected: rejected.length,
           pendingByRole,
         },
       };
@@ -252,4 +266,4 @@ class ApprovalService {
 }
 
 export const approvalService = new ApprovalService();
-export type { PendingRegistration, ApprovalRequest, ApiResponse };
+export type { PendingRegistration, ApprovalRequest, ApprovalActionRequest, ApiResponse };

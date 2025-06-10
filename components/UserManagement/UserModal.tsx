@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { X, Eye, EyeOff, User, Mail, Phone, Shield } from 'lucide-react';
+import { X, Eye, EyeOff, User as UserIcon, Mail, Phone, Shield } from 'lucide-react';
 import { type User, type CreateUserRequest, type UpdateUserRequest } from '@/services/userService';
 
 interface UserModalProps {
@@ -168,7 +168,9 @@ export default function UserModal({
       newErrors.email = 'Email is invalid';
     }
 
-    if (mode === 'create' && !formData.password.trim()) {
+    // Password validation - only required for non-control staff roles
+    // Control staff can have auto-generated passwords
+    if (mode === 'create' && formData.role !== 'CONTROL_STAFF' && !formData.password.trim()) {
       newErrors.password = 'Password is required';
     }
 
@@ -325,7 +327,7 @@ export default function UserModal({
           {mode === 'create' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                Password {formData.role === 'CONTROL_STAFF' && <span className="text-gray-500 font-normal">(Optional - will be auto-generated if empty)</span>}
               </label>
               <div className="relative">
                 <input
@@ -336,7 +338,7 @@ export default function UserModal({
                   className={`w-full pl-3 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0097fb] ${
                     errors.password ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Enter password"
+                  placeholder={formData.role === 'CONTROL_STAFF' ? 'Enter password (optional)' : 'Enter password'}
                 />
                 <button
                   type="button"
@@ -356,7 +358,7 @@ export default function UserModal({
               First Name
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 name="first_name"
@@ -377,7 +379,7 @@ export default function UserModal({
               Last Name
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 name="last_name"
@@ -496,7 +498,7 @@ export default function UserModal({
                 <img src={imagePreviewUrl} alt="Profile Preview" className="w-full h-full object-cover" />
               ) : (
                 <div className="flex flex-col items-center justify-center w-full h-full text-gray-400 text-sm">
-                  <User size={24} className="mb-2 group-hover:text-[#0097fb] transition-colors" />
+                  <UserIcon size={24} className="mb-2 group-hover:text-[#0097fb] transition-colors" />
                   <span>Click to Upload</span>
                 </div>
               )}

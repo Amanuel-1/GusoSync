@@ -10,7 +10,7 @@ async function getAuthToken(): Promise<string | null> {
   return authToken?.value || null;
 }
 
-// Helper function to check if user has admin permission
+// Helper function to check admin permission
 async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any }> {
   const token = await getAuthToken();
   if (!token) {
@@ -27,9 +27,8 @@ async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any
 
     if (response.ok) {
       const user = await response.json();
-      // Check if user has admin role
-      const isAdmin = user.role === 'CONTROL_ADMIN';
-      return { authorized: isAdmin, user };
+      const authorized = user.role === 'CONTROL_ADMIN';
+      return { authorized, user };
     }
   } catch (error) {
     console.error('Error checking admin permission:', error);
@@ -38,8 +37,11 @@ async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any
   return { authorized: false };
 }
 
-// GET /api/personnel/approvals - Get approval requests
-export async function GET(request: NextRequest) {
+// GET /api/personnel/approvals/[id] - Get specific approval request
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const { authorized } = await checkAdminPermission();
     if (!authorized) {
@@ -57,18 +59,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get query parameters
-    const { searchParams } = new URL(request.url);
-    const statusFilter = searchParams.get('status_filter');
-
-    // Build backend API URL
-    const backendUrl = new URL('/api/approvals/requests', BACKEND_API_BASE_URL);
-    if (statusFilter) {
-      backendUrl.searchParams.append('status_filter', statusFilter);
-    }
+    const { id } = params;
 
     // Forward request to backend API
-    const response = await fetch(backendUrl.toString(), {
+    const response = await fetch(`${BACKEND_API_BASE_URL}/api/approvals/requests/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -85,18 +79,16 @@ export async function GET(request: NextRequest) {
       });
     } else {
       return NextResponse.json(
-        { error: data.detail || 'Failed to fetch approval requests' },
+        { error: data.detail || 'Failed to fetch approval request' },
         { status: response.status }
       );
     }
 
   } catch (error) {
-    console.error('Error fetching approval requests:', error);
+    console.error('Error fetching approval request:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
-
-

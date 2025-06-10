@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     if (!Array.isArray(allTickets) || allTickets.length === 0) {
       console.log('Using mock ticket data for analytics');
       
-      // Generate mock ticket data for the last 30 days
+      // Generate mock ticket data Last 30 days
       const mockTickets = [];
       const statuses = ['active', 'used', 'expired', 'cancelled'];
       const routes = ['route_1', 'route_2', 'route_3', 'route_4', 'route_5'];

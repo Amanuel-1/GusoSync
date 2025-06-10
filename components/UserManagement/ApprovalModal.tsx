@@ -20,9 +20,11 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
   const fetchPendingRegistrations = async () => {
     setLoading(true);
     try {
-      const response = await approvalService.getPendingRegistrations();
+      const response = await approvalService.getPendingRegistrations('PENDING');
       if (response.success && response.data) {
-        setPendingRegistrations(response.data);
+        // Filter only pending registrations
+        const pendingOnly = response.data.filter(reg => reg.status === 'PENDING');
+        setPendingRegistrations(pendingOnly);
       } else {
         console.error('Error fetching pending registrations:', response.message);
         setPendingRegistrations([]);
@@ -41,20 +43,12 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
     }
   }, [isOpen]);
 
-  const handleApprove = async (registration: PendingRegistration) => {
+  const handleApprove = async (registration: PendingRegistration, reviewNotes?: string) => {
     try {
-      const userData = {
-        email: registration.email,
-        first_name: registration.first_name,
-        last_name: registration.last_name,
-        phone_number: registration.phone_number,
-        role: registration.role,
-      };
-
-      const response = await approvalService.approveRegistration(registration.id, userData);
+      const response = await approvalService.approveRegistration(registration.id, undefined, reviewNotes);
 
       if (response.success) {
-        // Remove from pending list
+        // Remove from pending list since it's no longer pending
         setPendingRegistrations(prev => prev.filter(r => r.id !== registration.id));
         showToast.success(
           'Registration Approved',
@@ -69,13 +63,13 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
     }
   };
 
-  const handleReject = async (registration: PendingRegistration) => {
+  const handleReject = async (registration: PendingRegistration, reviewNotes?: string) => {
     if (window.confirm(`Are you sure you want to reject ${registration.first_name} ${registration.last_name}'s registration?`)) {
       try {
-        const response = await approvalService.rejectRegistration(registration.id);
+        const response = await approvalService.rejectRegistration(registration.id, reviewNotes);
 
         if (response.success) {
-          // Remove from pending list
+          // Remove from pending list since it's no longer pending
           setPendingRegistrations(prev => prev.filter(r => r.id !== registration.id));
           showToast.success(
             'Registration Rejected',
@@ -202,9 +196,9 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                         </div>
                         <div className="flex items-center gap-1 text-xs text-[#7d7d7d] mt-1">
                           <Calendar size={12} />
-                          <span>Submitted: {formatDate(registration.created_at)}</span>
-                          {registration.submitted_by && (
-                            <span className="ml-2">by {registration.submitted_by}</span>
+                          <span>Submitted: {formatDate(registration.requested_at)}</span>
+                          {registration.reviewed_by && (
+                            <span className="ml-2">by {registration.reviewed_by}</span>
                           )}
                         </div>
                       </div>
@@ -271,12 +265,18 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-[#7d7d7d]">Submitted</label>
-                  <p className="text-[#103a5e]">{formatDate(selectedRegistration.created_at)}</p>
+                  <p className="text-[#103a5e]">{formatDate(selectedRegistration.requested_at)}</p>
                 </div>
-                {selectedRegistration.submitted_by && (
+                {selectedRegistration.reviewed_by && (
                   <div>
-                    <label className="text-sm font-medium text-[#7d7d7d]">Submitted By</label>
-                    <p className="text-[#103a5e]">{selectedRegistration.submitted_by}</p>
+                    <label className="text-sm font-medium text-[#7d7d7d]">Reviewed By</label>
+                    <p className="text-[#103a5e]">{selectedRegistration.reviewed_by}</p>
+                  </div>
+                )}
+                {selectedRegistration.review_notes && (
+                  <div>
+                    <label className="text-sm font-medium text-[#7d7d7d]">Review Notes</label>
+                    <p className="text-[#103a5e]">{selectedRegistration.review_notes}</p>
                   </div>
                 )}
               </div>

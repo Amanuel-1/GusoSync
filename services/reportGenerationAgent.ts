@@ -1,0 +1,708 @@
+import { GoogleGenAI } from '@google/genai';
+import { jsPDF } from 'jspdf';
+
+export interface ReportRequest {
+  id: string;
+  dateRange: string;
+  reportType: 'comprehensive' | 'executive' | 'operational' | 'incident';
+  requestedBy: string;
+  timestamp: string;
+  status: 'pending' | 'generating' | 'completed' | 'failed';
+  analyticsData?: any;
+}
+
+export interface GeneratedReport {
+  id: string;
+  requestId: string;
+  content: string;
+  metadata: {
+    title: string;
+    dateRange: string;
+    generatedAt: string;
+    period: string;
+    reportType: string;
+  };
+  generatedBy: string;
+  timestamp: string;
+  status: 'draft' | 'final';
+}
+
+export interface ReportGenerationResponse {
+  success: boolean;
+  reportId?: string;
+  content?: string;
+  metadata?: any;
+  error?: string;
+  needsManualReview?: boolean;
+}
+
+class ReportGenerationAgent {
+  private ai: GoogleGenAI;
+  private model: string = 'gemini-2.0-flash';
+  private pendingRequests: ReportRequest[] = [];
+  private generatedReports: GeneratedReport[] = [];
+  private isActive: boolean = false;
+
+  constructor() {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY environment variable is required');
+    }
+
+    this.ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
+
+    console.log('📊 Report Generation Agent initialized');
+  }
+
+  private getSystemInstruction() {
+    return {
+      text: `You are a professional Transportation System Analytics Report Generator for GusoSync. 
+
+Your task is to create comprehensive, formal, and insightful reports based on transportation analytics data.
+
+REPORT REQUIREMENTS:
+1. **Professional Language**: Use formal, executive-level business language
+2. **Data-Driven Insights**: Base all conclusions on the provided data
+3. **Actionable Recommendations**: Provide specific, measurable, achievable recommendations
+4. **Clear Structure**: Organize content with clear sections and subsections
+5. **Business Focus**: Focus on operational efficiency, safety, and performance improvements
+
+REPORT STRUCTURE:
+1. **Executive Summary** (2-3 paragraphs)
+   - Key findings overview
+   - Critical metrics summary
+   - High-level recommendations
+
+2. **Key Performance Indicators**
+   - Current system status
+   - Performance metrics
+   - Trend analysis
+
+3. **Operational Analysis**
+   - System performance breakdown
+   - Resource utilization analysis
+   - Efficiency measurements
+
+4. **Incident Management Analysis** (if applicable)
+   - Safety and security metrics
+   - Response time analysis
+   - Resolution effectiveness
+
+5. **Growth and Trends**
+   - Passenger growth patterns
+   - Revenue trends (if applicable)
+   - Capacity planning insights
+
+6. **Strategic Recommendations**
+   - Priority-based action items
+   - Expected impact assessments
+   - Implementation timeline suggestions
+
+7. **Conclusion**
+   - Summary of critical points
+   - Next steps
+
+FORMAT: Return the report as well-structured markdown text with clear headings and professional formatting.
+
+FORMATTING GUIDELINES:
+- Use # for main section headers (Executive Summary, Key Findings, etc.)
+- Use ## for subsection headers
+- Use ### for sub-subsection headers
+- Use - for bullet points
+- Use 1. 2. 3. for numbered lists
+- Keep paragraphs concise and well-structured
+- Avoid complex markdown formatting (tables, links, etc.)
+- Use **bold** sparingly for emphasis
+- Separate sections with blank lines`
+    };
+  }
+
+  async generateReport(
+    analyticsData: any,
+    dateRange: string,
+    reportType: string,
+    requestedBy: string
+  ): Promise<ReportGenerationResponse> {
+    try {
+      console.log(`📊 Generating ${reportType} report for ${dateRange} by ${requestedBy}`);
+
+      // Create report request
+      const request: ReportRequest = {
+        id: `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        dateRange,
+        reportType: reportType as any,
+        requestedBy,
+        timestamp: new Date().toISOString(),
+        status: 'generating',
+        analyticsData,
+      };
+
+      this.pendingRequests.push(request);
+
+      // Process the analytics data
+      const processedData = this.processAnalyticsData(analyticsData, dateRange);
+
+      // Create the prompt
+      const prompt = this.createReportPrompt(processedData, reportType, dateRange, requestedBy);
+
+      // Generate report using AI
+      const config = {
+        responseMimeType: 'text/plain',
+        systemInstruction: [this.getSystemInstruction()],
+      };
+
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ];
+
+      const response = await this.ai.models.generateContent({
+        model: this.model,
+        config,
+        contents,
+      });
+
+      const reportContent = response.text || '';
+
+      if (!reportContent) {
+        throw new Error('No content generated by AI');
+      }
+
+      // Create generated report
+      const generatedReport: GeneratedReport = {
+        id: `RPT-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        requestId: request.id,
+        content: reportContent,
+        metadata: {
+          title: `GusoSync Transportation System Analytics Report`,
+          dateRange: this.formatDateRange(dateRange),
+          generatedAt: new Date().toISOString(),
+          period: dateRange,
+          reportType,
+        },
+        generatedBy: requestedBy,
+        timestamp: new Date().toISOString(),
+        status: 'final',
+      };
+
+      this.generatedReports.push(generatedReport);
+
+      // Update request status
+      request.status = 'completed';
+
+      console.log(`✅ Report generated successfully: ${generatedReport.id}`);
+
+      return {
+        success: true,
+        reportId: generatedReport.id,
+        content: reportContent,
+        metadata: generatedReport.metadata,
+      };
+
+    } catch (error) {
+      console.error('❌ Error generating report:', error);
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        needsManualReview: true,
+      };
+    }
+  }
+
+  private processAnalyticsData(rawData: any, dateRange: string) {
+    const currentDate = new Date();
+    const days = dateRange === 'Last 7 days' ? 7 : 
+                 dateRange === 'Last 30 days' ? 30 : 
+                 dateRange === 'Last 90 days' ? 90 : 365;
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    return {
+      reportMetadata: {
+        title: `GusoSync Transportation System Analytics Report`,
+        dateRange: `${startDate.toLocaleDateString()} - ${currentDate.toLocaleDateString()}`,
+        generatedAt: currentDate.toISOString(),
+        period: dateRange,
+      },
+      keyMetrics: {
+        totalIncidents: rawData?.incidents?.summary?.total || 0,
+        resolvedIncidents: rawData?.incidents?.summary?.resolved || 0,
+        pendingIncidents: rawData?.incidents?.summary?.pending || 0,
+        resolutionRate: rawData?.incidents?.summary?.resolutionRate || 0,
+        totalPersonnel: rawData?.personnel?.summary?.total || 0,
+        activePersonnel: rawData?.personnel?.summary?.active || 0,
+        systemHealth: rawData?.systemPerformance?.systemHealth?.overall || 0,
+        totalPassengers: rawData?.passengers?.summary?.total || 0,
+        newPassengers: rawData?.passengers?.summary?.recentRegistrations || 0,
+      },
+      detailedAnalysis: {
+        incidents: rawData?.incidents || {},
+        personnel: rawData?.personnel || {},
+        systemPerformance: rawData?.systemPerformance || {},
+        passengers: rawData?.passengers || {},
+        tickets: rawData?.tickets || {},
+      },
+      businessContext: {
+        objectives: [
+          "Improve transportation system efficiency",
+          "Enhance passenger experience and safety",
+          "Optimize resource allocation and utilization",
+          "Reduce operational incidents and response time",
+          "Increase system reliability and performance"
+        ],
+        targetAudience: "Transportation Management and Control Center Staff",
+        keyQuestions: [
+          "What are the main operational challenges affecting system performance?",
+          "How effective is our incident response and resolution process?",
+          "What trends indicate areas for improvement in resource utilization?",
+          "How is passenger growth affecting system capacity and performance?",
+          "What actionable insights can drive operational improvements?"
+        ]
+      }
+    };
+  }
+
+  private createReportPrompt(processedData: any, reportType: string, dateRange: string, requestedBy?: string): string {
+    return `
+Generate a ${reportType} transportation analytics report for GusoSync based on the following data for ${dateRange}:
+
+ANALYTICS DATA:
+${JSON.stringify(processedData, null, 2)}
+
+REPORT TYPE: ${reportType.toUpperCase()}
+${requestedBy ? `REQUESTED BY: ${requestedBy}` : ''}
+
+SPECIFIC REQUIREMENTS FOR ${reportType.toUpperCase()} REPORT:
+${this.getReportTypeRequirements(reportType)}
+
+Please create a comprehensive, professional report that:
+1. Analyzes the provided data thoroughly
+2. Identifies key trends and patterns
+3. Provides actionable insights and recommendations
+4. Uses professional business language
+5. Focuses on operational improvements and strategic decisions
+6. Includes specific metrics and data points to support conclusions
+
+The report should be suitable for presentation to transportation management and executive teams.
+Include an acknowledgment that this report was generated for the requesting user.
+`;
+  }
+
+  private getReportTypeRequirements(reportType: string): string {
+    switch (reportType) {
+      case 'comprehensive':
+        return `- Include all available metrics and detailed analysis
+- Provide in-depth examination of all system components
+- Include detailed recommendations for each area
+- Suitable for quarterly or annual reviews`;
+      
+      case 'executive':
+        return `- Focus on high-level strategic insights
+- Emphasize key performance indicators and trends
+- Provide executive-level recommendations
+- Keep technical details minimal
+- Suitable for board presentations`;
+      
+      case 'operational':
+        return `- Focus on day-to-day operational metrics
+- Emphasize efficiency and resource utilization
+- Provide tactical recommendations for operations teams
+- Include detailed performance breakdowns
+- Suitable for operations management`;
+      
+      case 'incident':
+        return `- Focus primarily on safety and incident analysis
+- Emphasize response times and resolution rates
+- Provide safety improvement recommendations
+- Include detailed incident breakdowns and trends
+- Suitable for safety and security teams`;
+      
+      default:
+        return `- Provide balanced analysis across all areas
+- Include relevant metrics and insights
+- Provide actionable recommendations`;
+    }
+  }
+
+  private formatDateRange(dateRange: string): string {
+    const currentDate = new Date();
+    const days = dateRange === 'Last 7 days' ? 7 : 
+                 dateRange === 'Last 30 days' ? 30 : 
+                 dateRange === 'Last 90 days' ? 90 : 365;
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    return `${startDate.toLocaleDateString()} - ${currentDate.toLocaleDateString()}`;
+  }
+
+  private parseTextSegments(text: string): Array<{ text: string; bold: boolean }> {
+    const segments: Array<{ text: string; bold: boolean }> = [];
+    const parts = text.split(/(\*\*.*?\*\*)/);
+
+    for (const part of parts) {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        // Bold text
+        const boldText = part.slice(2, -2);
+        if (boldText) {
+          segments.push({ text: boldText, bold: true });
+        }
+      } else if (part) {
+        // Regular text
+        segments.push({ text: part, bold: false });
+      }
+    }
+
+    return segments;
+  }
+
+  private parseMarkdownContent(content: string) {
+    const lines = content.split('\n');
+    const parsedContent: Array<{
+      type: 'header1' | 'header2' | 'header3' | 'paragraph' | 'bullet' | 'number' | 'bold' | 'italic' | 'line';
+      text: string;
+      level?: number;
+      segments?: Array<{ text: string; bold: boolean }>;
+    }> = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (!line) {
+        parsedContent.push({ type: 'line', text: '' });
+        continue;
+      }
+
+      // Headers
+      if (line.startsWith('# ')) {
+        parsedContent.push({ type: 'header1', text: line.substring(2) });
+      } else if (line.startsWith('## ')) {
+        parsedContent.push({ type: 'header2', text: line.substring(3) });
+      } else if (line.startsWith('### ')) {
+        parsedContent.push({ type: 'header3', text: line.substring(4) });
+      }
+      // Bullet points
+      else if (line.startsWith('- ') || line.startsWith('* ')) {
+        const bulletText = line.substring(2);
+        parsedContent.push({
+          type: 'bullet',
+          text: bulletText,
+          segments: this.parseTextSegments(bulletText)
+        });
+      }
+      // Numbered lists
+      else if (/^\d+\.\s/.test(line)) {
+        const match = line.match(/^(\d+)\.\s(.*)$/);
+        if (match) {
+          parsedContent.push({
+            type: 'number',
+            text: match[2],
+            level: parseInt(match[1]),
+            segments: this.parseTextSegments(match[2])
+          });
+        }
+      }
+      // Regular paragraphs
+      else {
+        // Handle bold and italic within paragraphs
+        let processedText = line;
+        processedText = processedText.replace(/\*(.*?)\*/g, '$1'); // Remove italic markers
+
+        parsedContent.push({
+          type: 'paragraph',
+          text: processedText,
+          segments: this.parseTextSegments(line) // Use original line for segment parsing
+        });
+      }
+    }
+
+    return parsedContent;
+  }
+
+  private addNewPageIfNeeded(doc: jsPDF, currentY: number, requiredHeight: number, margin: number, pageHeight: number): number {
+    if (currentY + requiredHeight > pageHeight - margin) {
+      doc.addPage();
+      return margin;
+    }
+    return currentY;
+  }
+
+  private renderTextWithFormatting(doc: jsPDF, segments: Array<{ text: string; bold: boolean }>, x: number, y: number, maxWidth: number): { height: number; lastY: number } {
+    let currentX = x;
+    let currentY = y;
+    const lineHeight = 7;
+    let totalHeight = 0;
+
+    for (const segment of segments) {
+      // Set font style
+      if (segment.bold) {
+        doc.setFont('helvetica', 'bold');
+      } else {
+        doc.setFont('helvetica', 'normal');
+      }
+
+      // Handle word wrapping for the segment
+      const words = segment.text.split(' ');
+
+      for (const word of words) {
+        const wordWithSpace = word + ' ';
+        const textWidth = doc.getTextWidth(wordWithSpace);
+
+        // Check if we need to wrap to next line
+        if (currentX + textWidth > x + maxWidth && currentX > x) {
+          currentY += lineHeight;
+          currentX = x;
+          totalHeight += lineHeight;
+        }
+
+        doc.text(word, currentX, currentY);
+        currentX += doc.getTextWidth(word + ' ');
+      }
+    }
+
+    return { height: totalHeight, lastY: currentY };
+  }
+
+  async generatePDF(reportContent: string, metadata: any): Promise<Uint8Array> {
+    try {
+      console.log('📄 Generating PDF for report');
+
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      let currentY = margin;
+      const lineHeight = 7;
+
+      // Add header
+      doc.setFillColor(16, 58, 94);
+      doc.rect(0, 0, pageWidth, 40, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20); // Reduced font size to prevent overflow
+      doc.setFont('helvetica', 'bold');
+
+      // Wrap the title text if it's too long
+      const titleLines = doc.splitTextToSize(metadata.title, pageWidth - 2 * margin);
+      let titleY = 20;
+      for (let i = 0; i < titleLines.length && i < 2; i++) { // Max 2 lines for title
+        doc.text(titleLines[i], margin, titleY);
+        titleY += 8;
+      }
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Transportation System Analytics Report', margin, titleY + 5);
+
+      currentY = 50;
+
+      // Add metadata section
+      doc.setTextColor(0, 0, 0);
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, currentY, pageWidth - 2 * margin, 35, 'F');
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Report Information', margin + 5, currentY + 8);
+
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Period: ${metadata.period}`, margin + 5, currentY + 15);
+      doc.text(`Generated: ${new Date(metadata.generatedAt).toLocaleString()}`, margin + 5, currentY + 22);
+
+      // Add generated by information if available
+      if (metadata.generatedBy) {
+        doc.text(`Generated by: ${metadata.generatedBy}`, margin + 5, currentY + 29);
+      }
+
+      currentY += 45;
+
+      // Parse and add markdown content
+      const parsedContent = this.parseMarkdownContent(reportContent);
+      console.log('📄 Parsed content items:', parsedContent.length);
+
+      for (const item of parsedContent) {
+        switch (item.type) {
+          case 'header1':
+            currentY = this.addNewPageIfNeeded(doc, currentY, 15, margin, pageHeight);
+            doc.setTextColor(16, 58, 94);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(item.text, margin, currentY);
+            currentY += 12;
+            // Add underline
+            doc.setDrawColor(16, 58, 94);
+            doc.line(margin, currentY - 2, margin + 100, currentY - 2);
+            currentY += 8;
+            break;
+
+          case 'header2':
+            currentY = this.addNewPageIfNeeded(doc, currentY, 12, margin, pageHeight);
+            doc.setTextColor(16, 58, 94);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(item.text, margin, currentY);
+            currentY += 10;
+            break;
+
+          case 'header3':
+            currentY = this.addNewPageIfNeeded(doc, currentY, 10, margin, pageHeight);
+            doc.setTextColor(16, 58, 94);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(item.text, margin, currentY);
+            currentY += 8;
+            break;
+
+          case 'bullet':
+            currentY = this.addNewPageIfNeeded(doc, currentY, lineHeight, margin, pageHeight);
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            // Add bullet point
+            doc.text('•', margin + 5, currentY);
+
+            // Add bullet text with formatting support
+            if (item.segments && item.segments.length > 0) {
+              const result = this.renderTextWithFormatting(
+                doc,
+                item.segments,
+                margin + 15,
+                currentY,
+                pageWidth - 2 * margin - 15
+              );
+              currentY = result.lastY + lineHeight;
+            } else {
+              // Fallback to simple text
+              const bulletLines = doc.splitTextToSize(item.text, pageWidth - 2 * margin - 15);
+              for (let i = 0; i < bulletLines.length; i++) {
+                currentY = this.addNewPageIfNeeded(doc, currentY, lineHeight, margin, pageHeight);
+                doc.text(bulletLines[i], margin + 15, currentY);
+                currentY += lineHeight;
+              }
+            }
+            break;
+
+          case 'number':
+            currentY = this.addNewPageIfNeeded(doc, currentY, lineHeight, margin, pageHeight);
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            // Add number
+            doc.text(`${item.level || 1}.`, margin + 5, currentY);
+
+            // Add numbered text with formatting support
+            if (item.segments && item.segments.length > 0) {
+              const result = this.renderTextWithFormatting(
+                doc,
+                item.segments,
+                margin + 15,
+                currentY,
+                pageWidth - 2 * margin - 15
+              );
+              currentY = result.lastY + lineHeight;
+            } else {
+              // Fallback to simple text
+              const numberedLines = doc.splitTextToSize(item.text, pageWidth - 2 * margin - 15);
+              for (let i = 0; i < numberedLines.length; i++) {
+                currentY = this.addNewPageIfNeeded(doc, currentY, lineHeight, margin, pageHeight);
+                doc.text(numberedLines[i], margin + 15, currentY);
+                currentY += lineHeight;
+              }
+            }
+            break;
+
+          case 'paragraph':
+            if (item.text) {
+              currentY = this.addNewPageIfNeeded(doc, currentY, lineHeight, margin, pageHeight);
+              doc.setTextColor(0, 0, 0);
+              doc.setFontSize(10);
+
+              // Handle paragraph text with formatting support
+              if (item.segments && item.segments.length > 0) {
+                const result = this.renderTextWithFormatting(
+                  doc,
+                  item.segments,
+                  margin,
+                  currentY,
+                  pageWidth - 2 * margin
+                );
+                currentY = result.lastY + lineHeight + 3; // Add space after paragraph
+              } else {
+                // Fallback to simple text
+                doc.setFont('helvetica', 'normal');
+                const paragraphLines = doc.splitTextToSize(item.text, pageWidth - 2 * margin);
+                for (let i = 0; i < paragraphLines.length; i++) {
+                  currentY = this.addNewPageIfNeeded(doc, currentY, lineHeight, margin, pageHeight);
+                  doc.text(paragraphLines[i], margin, currentY);
+                  currentY += lineHeight;
+                }
+                currentY += 3; // Add space after paragraph
+              }
+            }
+            break;
+
+          case 'line':
+            currentY += 5; // Add space for empty lines
+            break;
+        }
+      }
+
+      // Add footer
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        const footerY = pageHeight - 15;
+        
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
+        
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin - 30, footerY);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, margin, footerY);
+      }
+
+      const arrayBuffer = doc.output('arraybuffer');
+      return new Uint8Array(arrayBuffer as ArrayBuffer);
+      
+    } catch (error) {
+      console.error('❌ Error generating PDF:', error);
+      throw new Error('Failed to generate PDF report');
+    }
+  }
+
+  // Get agent status
+  getAgentStatus() {
+    return {
+      isActive: this.isActive,
+      pendingRequests: this.pendingRequests.filter(r => r.status === 'pending' || r.status === 'generating').length,
+      completedReports: this.generatedReports.length,
+      totalRequests: this.pendingRequests.length,
+    };
+  }
+
+  // Get generated reports
+  getGeneratedReports(): GeneratedReport[] {
+    return this.generatedReports;
+  }
+
+  // Get specific report
+  getReport(reportId: string): GeneratedReport | null {
+    return this.generatedReports.find(r => r.id === reportId) || null;
+  }
+}
+
+// Export singleton instance
+export const reportGenerationAgent = new ReportGenerationAgent();
+export default ReportGenerationAgent;

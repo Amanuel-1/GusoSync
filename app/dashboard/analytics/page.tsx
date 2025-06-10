@@ -1,17 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { 
-  AlertTriangle, 
-  Users, 
-  Activity, 
-  Route, 
-  TrendingUp, 
+import {
+  AlertTriangle,
+  Users,
+  Activity,
+  Route,
+  TrendingUp,
   TrendingDown,
   RefreshCw,
-  Download,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  FileText
 } from "lucide-react"
 import { showToast } from "@/lib/toast"
 import LineChart from "@/components/analytics/LineChart"
@@ -20,6 +20,7 @@ import PieChart from "@/components/analytics/PieChart"
 import AreaChart from "@/components/analytics/AreaChart"
 import MetricCard from "@/components/analytics/MetricCard"
 import GaugeChart from "@/components/analytics/GaugeChart"
+import ReportGenerator from "@/components/analytics/ReportGenerator"
 
 interface AnalyticsData {
   incidents: any;
@@ -37,6 +38,7 @@ export default function AnalyticsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [dateFilter, setDateFilter] = useState("Last 30 days")
   const [showDateDropdown, setShowDateDropdown] = useState(false)
+  const [showReportGenerator, setShowReportGenerator] = useState(false)
 
   // Map date filter labels to days
   const dateFilterMap: Record<string, number> = {
@@ -258,12 +260,12 @@ export default function AnalyticsPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#103a5e]">Analytics Dashboard</h1>
-          <p className="text-[#7d7d7d] mt-1">
+          {/* <p className="text-[#7d7d7d] mt-1">
             Comprehensive data insights and analysis for GusoSync transportation system
             <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">
               {dateFilter}
             </span>
-          </p>
+          </p> */}
         </div>
         
         <div className="flex items-center gap-4">
@@ -309,10 +311,13 @@ export default function AnalyticsPage() {
             Refresh
           </button>
 
-          {/* Export Button */}
-          <button className="flex items-center gap-2 bg-white border border-[#d9d9d9] text-[#103a5e] px-4 py-2 rounded-md hover:bg-gray-50 transition-colors">
-            <Download size={16} />
-            Export
+          {/* Generate Report Button */}
+          <button
+            onClick={() => setShowReportGenerator(true)}
+            className="flex items-center gap-2 bg-white border border-[#d9d9d9] text-[#103a5e] px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <FileText size={16} />
+            Generate Report
           </button>
         </div>
       </div>
@@ -652,6 +657,24 @@ export default function AnalyticsPage() {
           height={200}
         />
       </div>
+
+      {/* Report Generator Modal */}
+      {showReportGenerator && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowReportGenerator(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <ReportGenerator onClose={() => setShowReportGenerator(false)} />
+          </div>
+        </div>
+      )}
+
+
 
       {/* Detailed Analytics Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

@@ -22,10 +22,8 @@ interface UseApprovalManagementReturn {
   // Actions
   fetchPendingRegistrations: () => Promise<void>;
   fetchStatistics: () => Promise<void>;
-  approveRegistration: (registrationId: string, userData: any) => Promise<{ success: boolean; message?: string }>;
-  rejectRegistration: (registrationId: string) => Promise<{ success: boolean; message?: string }>;
-  updatePendingRegistration: (registrationId: string, updates: Partial<PendingRegistration>) => Promise<{ success: boolean; message?: string }>;
-  deletePendingRegistration: (registrationId: string) => Promise<{ success: boolean; message?: string }>;
+  approveRegistration: (registrationId: string, userData?: any, reviewNotes?: string) => Promise<{ success: boolean; message?: string }>;
+  rejectRegistration: (registrationId: string, reviewNotes?: string) => Promise<{ success: boolean; message?: string }>;
   refreshData: () => Promise<void>;
 }
 
@@ -84,12 +82,17 @@ export function useApprovalManagement(): UseApprovalManagementReturn {
   }, []);
 
   // Approve registration
-  const approveRegistration = useCallback(async (registrationId: string, userData: any) => {
+  const approveRegistration = useCallback(async (registrationId: string, userData?: any, reviewNotes?: string) => {
     try {
-      const response = await approvalService.approveRegistration(registrationId, userData);
+      const response = await approvalService.approveRegistration(registrationId, userData, reviewNotes);
       if (response.success) {
-        // Remove from pending list
-        setPendingRegistrations(prev => prev.filter(r => r.id !== registrationId));
+        // Update the registration status in local state instead of removing
+        setPendingRegistrations(prev =>
+          prev.map(r => r.id === registrationId
+            ? { ...r, status: 'APPROVED' as const, reviewed_at: new Date().toISOString(), review_notes: reviewNotes || null }
+            : r
+          )
+        );
         // Refresh statistics
         await fetchStatistics();
       }
@@ -103,50 +106,17 @@ export function useApprovalManagement(): UseApprovalManagementReturn {
   }, [fetchStatistics]);
 
   // Reject registration
-  const rejectRegistration = useCallback(async (registrationId: string) => {
+  const rejectRegistration = useCallback(async (registrationId: string, reviewNotes?: string) => {
     try {
-      const response = await approvalService.rejectRegistration(registrationId);
+      const response = await approvalService.rejectRegistration(registrationId, reviewNotes);
       if (response.success) {
-        // Remove from pending list
-        setPendingRegistrations(prev => prev.filter(r => r.id !== registrationId));
-        // Refresh statistics
-        await fetchStatistics();
-      }
-      return response;
-    } catch (err) {
-      return {
-        success: false,
-        message: 'An unexpected error occurred',
-      };
-    }
-  }, [fetchStatistics]);
-
-  // Update pending registration
-  const updatePendingRegistration = useCallback(async (registrationId: string, updates: Partial<PendingRegistration>) => {
-    try {
-      const response = await approvalService.updatePendingRegistration(registrationId, updates);
-      if (response.success) {
-        // Update in local state
-        setPendingRegistrations(prev => 
-          prev.map(r => r.id === registrationId ? { ...r, ...updates } : r)
+        // Update the registration status in local state instead of removing
+        setPendingRegistrations(prev =>
+          prev.map(r => r.id === registrationId
+            ? { ...r, status: 'REJECTED' as const, reviewed_at: new Date().toISOString(), review_notes: reviewNotes || null }
+            : r
+          )
         );
-      }
-      return response;
-    } catch (err) {
-      return {
-        success: false,
-        message: 'An unexpected error occurred',
-      };
-    }
-  }, []);
-
-  // Delete pending registration
-  const deletePendingRegistration = useCallback(async (registrationId: string) => {
-    try {
-      const response = await approvalService.deletePendingRegistration(registrationId);
-      if (response.success) {
-        // Remove from pending list
-        setPendingRegistrations(prev => prev.filter(r => r.id !== registrationId));
         // Refresh statistics
         await fetchStatistics();
       }
@@ -158,6 +128,8 @@ export function useApprovalManagement(): UseApprovalManagementReturn {
       };
     }
   }, [fetchStatistics]);
+
+
 
   // Refresh all data
   const refreshData = useCallback(async () => {
@@ -190,8 +162,6 @@ export function useApprovalManagement(): UseApprovalManagementReturn {
     fetchStatistics,
     approveRegistration,
     rejectRegistration,
-    updatePendingRegistration,
-    deletePendingRegistration,
     refreshData,
   };
 }

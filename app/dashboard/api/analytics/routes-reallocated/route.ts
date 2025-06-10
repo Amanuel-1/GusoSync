@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     if (!Array.isArray(reallocationRequests) || reallocationRequests.length === 0) {
       console.log('Using mock reallocation data for analytics');
       
-      // Generate mock reallocation data for the last 30 days
+      // Generate mock reallocation data Last 30 days
       const mockData = [];
       for (let i = 0; i < 50; i++) {
         const date = new Date();
