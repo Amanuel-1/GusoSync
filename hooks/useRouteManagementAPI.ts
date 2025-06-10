@@ -98,9 +98,11 @@ export function useRouteManagementAPI(): UseRouteManagementReturn {
         return queryParams;
       };
 
-      // If specific params are provided, just fetch that page
-      if (params?.page && params?.limit) {
-        const queryParams = buildQueryParams(parseInt(params.page), Math.min(parseInt(params.limit), 100));
+      // If search or filter params are provided, fetch only the first page with those filters
+      if (params?.search || params?.is_active !== undefined || (params?.page && params?.limit)) {
+        const page = params?.page ? parseInt(params.page) : 1;
+        const limit = params?.limit ? Math.min(parseInt(params.limit), 100) : 100;
+        const queryParams = buildQueryParams(page, limit);
 
         const url = `/dashboard/api/routes?${queryParams.toString()}`;
         const response = await fetch(url, {

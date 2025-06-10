@@ -205,7 +205,7 @@ export default function ClientLayout({
 
             <Link
               href="/dashboard/analysis"
-              className={`flex flex-col items-center text-white ${pathname === "/dashboard/analysisysis" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/analysis" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -219,6 +219,34 @@ export default function ClientLayout({
                 </svg>
               </div>
               <span className="text-xs mt-1">Analysis</span>
+            </Link>
+
+            <Link
+              href="/dashboard/analytics"
+              className={`flex flex-col items-center text-white ${pathname === "/dashboard/analytics" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+            >
+              <div className="w-8 h-8 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M3 3v18h18"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M18 9l-5 5-4-4-6 6"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="9" cy="9" r="1" fill="white" />
+                  <circle cx="14" cy="14" r="1" fill="white" />
+                  <circle cx="18" cy="9" r="1" fill="white" />
+                </svg>
+              </div>
+              <span className="text-xs mt-1">Analytics</span>
             </Link>
 
             <Link

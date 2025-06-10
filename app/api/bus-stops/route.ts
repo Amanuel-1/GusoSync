@@ -66,11 +66,8 @@ async function checkAdminPermission(): Promise<{ authorized: boolean; user?: any
   return { authorized: false };
 }
 
-// GET /dashboard/api/bus-stops/[id] - Get specific bus stop
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// GET /api/bus-stops - Get all bus stops
+export async function GET(request: NextRequest) {
   try {
     const { authorized, user } = await checkPermission();
     if (!authorized) {
@@ -80,18 +77,13 @@ export async function GET(
       );
     }
 
-    const { id } = params;
     const token = await getAuthToken();
 
-    // Choose endpoint based on user role
-    let endpoint;
-    if (user?.role === 'CONTROL_ADMIN') {
-      endpoint = `${BACKEND_API_BASE_URL}/api/control-center/bus-stops/${id}`;
-    } else {
-      endpoint = `${BACKEND_API_BASE_URL}/api/buses/stops/${id}`;
-    }
+    // Use /api/buses/stops endpoint for all users (both CONTROL_STAFF and CONTROL_ADMIN)
+    const endpoint = `${BACKEND_API_BASE_URL}/api/buses/stops`;
 
-    console.log('Fetching bus stop:', id);
+    console.log('Fetching bus stops from /api/buses/stops endpoint');
+
     const backendResponse = await fetch(endpoint, {
       method: 'GET',
       headers: {
@@ -103,23 +95,24 @@ export async function GET(
     console.log('Backend response status:', backendResponse.status);
 
     if (backendResponse.ok) {
-      const busStop = await backendResponse.json();
-      console.log('Successfully fetched bus stop:', busStop);
-      return NextResponse.json({ data: busStop });
+      const busStops = await backendResponse.json();
+      console.log('Successfully fetched bus stops:', busStops.length);
+      return NextResponse.json({ data: busStops, user_role: user.role });
     } else {
       const errorData = await backendResponse.json().catch(() => ({}));
-      console.error('Failed to fetch bus stop:', {
+      console.error('Failed to fetch bus stops:', {
+        endpoint,
         status: backendResponse.status,
         statusText: backendResponse.statusText,
         errorData
       });
       return NextResponse.json(
-        { error: 'Failed to fetch bus stop', details: errorData },
+        { error: 'Failed to fetch bus stops', details: errorData },
         { status: backendResponse.status }
       );
     }
   } catch (error) {
-    console.error('Error in GET /dashboard/api/bus-stops/[id]:', error);
+    console.error('Error in GET /api/bus-stops:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -127,29 +120,25 @@ export async function GET(
   }
 }
 
-// PUT /dashboard/api/bus-stops/[id] - Update bus stop
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// POST /api/bus-stops - Create new bus stop
+export async function POST(request: NextRequest) {
   try {
     const { authorized } = await checkAdminPermission();
     if (!authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized. Only administrators can update bus stops.' },
+        { error: 'Unauthorized. Only administrators can create bus stops.' },
         { status: 403 }
       );
     }
 
-    const { id } = params;
     const token = await getAuthToken();
     const body = await request.json();
 
-    console.log('Updating bus stop:', id, 'with data:', body);
+    console.log('Creating bus stop with data:', body);
 
-    // Update bus stop in backend
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/bus-stops/${id}`, {
-      method: 'PUT',
+    // Create bus stop in backend using /api/buses/stops
+    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/buses/stops`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -157,84 +146,29 @@ export async function PUT(
       body: JSON.stringify(body),
     });
 
-    console.log('Backend update response status:', backendResponse.status);
+    console.log('Backend create response status:', backendResponse.status);
 
     if (backendResponse.ok) {
       const busStop = await backendResponse.json();
-      console.log('Successfully updated bus stop:', busStop);
+      console.log('Successfully created bus stop:', busStop);
       return NextResponse.json({ 
         data: busStop, 
-        message: 'Bus stop updated successfully' 
+        message: 'Bus stop created successfully' 
       });
     } else {
       const errorData = await backendResponse.json().catch(() => ({}));
-      console.error('Failed to update bus stop:', {
+      console.error('Failed to create bus stop:', {
         status: backendResponse.status,
         statusText: backendResponse.statusText,
         errorData
       });
       return NextResponse.json(
-        { error: 'Failed to update bus stop', details: errorData },
+        { error: 'Failed to create bus stop', details: errorData },
         { status: backendResponse.status }
       );
     }
   } catch (error) {
-    console.error('Error in PUT /dashboard/api/bus-stops/[id]:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE /dashboard/api/bus-stops/[id] - Delete bus stop
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { authorized } = await checkAdminPermission();
-    if (!authorized) {
-      return NextResponse.json(
-        { error: 'Unauthorized. Only administrators can delete bus stops.' },
-        { status: 403 }
-      );
-    }
-
-    const { id } = params;
-    const token = await getAuthToken();
-    console.log('Deleting bus stop:', id);
-
-    // Delete bus stop from backend
-    const backendResponse = await fetch(`${BACKEND_API_BASE_URL}/api/control-center/bus-stops/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log('Backend delete response status:', backendResponse.status);
-
-    if (backendResponse.ok) {
-      console.log('Successfully deleted bus stop:', id);
-      return NextResponse.json({ 
-        message: 'Bus stop deleted successfully' 
-      });
-    } else {
-      const errorData = await backendResponse.json().catch(() => ({}));
-      console.error('Failed to delete bus stop:', {
-        status: backendResponse.status,
-        statusText: backendResponse.statusText,
-        errorData
-      });
-      return NextResponse.json(
-        { error: 'Failed to delete bus stop', details: errorData },
-        { status: backendResponse.status }
-      );
-    }
-  } catch (error) {
-    console.error('Error in DELETE /dashboard/api/bus-stops/[id]:', error);
+    console.error('Error in POST /api/bus-stops:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
