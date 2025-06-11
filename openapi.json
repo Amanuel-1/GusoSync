@@ -524,6 +524,31 @@
     }
     }
     },
+    "/api/buses/debug/count": {
+    "get": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Debug Bus Count",
+    "description": "Debug endpoint to check bus and bus stop counts",
+    "operationId": "debug_bus_count_api_buses_debug_count_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
     "/api/buses/": {
     "post": {
     "tags": [
@@ -683,153 +708,6 @@
     }
     }
     },
-    "/api/buses/{bus_id}": {
-    "get": {
-    "tags": [
-    "buses"
-    ],
-    "summary": "Get Bus",
-    "operationId": "get_bus_api_buses__bus_id__get",
-    "security": [
-    {
-    "CustomHTTPBearer": []
-    }
-    ],
-    "parameters": [
-    {
-    "name": "bus_id",
-    "in": "path",
-    "required": true,
-    "schema": {
-    "type": "string",
-    "title": "Bus Id"
-    }
-    }
-    ],
-    "responses": {
-    "200": {
-    "description": "Successful Response",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/BusResponse"
-    }
-    }
-    }
-    },
-    "422": {
-    "description": "Validation Error",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/HTTPValidationError"
-    }
-    }
-    }
-    }
-    }
-    },
-    "put": {
-    "tags": [
-    "buses"
-    ],
-    "summary": "Update Bus",
-    "description": "Update an existing bus (admin only)",
-    "operationId": "update_bus_api_buses__bus_id__put",
-    "security": [
-    {
-    "CustomHTTPBearer": []
-    }
-    ],
-    "parameters": [
-    {
-    "name": "bus_id",
-    "in": "path",
-    "required": true,
-    "schema": {
-    "type": "string",
-    "title": "Bus Id"
-    }
-    }
-    ],
-    "requestBody": {
-    "required": true,
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/UpdateBusRequest"
-    }
-    }
-    }
-    },
-    "responses": {
-    "200": {
-    "description": "Successful Response",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/BusResponse"
-    }
-    }
-    }
-    },
-    "422": {
-    "description": "Validation Error",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/HTTPValidationError"
-    }
-    }
-    }
-    }
-    }
-    },
-    "delete": {
-    "tags": [
-    "buses"
-    ],
-    "summary": "Delete Bus",
-    "description": "Delete a bus (admin only)",
-    "operationId": "delete_bus_api_buses__bus_id__delete",
-    "security": [
-    {
-    "CustomHTTPBearer": []
-    }
-    ],
-    "parameters": [
-    {
-    "name": "bus_id",
-    "in": "path",
-    "required": true,
-    "schema": {
-    "type": "string",
-    "title": "Bus Id"
-    }
-    }
-    ],
-    "responses": {
-    "200": {
-    "description": "Successful Response",
-    "content": {
-    "application/json": {
-    "schema": {}
-    }
-    }
-    },
-    "422": {
-    "description": "Validation Error",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/HTTPValidationError"
-    }
-    }
-    }
-    }
-    }
-    }
-    },
     "/api/buses/stops": {
     "post": {
     "tags": [
@@ -881,6 +759,7 @@
     "buses"
     ],
     "summary": "Get Bus Stops",
+    "description": "Get all bus stops with optional search and filtering",
     "operationId": "get_bus_stops_api_buses_stops_get",
     "security": [
     {
@@ -978,6 +857,7 @@
     "buses"
     ],
     "summary": "Get Bus Stop",
+    "description": "Get a specific bus stop by ID",
     "operationId": "get_bus_stop_api_buses_stops__bus_stop_id__get",
     "security": [
     {
@@ -1125,6 +1005,7 @@
     "buses"
     ],
     "summary": "Get Incoming Buses",
+    "description": "Get incoming buses for a specific bus stop",
     "operationId": "get_incoming_buses_api_buses_stops__bus_stop_id__incoming_buses_get",
     "security": [
     {
@@ -1168,6 +1049,338 @@
     }
     }
     }
+    }
+    },
+    "/api/buses/{bus_id}": {
+    "get": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Get Bus",
+    "description": "Get a specific bus with populated driver information",
+    "operationId": "get_bus_api_buses__bus_id__get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "put": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Update Bus",
+    "description": "Update an existing bus (admin only)",
+    "operationId": "update_bus_api_buses__bus_id__put",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/UpdateBusRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "delete": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Delete Bus",
+    "description": "Delete a bus (admin only)",
+    "operationId": "delete_bus_api_buses__bus_id__delete",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/buses/{bus_id}/details": {
+    "get": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Get Bus Details",
+    "description": "Get comprehensive bus details including route, trip, and real-time information",
+    "operationId": "get_bus_details_api_buses__bus_id__details_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusDetailedResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/buses/{bus_id}/assign-driver/{driver_id}": {
+    "put": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Assign Driver To Bus",
+    "description": "Assign a bus driver to a specific bus",
+    "operationId": "assign_driver_to_bus_api_buses__bus_id__assign_driver__driver_id__put",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    },
+    {
+    "name": "driver_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Driver Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/DriverAssignmentResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/buses/{bus_id}/unassign-driver": {
+    "put": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Unassign Driver From Bus",
+    "description": "Unassign the current driver from a specific bus",
+    "operationId": "unassign_driver_from_bus_api_buses__bus_id__unassign_driver_put",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/DriverAssignmentResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/buses/available-drivers": {
+    "get": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Get Available Drivers",
+    "description": "Get list of bus drivers that are not currently assigned to any bus",
+    "operationId": "get_available_drivers_api_buses_available_drivers_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "items": {
+    "$ref": "#/components/schemas/UserResponse"
+    },
+    "type": "array",
+    "title": "Response Get Available Drivers Api Buses Available Drivers Get"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
     }
     },
     "/api/buses/reallocate": {
@@ -1276,6 +1489,54 @@
     }
     }
     },
+    "/api/buses/{bus_id}/eta": {
+    "get": {
+    "tags": [
+    "buses"
+    ],
+    "summary": "Get Bus Eta To Stops",
+    "description": "Get ETA from bus current location to all stops on its assigned route",
+    "operationId": "get_bus_eta_to_stops_api_buses__bus_id__eta_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Bus Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BusETAResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
     "/api/buses/{bus_id}/track": {
     "post": {
     "tags": [
@@ -1364,6 +1625,31 @@
     }
     }
     }
+    }
+    },
+    "/api/routes/debug/count": {
+    "get": {
+    "tags": [
+    "routes"
+    ],
+    "summary": "Debug Route Count",
+    "description": "Debug endpoint to check route counts",
+    "operationId": "debug_route_count_api_routes_debug_count_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
     }
     },
     "/api/routes/": {
@@ -1754,6 +2040,100 @@
     }
     }
     },
+    "/api/routes/{route_id}/shape": {
+    "get": {
+    "tags": [
+    "routes"
+    ],
+    "summary": "Get Route Shape",
+    "description": "Get route shape (GeoJSON LineString) for map visualization",
+    "operationId": "get_route_shape_api_routes__route_id__shape_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "route_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Route Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/RouteShapeResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/routes/{route_id}/generate-shape": {
+    "post": {
+    "tags": [
+    "routes"
+    ],
+    "summary": "Generate Route Shape",
+    "description": "Generate/regenerate route shape from bus stops (admin only)",
+    "operationId": "generate_route_shape_api_routes__route_id__generate_shape_post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "route_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Route Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
     "/api/feedback": {
     "post": {
     "tags": [
@@ -1980,6 +2360,7 @@
     "issues"
     ],
     "summary": "Report Issue",
+    "description": "Report a new incident",
     "operationId": "report_issue_api_issues_report_post",
     "requestBody": {
     "content": {
@@ -2090,17 +2471,23 @@
     "tags": [
     "attendance"
     ],
-    "summary": "Create Attendance Record",
-    "operationId": "create_attendance_record_api_attendance_post",
+    "summary": "Mark Attendance",
+    "description": "Mark attendance status for a user",
+    "operationId": "mark_attendance_api_attendance_post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
     "requestBody": {
+    "required": true,
     "content": {
     "application/json": {
     "schema": {
-    "$ref": "#/components/schemas/CreateAttendanceRecordRequest"
+    "$ref": "#/components/schemas/MarkAttendanceRequest"
     }
     }
-    },
-    "required": true
+    }
     },
     "responses": {
     "201": {
@@ -2108,7 +2495,365 @@
     "content": {
     "application/json": {
     "schema": {
-    "$ref": "#/components/schemas/AttendanceRecordResponse"
+    "$ref": "#/components/schemas/AttendanceResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "get": {
+    "tags": [
+    "attendance"
+    ],
+    "summary": "Get Attendance",
+    "description": "Get attendance records",
+    "operationId": "get_attendance_api_attendance_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "user_id",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "User ID (admin only)",
+    "title": "User Id"
+    },
+    "description": "User ID (admin only)"
+    },
+    {
+    "name": "date_from",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date",
+    "title": "Date From"
+    },
+    "description": "Start date"
+    },
+    {
+    "name": "date_to",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date",
+    "title": "Date To"
+    },
+    "description": "End date"
+    },
+    {
+    "name": "attendance_status",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/AttendanceStatus"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by status",
+    "title": "Attendance Status"
+    },
+    "description": "Filter by status"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "type": "array",
+    "items": {
+    "$ref": "#/components/schemas/AttendanceResponse"
+    },
+    "title": "Response Get Attendance Api Attendance Get"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/attendance/heatmap": {
+    "get": {
+    "tags": [
+    "attendance"
+    ],
+    "summary": "Get Attendance Heatmap",
+    "description": "Get attendance heatmap data for visualization",
+    "operationId": "get_attendance_heatmap_api_attendance_heatmap_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "user_id",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "User ID (admin only)",
+    "title": "User Id"
+    },
+    "description": "User ID (admin only)"
+    },
+    {
+    "name": "date_from",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date",
+    "title": "Date From"
+    },
+    "description": "Start date"
+    },
+    {
+    "name": "date_to",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date",
+    "title": "Date To"
+    },
+    "description": "End date"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/AttendanceHeatmapResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/attendance/{attendance_id}": {
+    "put": {
+    "tags": [
+    "attendance"
+    ],
+    "summary": "Update Attendance",
+    "description": "Update attendance status",
+    "operationId": "update_attendance_api_attendance__attendance_id__put",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "attendance_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Attendance Id"
+    }
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/UpdateAttendanceStatusRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/AttendanceResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "delete": {
+    "tags": [
+    "attendance"
+    ],
+    "summary": "Delete Attendance",
+    "description": "Delete attendance record (admin only)",
+    "operationId": "delete_attendance_api_attendance__attendance_id__delete",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "attendance_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Attendance Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/attendance/bulk": {
+    "post": {
+    "tags": [
+    "attendance"
+    ],
+    "summary": "Mark Bulk Attendance",
+    "description": "Mark attendance for multiple users (admin only)",
+    "operationId": "mark_bulk_attendance_api_attendance_bulk_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/BulkAttendanceRequest"
+    }
+    }
+    },
+    "required": true
+    },
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "items": {
+    "$ref": "#/components/schemas/AttendanceResponse"
+    },
+    "type": "array",
+    "title": "Response Mark Bulk Attendance Api Attendance Bulk Post"
     }
     }
     }
@@ -2131,34 +2876,99 @@
     ]
     }
     },
-    "/api/attendance/today": {
+    "/api/attendance/summary": {
     "get": {
     "tags": [
     "attendance"
     ],
-    "summary": "Get Today Attendance",
-    "operationId": "get_today_attendance_api_attendance_today_get",
+    "summary": "Get Attendance Summary",
+    "description": "Get attendance summary for a user over a period",
+    "operationId": "get_attendance_summary_api_attendance_summary_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "user_id",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "User ID (admin only)",
+    "title": "User Id"
+    },
+    "description": "User ID (admin only)"
+    },
+    {
+    "name": "date_from",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date",
+    "title": "Date From"
+    },
+    "description": "Start date"
+    },
+    {
+    "name": "date_to",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date",
+    "title": "Date To"
+    },
+    "description": "End date"
+    }
+    ],
     "responses": {
     "200": {
     "description": "Successful Response",
     "content": {
     "application/json": {
     "schema": {
-    "items": {
-    "$ref": "#/components/schemas/AttendanceRecordResponse"
-    },
-    "type": "array",
-    "title": "Response Get Today Attendance Api Attendance Today Get"
-    }
+    "$ref": "#/components/schemas/AttendanceSummaryResponse"
     }
     }
     }
     },
-    "security": [
-    {
-    "CustomHTTPBearer": []
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
     }
-    ]
+    }
+    }
+    }
+    }
     }
     },
     "/api/alerts": {
@@ -2374,6 +3184,53 @@
     }
     }
     },
+    "/api/conversations/create": {
+    "post": {
+    "tags": [
+    "conversations"
+    ],
+    "summary": "Create Conversation",
+    "description": "Create a new conversation (only for field staff to contact control center)",
+    "operationId": "create_conversation_api_conversations_create_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/CreateConversationRequest"
+    }
+    }
+    },
+    "required": true
+    },
+    "responses": {
+    "201": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/ConversationResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
     "/api/conversations": {
     "get": {
     "tags": [
@@ -2571,14 +3428,14 @@
     }
     }
     },
-    "/api/conversations/{conversation_id}/join": {
+    "/api/conversations/{conversation_id}/close": {
     "post": {
     "tags": [
     "conversations"
     ],
-    "summary": "Join Conversation Websocket",
-    "description": "Join a conversation for real-time updates (WebSocket)",
-    "operationId": "join_conversation_websocket_api_conversations__conversation_id__join_post",
+    "summary": "Close Conversation",
+    "description": "Close a conversation (only for control center staff)",
+    "operationId": "close_conversation_api_conversations__conversation_id__close_post",
     "security": [
     {
     "CustomHTTPBearer": []
@@ -2617,30 +3474,14 @@
     }
     }
     },
-    "/api/conversations/{conversation_id}/leave": {
-    "post": {
+    "/api/conversations/stats": {
+    "get": {
     "tags": [
     "conversations"
     ],
-    "summary": "Leave Conversation Websocket",
-    "description": "Leave a conversation's real-time updates",
-    "operationId": "leave_conversation_websocket_api_conversations__conversation_id__leave_post",
-    "security": [
-    {
-    "CustomHTTPBearer": []
-    }
-    ],
-    "parameters": [
-    {
-    "name": "conversation_id",
-    "in": "path",
-    "required": true,
-    "schema": {
-    "type": "string",
-    "title": "Conversation Id"
-    }
-    }
-    ],
+    "summary": "Get Chat Stats",
+    "description": "Get chat statistics (only for control center)",
+    "operationId": "get_chat_stats_api_conversations_stats_get",
     "responses": {
     "200": {
     "description": "Successful Response",
@@ -2649,75 +3490,13 @@
     "schema": {}
     }
     }
-    },
-    "422": {
-    "description": "Validation Error",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/HTTPValidationError"
-    }
-    }
-    }
-    }
-    }
     }
     },
-    "/api/conversations/{conversation_id}/typing": {
-    "post": {
-    "tags": [
-    "conversations"
-    ],
-    "summary": "Update Typing Status",
-    "description": "Update typing status in conversation",
-    "operationId": "update_typing_status_api_conversations__conversation_id__typing_post",
     "security": [
     {
     "CustomHTTPBearer": []
     }
-    ],
-    "parameters": [
-    {
-    "name": "conversation_id",
-    "in": "path",
-    "required": true,
-    "schema": {
-    "type": "string",
-    "title": "Conversation Id"
-    }
-    },
-    {
-    "name": "is_typing",
-    "in": "query",
-    "required": true,
-    "schema": {
-    "type": "boolean",
-    "description": "Whether user is currently typing",
-    "title": "Is Typing"
-    },
-    "description": "Whether user is currently typing"
-    }
-    ],
-    "responses": {
-    "200": {
-    "description": "Successful Response",
-    "content": {
-    "application/json": {
-    "schema": {}
-    }
-    }
-    },
-    "422": {
-    "description": "Validation Error",
-    "content": {
-    "application/json": {
-    "schema": {
-    "$ref": "#/components/schemas/HTTPValidationError"
-    }
-    }
-    }
-    }
-    }
+    ]
     }
     },
     "/api/drivers/attendance": {
@@ -2725,18 +3504,23 @@
     "tags": [
     "drivers"
     ],
-    "summary": "Create Driver Attendance",
-    "description": "Create driver attendance record",
-    "operationId": "create_driver_attendance_api_drivers_attendance_post",
+    "summary": "Mark Driver Attendance",
+    "description": "Mark driver's attendance status",
+    "operationId": "mark_driver_attendance_api_drivers_attendance_post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
     "requestBody": {
+    "required": true,
     "content": {
     "application/json": {
     "schema": {
-    "$ref": "#/components/schemas/CreateAttendanceRecordRequest"
+    "$ref": "#/components/schemas/MarkAttendanceRequest"
     }
     }
-    },
-    "required": true
+    }
     },
     "responses": {
     "201": {
@@ -2744,7 +3528,7 @@
     "content": {
     "application/json": {
     "schema": {
-    "$ref": "#/components/schemas/AttendanceRecordResponse"
+    "$ref": "#/components/schemas/AttendanceResponse"
     }
     }
     }
@@ -2759,43 +3543,86 @@
     }
     }
     }
-    },
-    "security": [
-    {
-    "CustomHTTPBearer": []
-    }
-    ]
     }
     },
-    "/api/drivers/attendance/today": {
     "get": {
     "tags": [
     "drivers"
     ],
-    "summary": "Get Driver Attendance Today",
-    "description": "Get driver's attendance records for today",
-    "operationId": "get_driver_attendance_today_api_drivers_attendance_today_get",
+    "summary": "Get Driver Attendance",
+    "description": "Get driver's attendance records",
+    "operationId": "get_driver_attendance_api_drivers_attendance_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "date_from",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date",
+    "title": "Date From"
+    },
+    "description": "Start date"
+    },
+    {
+    "name": "date_to",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date",
+    "title": "Date To"
+    },
+    "description": "End date"
+    }
+    ],
     "responses": {
     "200": {
     "description": "Successful Response",
     "content": {
     "application/json": {
     "schema": {
-    "items": {
-    "$ref": "#/components/schemas/AttendanceRecordResponse"
-    },
     "type": "array",
-    "title": "Response Get Driver Attendance Today Api Drivers Attendance Today Get"
-    }
+    "items": {
+    "$ref": "#/components/schemas/AttendanceResponse"
+    },
+    "title": "Response Get Driver Attendance Api Drivers Attendance Get"
     }
     }
     }
     },
-    "security": [
-    {
-    "CustomHTTPBearer": []
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
     }
-    ]
+    }
+    }
+    }
+    }
     }
     },
     "/api/drivers/incidents": {
@@ -3214,37 +4041,31 @@
     }
     }
     },
-    "/api/regulators/bus-stops/{bus_stop_id}": {
-    "get": {
+    "/api/regulators/request-reallocation": {
+    "post": {
     "tags": [
     "regulators"
     ],
-    "summary": "Get Regulator Bus Stop",
-    "description": "Get bus stop information for regulators",
-    "operationId": "get_regulator_bus_stop_api_regulators_bus_stops__bus_stop_id__get",
-    "security": [
-    {
-    "CustomHTTPBearer": []
-    }
-    ],
-    "parameters": [
-    {
-    "name": "bus_stop_id",
-    "in": "path",
-    "required": true,
+    "summary": "Request Bus Reallocation",
+    "description": "Request bus reallocation (regulator only)",
+    "operationId": "request_bus_reallocation_api_regulators_request_reallocation_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
     "schema": {
-    "type": "string",
-    "title": "Bus Stop Id"
+    "$ref": "#/components/schemas/RequestReallocationRequest"
     }
     }
-    ],
+    },
+    "required": true
+    },
     "responses": {
-    "200": {
+    "201": {
     "description": "Successful Response",
     "content": {
     "application/json": {
     "schema": {
-    "$ref": "#/components/schemas/BusStopResponse"
+    "$ref": "#/components/schemas/ReallocationRequestResponse"
     }
     }
     }
@@ -3259,7 +4080,84 @@
     }
     }
     }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
     }
+    ]
+    }
+    },
+    "/api/regulators/report-overcrowding": {
+    "post": {
+    "tags": [
+    "regulators"
+    ],
+    "summary": "Report Overcrowding",
+    "description": "Report overcrowding at a bus stop (regulator only)",
+    "operationId": "report_overcrowding_api_regulators_report_overcrowding_post",
+    "requestBody": {
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/ReportOvercrowdingRequest"
+    }
+    }
+    },
+    "required": true
+    },
+    "responses": {
+    "201": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/OvercrowdingReportResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
+    "/api/control-center/debug/approval-requests": {
+    "get": {
+    "tags": [
+    "control-center"
+    ],
+    "summary": "Debug Approval Requests",
+    "description": "Debug endpoint to check approval requests (CONTROL_ADMIN only)",
+    "operationId": "debug_approval_requests_api_control_center_debug_approval_requests_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
     }
     },
     "/api/control-center/personnel/register": {
@@ -4881,6 +5779,268 @@
     }
     }
     },
+    "/api/control-center/reallocation-requests/{request_id}/process": {
+    "post": {
+    "tags": [
+    "control-center"
+    ],
+    "summary": "Process Reallocation Request",
+    "description": "Process a reallocation request using AI agent to determine optimal route",
+    "operationId": "process_reallocation_request_api_control_center_reallocation_requests__request_id__process_post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "request_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Request Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/control-center/reallocation-requests/pending": {
+    "get": {
+    "tags": [
+    "control-center"
+    ],
+    "summary": "Get Pending Reallocation Requests",
+    "description": "Get pending reallocation requests that need AI processing",
+    "operationId": "get_pending_reallocation_requests_api_control_center_reallocation_requests_pending_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "skip",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "minimum": 0,
+    "default": 0,
+    "title": "Skip"
+    }
+    },
+    {
+    "name": "limit",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "maximum": 100,
+    "minimum": 1,
+    "default": 10,
+    "title": "Limit"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/control-center/reallocation-history": {
+    "get": {
+    "tags": [
+    "control-center"
+    ],
+    "summary": "Get Reallocation History",
+    "description": "Get comprehensive reallocation history with filtering options",
+    "operationId": "get_reallocation_history_api_control_center_reallocation_history_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "bus_id",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by bus ID",
+    "title": "Bus Id"
+    },
+    "description": "Filter by bus ID"
+    },
+    {
+    "name": "route_id",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by route ID (old or new)",
+    "title": "Route Id"
+    },
+    "description": "Filter by route ID (old or new)"
+    },
+    {
+    "name": "status_filter",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by status",
+    "title": "Status Filter"
+    },
+    "description": "Filter by status"
+    },
+    {
+    "name": "start_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date filter (YYYY-MM-DD)",
+    "title": "Start Date"
+    },
+    "description": "Start date filter (YYYY-MM-DD)"
+    },
+    {
+    "name": "end_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date filter (YYYY-MM-DD)",
+    "title": "End Date"
+    },
+    "description": "End date filter (YYYY-MM-DD)"
+    },
+    {
+    "name": "skip",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "minimum": 0,
+    "default": 0,
+    "title": "Skip"
+    }
+    },
+    {
+    "name": "limit",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "maximum": 100,
+    "minimum": 1,
+    "default": 20,
+    "title": "Limit"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "type": "array",
+    "items": {
+    "$ref": "#/components/schemas/ReallocationHistoryResponse"
+    },
+    "title": "Response Get Reallocation History Api Control Center Reallocation History Get"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
     "/api/approvals/requests": {
     "get": {
     "tags": [
@@ -5707,6 +6867,853 @@
     }
     }
     },
+    "/api/analytics/summary": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Summary Analytics",
+    "description": "Get summary analytics for the main dashboard.",
+    "operationId": "get_summary_analytics_api_analytics_summary_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/AnalyticsSummaryResponse"
+    }
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
+    "/api/analytics/operational": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Operational Metrics",
+    "description": "Get operational performance metrics.",
+    "operationId": "get_operational_metrics_api_analytics_operational_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "start_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date for metrics",
+    "title": "Start Date"
+    },
+    "description": "Start date for metrics"
+    },
+    {
+    "name": "end_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date for metrics",
+    "title": "End Date"
+    },
+    "description": "End date for metrics"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/OperationalMetricsResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/financial": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Financial Metrics",
+    "description": "Get financial metrics.",
+    "operationId": "get_financial_metrics_api_analytics_financial_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "start_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date for metrics",
+    "title": "Start Date"
+    },
+    "description": "Start date for metrics"
+    },
+    {
+    "name": "end_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date for metrics",
+    "title": "End Date"
+    },
+    "description": "End date for metrics"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/FinancialMetricsResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/performance": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Performance Metrics",
+    "description": "Get performance metrics.",
+    "operationId": "get_performance_metrics_api_analytics_performance_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "start_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Start date for metrics",
+    "title": "Start Date"
+    },
+    "description": "Start date for metrics"
+    },
+    {
+    "name": "end_date",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "End date for metrics",
+    "title": "End Date"
+    },
+    "description": "End date for metrics"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/PerformanceMetricsResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/routes": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Route Analytics",
+    "description": "Get route-specific analytics.",
+    "operationId": "get_route_analytics_api_analytics_routes_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "route_id",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Specific route ID",
+    "title": "Route Id"
+    },
+    "description": "Specific route ID"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/time-series": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Time Series Data",
+    "description": "Get time series data for charts.",
+    "operationId": "get_time_series_data_api_analytics_time_series_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "metric",
+    "in": "query",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "description": "Metric name (trip_count, revenue, incidents)",
+    "title": "Metric"
+    },
+    "description": "Metric name (trip_count, revenue, incidents)"
+    },
+    {
+    "name": "start_date",
+    "in": "query",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "format": "date-time",
+    "description": "Start date",
+    "title": "Start Date"
+    },
+    "description": "Start date"
+    },
+    {
+    "name": "end_date",
+    "in": "query",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "format": "date-time",
+    "description": "End date",
+    "title": "End Date"
+    },
+    "description": "End date"
+    },
+    {
+    "name": "granularity",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "string",
+    "description": "Time granularity (hourly, daily, weekly, monthly)",
+    "default": "daily",
+    "title": "Granularity"
+    },
+    "description": "Time granularity (hourly, daily, weekly, monthly)"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/reports": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Reports",
+    "description": "Get list of generated reports.",
+    "operationId": "get_reports_api_analytics_reports_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "skip",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "minimum": 0,
+    "default": 0,
+    "title": "Skip"
+    }
+    },
+    {
+    "name": "limit",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "type": "integer",
+    "maximum": 100,
+    "minimum": 1,
+    "default": 10,
+    "title": "Limit"
+    }
+    },
+    {
+    "name": "report_type",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by report type",
+    "title": "Report Type"
+    },
+    "description": "Filter by report type"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "post": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Generate Report",
+    "description": "Generate a new analytics report.",
+    "operationId": "generate_report_api_analytics_reports_post",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "requestBody": {
+    "required": true,
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/ReportRequest"
+    }
+    }
+    }
+    },
+    "responses": {
+    "201": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/ReportResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/reports/{report_id}": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Report",
+    "description": "Get a specific report by ID.",
+    "operationId": "get_report_api_analytics_reports__report_id__get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "report_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Report Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/ReportResponse"
+    }
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    },
+    "delete": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Delete Report",
+    "description": "Delete a specific report.",
+    "operationId": "delete_report_api_analytics_reports__report_id__delete",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "report_id",
+    "in": "path",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "title": "Report Id"
+    }
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/kpis": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Kpi Metrics",
+    "description": "Get KPI metrics.",
+    "operationId": "get_kpi_metrics_api_analytics_kpis_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "category",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by KPI category",
+    "title": "Category"
+    },
+    "description": "Filter by KPI category"
+    },
+    {
+    "name": "period",
+    "in": "query",
+    "required": false,
+    "schema": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "description": "Filter by time period",
+    "title": "Period"
+    },
+    "description": "Filter by time period"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/api/analytics/dashboard-config": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Dashboard Config",
+    "description": "Get dashboard configuration for the current user.",
+    "operationId": "get_dashboard_config_api_analytics_dashboard_config_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
+    "/api/analytics/dashboard/real-time": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Get Realtime Dashboard Data",
+    "description": "Get real-time dashboard data for live updates.",
+    "operationId": "get_realtime_dashboard_data_api_analytics_dashboard_real_time_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    },
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ]
+    }
+    },
+    "/api/analytics/export/csv": {
+    "get": {
+    "tags": [
+    "analytics"
+    ],
+    "summary": "Export Analytics Csv",
+    "description": "Export analytics data as CSV.",
+    "operationId": "export_analytics_csv_api_analytics_export_csv_get",
+    "security": [
+    {
+    "CustomHTTPBearer": []
+    }
+    ],
+    "parameters": [
+    {
+    "name": "report_type",
+    "in": "query",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "description": "Type of report to export",
+    "title": "Report Type"
+    },
+    "description": "Type of report to export"
+    },
+    {
+    "name": "start_date",
+    "in": "query",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "format": "date-time",
+    "description": "Start date",
+    "title": "Start Date"
+    },
+    "description": "Start date"
+    },
+    {
+    "name": "end_date",
+    "in": "query",
+    "required": true,
+    "schema": {
+    "type": "string",
+    "format": "date-time",
+    "description": "End date",
+    "title": "End Date"
+    },
+    "description": "End date"
+    }
+    ],
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    },
+    "422": {
+    "description": "Validation Error",
+    "content": {
+    "application/json": {
+    "schema": {
+    "$ref": "#/components/schemas/HTTPValidationError"
+    }
+    }
+    }
+    }
+    }
+    }
+    },
+    "/socket.io/info": {
+    "get": {
+    "tags": [
+    "socketio"
+    ],
+    "summary": "Socketio Info",
+    "description": "Get Socket.IO connection information",
+    "operationId": "socketio_info_socket_io_info_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    }
+    }
+    },
+    "/socket.io/stats": {
+    "get": {
+    "tags": [
+    "socketio"
+    ],
+    "summary": "Socketio Stats",
+    "description": "Get Socket.IO connection statistics",
+    "operationId": "socketio_stats_socket_io_stats_get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    }
+    }
+    },
     "/api/realtime/demo/bus-location-update": {
     "post": {
     "tags": [
@@ -6015,6 +8022,75 @@
     ],
     "title": "AlertType"
     },
+    "AnalyticsSummaryResponse": {
+    "properties": {
+    "total_buses": {
+    "type": "integer",
+    "title": "Total Buses"
+    },
+    "active_buses": {
+    "type": "integer",
+    "title": "Active Buses"
+    },
+    "total_routes": {
+    "type": "integer",
+    "title": "Total Routes"
+    },
+    "active_routes": {
+    "type": "integer",
+    "title": "Active Routes"
+    },
+    "total_trips_today": {
+    "type": "integer",
+    "title": "Total Trips Today"
+    },
+    "completed_trips_today": {
+    "type": "integer",
+    "title": "Completed Trips Today"
+    },
+    "average_delay_minutes": {
+    "type": "number",
+    "title": "Average Delay Minutes"
+    },
+    "passenger_satisfaction_score": {
+    "type": "number",
+    "title": "Passenger Satisfaction Score"
+    },
+    "fuel_efficiency_score": {
+    "type": "number",
+    "title": "Fuel Efficiency Score"
+    },
+    "maintenance_alerts": {
+    "type": "integer",
+    "title": "Maintenance Alerts"
+    },
+    "safety_incidents": {
+    "type": "integer",
+    "title": "Safety Incidents"
+    },
+    "revenue_today": {
+    "type": "number",
+    "title": "Revenue Today"
+    }
+    },
+    "type": "object",
+    "required": [
+    "total_buses",
+    "active_buses",
+    "total_routes",
+    "active_routes",
+    "total_trips_today",
+    "completed_trips_today",
+    "average_delay_minutes",
+    "passenger_satisfaction_score",
+    "fuel_efficiency_score",
+    "maintenance_alerts",
+    "safety_incidents",
+    "revenue_today"
+    ],
+    "title": "AnalyticsSummaryResponse",
+    "description": "Summary analytics response."
+    },
     "ApprovalActionRequest": {
     "properties": {
     "action": {
@@ -6151,7 +8227,41 @@
     ],
     "title": "ApprovalStatus"
     },
-    "AttendanceRecordResponse": {
+    "AttendanceHeatmapResponse": {
+    "properties": {
+    "user_id": {
+    "type": "string",
+    "title": "User Id"
+    },
+    "date_from": {
+    "type": "string",
+    "format": "date",
+    "title": "Date From"
+    },
+    "date_to": {
+    "type": "string",
+    "format": "date",
+    "title": "Date To"
+    },
+    "attendance_data": {
+    "additionalProperties": {
+    "type": "string"
+    },
+    "type": "object",
+    "title": "Attendance Data"
+    }
+    },
+    "type": "object",
+    "required": [
+    "user_id",
+    "date_from",
+    "date_to",
+    "attendance_data"
+    ],
+    "title": "AttendanceHeatmapResponse",
+    "description": "Response for attendance heatmap data"
+    },
+    "AttendanceResponse": {
     "properties": {
     "id": {
     "type": "string",
@@ -6161,13 +8271,37 @@
     "type": "string",
     "title": "User Id"
     },
-    "timestamp": {
+    "date": {
     "type": "string",
-    "format": "date-time",
-    "title": "Timestamp"
+    "format": "date",
+    "title": "Date"
     },
-    "type": {
-    "$ref": "#/components/schemas/AttendanceType"
+    "status": {
+    "$ref": "#/components/schemas/AttendanceStatus"
+    },
+    "check_in_time": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Check In Time"
+    },
+    "check_out_time": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Check Out Time"
     },
     "location": {
     "anyOf": [
@@ -6178,24 +8312,101 @@
     "type": "null"
     }
     ]
+    },
+    "notes": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Notes"
+    },
+    "marked_by": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Marked By"
+    },
+    "marked_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Marked At"
     }
     },
     "type": "object",
     "required": [
     "id",
     "user_id",
-    "timestamp",
-    "type"
+    "date",
+    "status",
+    "marked_at"
     ],
-    "title": "AttendanceRecordResponse"
+    "title": "AttendanceResponse",
+    "description": "Response for attendance record"
     },
-    "AttendanceType": {
+    "AttendanceStatus": {
     "type": "string",
     "enum": [
-    "CHECK_IN",
-    "CHECK_OUT"
+    "PRESENT",
+    "ABSENT",
+    "LATE"
     ],
-    "title": "AttendanceType"
+    "title": "AttendanceStatus"
+    },
+    "AttendanceSummaryResponse": {
+    "properties": {
+    "user_id": {
+    "type": "string",
+    "title": "User Id"
+    },
+    "total_days": {
+    "type": "integer",
+    "title": "Total Days"
+    },
+    "present_days": {
+    "type": "integer",
+    "title": "Present Days"
+    },
+    "absent_days": {
+    "type": "integer",
+    "title": "Absent Days"
+    },
+    "late_days": {
+    "type": "integer",
+    "title": "Late Days"
+    },
+    "attendance_percentage": {
+    "type": "number",
+    "title": "Attendance Percentage"
+    },
+    "records": {
+    "items": {
+    "$ref": "#/components/schemas/AttendanceResponse"
+    },
+    "type": "array",
+    "title": "Records"
+    }
+    },
+    "type": "object",
+    "required": [
+    "user_id",
+    "total_days",
+    "present_days",
+    "absent_days",
+    "late_days",
+    "attendance_percentage",
+    "records"
+    ],
+    "title": "AttendanceSummaryResponse",
+    "description": "Summary of attendance for a user over a period"
     },
     "AuthorizePaymentRequest": {
     "properties": {
@@ -6321,6 +8532,290 @@
     ],
     "title": "BroadcastNotificationRequest"
     },
+    "BulkAttendanceRequest": {
+    "properties": {
+    "date": {
+    "type": "string",
+    "format": "date",
+    "title": "Date"
+    },
+    "attendance_records": {
+    "items": {
+    "$ref": "#/components/schemas/MarkAttendanceRequest"
+    },
+    "type": "array",
+    "title": "Attendance Records"
+    }
+    },
+    "type": "object",
+    "required": [
+    "date",
+    "attendance_records"
+    ],
+    "title": "BulkAttendanceRequest",
+    "description": "Request to mark attendance for multiple users"
+    },
+    "BusDetailedResponse": {
+    "properties": {
+    "created_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Created At"
+    },
+    "updated_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Updated At"
+    },
+    "id": {
+    "type": "string",
+    "title": "Id"
+    },
+    "license_plate": {
+    "type": "string",
+    "title": "License Plate"
+    },
+    "bus_type": {
+    "$ref": "#/components/schemas/BusType"
+    },
+    "capacity": {
+    "type": "integer",
+    "title": "Capacity"
+    },
+    "bus_status": {
+    "$ref": "#/components/schemas/BusStatus"
+    },
+    "manufacture_year": {
+    "anyOf": [
+    {
+    "type": "integer"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Manufacture Year"
+    },
+    "bus_model": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Bus Model"
+    },
+    "current_location": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/Location"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "last_location_update": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Last Location Update"
+    },
+    "heading": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Heading"
+    },
+    "speed": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Speed"
+    },
+    "location_accuracy": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Location Accuracy"
+    },
+    "current_address": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Current Address"
+    },
+    "assigned_driver": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/UserResponse"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "current_route": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/RouteInfo"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "current_trip": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/CurrentTripInfo"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "is_tracking_active": {
+    "type": "boolean",
+    "title": "Is Tracking Active",
+    "default": false
+    },
+    "last_ping": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Last Ping"
+    },
+    "total_trips_today": {
+    "anyOf": [
+    {
+    "type": "integer"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Total Trips Today"
+    },
+    "average_speed_today": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Average Speed Today"
+    },
+    "distance_covered_today": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Distance Covered Today"
+    }
+    },
+    "type": "object",
+    "required": [
+    "id",
+    "license_plate",
+    "bus_type",
+    "capacity",
+    "bus_status"
+    ],
+    "title": "BusDetailedResponse",
+    "description": "Comprehensive bus information returned when a bus is clicked"
+    },
+    "BusETAResponse": {
+    "properties": {
+    "bus_id": {
+    "type": "string",
+    "title": "Bus Id"
+    },
+    "route_id": {
+    "type": "string",
+    "title": "Route Id"
+    },
+    "current_location": {
+    "additionalProperties": {
+    "type": "number"
+    },
+    "type": "object",
+    "title": "Current Location"
+    },
+    "current_speed_kmh": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Current Speed Kmh"
+    },
+    "stop_etas": {
+    "items": {
+    "$ref": "#/components/schemas/ETAResponse"
+    },
+    "type": "array",
+    "title": "Stop Etas"
+    },
+    "calculated_at": {
+    "type": "string",
+    "title": "Calculated At"
+    }
+    },
+    "type": "object",
+    "required": [
+    "bus_id",
+    "route_id",
+    "current_location",
+    "stop_etas",
+    "calculated_at"
+    ],
+    "title": "BusETAResponse",
+    "description": "Bus ETA to all stops on route"
+    },
     "BusResponse": {
     "properties": {
     "created_at": {
@@ -6436,6 +8931,16 @@
     ],
     "title": "Assigned Driver Id"
     },
+    "assigned_driver": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/UserResponse"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
     "bus_status": {
     "$ref": "#/components/schemas/BusStatus"
     },
@@ -6541,6 +9046,16 @@
     },
     "ConversationResponse": {
     "properties": {
+    "created_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Created At"
+    },
+    "updated_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Updated At"
+    },
     "id": {
     "type": "string",
     "title": "Id"
@@ -6551,6 +9066,19 @@
     },
     "type": "array",
     "title": "Participants"
+    },
+    "title": {
+    "type": "string",
+    "title": "Title"
+    },
+    "status": {
+    "type": "string",
+    "title": "Status",
+    "default": "ACTIVE"
+    },
+    "created_by": {
+    "type": "string",
+    "title": "Created By"
     },
     "last_message_at": {
     "anyOf": [
@@ -6568,7 +9096,9 @@
     "type": "object",
     "required": [
     "id",
-    "participants"
+    "participants",
+    "title",
+    "created_by"
     ],
     "title": "ConversationResponse"
     },
@@ -6625,28 +9155,6 @@
     "severity"
     ],
     "title": "CreateAlertRequest"
-    },
-    "CreateAttendanceRecordRequest": {
-    "properties": {
-    "type": {
-    "$ref": "#/components/schemas/AttendanceType"
-    },
-    "location": {
-    "anyOf": [
-    {
-    "$ref": "#/components/schemas/Location"
-    },
-    {
-    "type": "null"
-    }
-    ]
-    }
-    },
-    "type": "object",
-    "required": [
-    "type"
-    ],
-    "title": "CreateAttendanceRecordRequest"
     },
     "CreateBusRequest": {
     "properties": {
@@ -6728,6 +9236,30 @@
     "is_active"
     ],
     "title": "CreateBusStopRequest"
+    },
+    "CreateConversationRequest": {
+    "properties": {
+    "title": {
+    "type": "string",
+    "maxLength": 200,
+    "minLength": 1,
+    "title": "Title",
+    "description": "Brief title for the conversation"
+    },
+    "content": {
+    "type": "string",
+    "maxLength": 1000,
+    "minLength": 1,
+    "title": "Content",
+    "description": "Initial message content"
+    }
+    },
+    "type": "object",
+    "required": [
+    "title",
+    "content"
+    ],
+    "title": "CreateConversationRequest"
     },
     "CreatePaymentMethodRequest": {
     "properties": {
@@ -6876,6 +9408,194 @@
     ],
     "title": "CreateRouteRequest"
     },
+    "CurrentTripInfo": {
+    "properties": {
+    "id": {
+    "type": "string",
+    "title": "Id"
+    },
+    "status": {
+    "type": "string",
+    "title": "Status"
+    },
+    "actual_departure_time": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Actual Departure Time"
+    },
+    "estimated_arrival_time": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Estimated Arrival Time"
+    },
+    "passenger_count": {
+    "anyOf": [
+    {
+    "type": "integer"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Passenger Count"
+    }
+    },
+    "type": "object",
+    "required": [
+    "id",
+    "status"
+    ],
+    "title": "CurrentTripInfo",
+    "description": "Current trip information for detailed bus response"
+    },
+    "DriverAssignmentResponse": {
+    "properties": {
+    "message": {
+    "type": "string",
+    "title": "Message"
+    },
+    "bus_id": {
+    "type": "string",
+    "title": "Bus Id"
+    },
+    "driver_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Driver Id"
+    },
+    "driver_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Driver Name"
+    },
+    "assignment_timestamp": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Assignment Timestamp"
+    },
+    "previous_driver_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Previous Driver Id"
+    }
+    },
+    "type": "object",
+    "required": [
+    "message",
+    "bus_id",
+    "assignment_timestamp"
+    ],
+    "title": "DriverAssignmentResponse",
+    "description": "Response for driver assignment operations"
+    },
+    "ETAResponse": {
+    "properties": {
+    "stop_id": {
+    "type": "string",
+    "title": "Stop Id"
+    },
+    "stop_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Stop Name"
+    },
+    "duration_seconds": {
+    "type": "number",
+    "title": "Duration Seconds"
+    },
+    "duration_minutes": {
+    "type": "number",
+    "title": "Duration Minutes"
+    },
+    "distance_meters": {
+    "type": "number",
+    "title": "Distance Meters"
+    },
+    "distance_km": {
+    "type": "number",
+    "title": "Distance Km"
+    },
+    "estimated_arrival": {
+    "type": "string",
+    "title": "Estimated Arrival"
+    },
+    "traffic_aware": {
+    "type": "boolean",
+    "title": "Traffic Aware",
+    "default": true
+    },
+    "current_speed_kmh": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Current Speed Kmh"
+    },
+    "calculated_at": {
+    "type": "string",
+    "title": "Calculated At"
+    },
+    "fallback_calculation": {
+    "type": "boolean",
+    "title": "Fallback Calculation",
+    "default": false
+    }
+    },
+    "type": "object",
+    "required": [
+    "stop_id",
+    "duration_seconds",
+    "duration_minutes",
+    "distance_meters",
+    "distance_km",
+    "estimated_arrival",
+    "calculated_at"
+    ],
+    "title": "ETAResponse",
+    "description": "ETA calculation response"
+    },
     "FeedbackResponse": {
     "properties": {
     "created_at": {
@@ -6942,6 +9662,55 @@
     ],
     "title": "FeedbackResponse"
     },
+    "FinancialMetricsResponse": {
+    "properties": {
+    "daily_revenue": {
+    "type": "number",
+    "title": "Daily Revenue"
+    },
+    "monthly_revenue": {
+    "type": "number",
+    "title": "Monthly Revenue"
+    },
+    "operating_costs": {
+    "type": "number",
+    "title": "Operating Costs"
+    },
+    "profit_margin": {
+    "type": "number",
+    "title": "Profit Margin"
+    },
+    "cost_per_kilometer": {
+    "type": "number",
+    "title": "Cost Per Kilometer"
+    },
+    "revenue_per_passenger": {
+    "type": "number",
+    "title": "Revenue Per Passenger"
+    },
+    "fuel_costs": {
+    "type": "number",
+    "title": "Fuel Costs"
+    },
+    "maintenance_costs": {
+    "type": "number",
+    "title": "Maintenance Costs"
+    }
+    },
+    "type": "object",
+    "required": [
+    "daily_revenue",
+    "monthly_revenue",
+    "operating_costs",
+    "profit_margin",
+    "cost_per_kilometer",
+    "revenue_per_passenger",
+    "fuel_costs",
+    "maintenance_costs"
+    ],
+    "title": "FinancialMetricsResponse",
+    "description": "Financial metrics response."
+    },
     "ForgotPasswordRequest": {
     "properties": {
     "email": {
@@ -6955,6 +9724,14 @@
     "email"
     ],
     "title": "ForgotPasswordRequest"
+    },
+    "Gender": {
+    "type": "string",
+    "enum": [
+    "MALE",
+    "FEMALE"
+    ],
+    "title": "Gender"
     },
     "HTTPValidationError": {
     "properties": {
@@ -6992,6 +9769,9 @@
     "description": {
     "type": "string",
     "title": "Description"
+    },
+    "incident_type": {
+    "$ref": "#/components/schemas/IncidentType"
     },
     "location": {
     "anyOf": [
@@ -7049,6 +9829,7 @@
     "id",
     "reported_by_user_id",
     "description",
+    "incident_type",
     "is_resolved",
     "severity"
     ],
@@ -7063,6 +9844,15 @@
     "CRITICAL"
     ],
     "title": "IncidentSeverity"
+    },
+    "IncidentType": {
+    "type": "string",
+    "enum": [
+    "VEHICLE_ISSUE",
+    "SAFETY_CONCERN",
+    "OTHER"
+    ],
+    "title": "IncidentType"
     },
     "InitiatePaymentRequest": {
     "properties": {
@@ -7318,6 +10108,75 @@
     ],
     "title": "LoginRequest"
     },
+    "MarkAttendanceRequest": {
+    "properties": {
+    "user_id": {
+    "type": "string",
+    "title": "User Id"
+    },
+    "date": {
+    "type": "string",
+    "format": "date",
+    "title": "Date"
+    },
+    "status": {
+    "$ref": "#/components/schemas/AttendanceStatus"
+    },
+    "check_in_time": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Check In Time"
+    },
+    "check_out_time": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Check Out Time"
+    },
+    "location": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/Location"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "notes": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Notes"
+    }
+    },
+    "type": "object",
+    "required": [
+    "user_id",
+    "date",
+    "status"
+    ],
+    "title": "MarkAttendanceRequest",
+    "description": "Request to mark attendance status"
+    },
     "MessageResponse": {
     "properties": {
     "created_at": {
@@ -7347,14 +10206,7 @@
     "title": "Content"
     },
     "message_type": {
-    "anyOf": [
-    {
-    "type": "string"
-    },
-    {
-    "type": "null"
-    }
-    ],
+    "type": "string",
     "title": "Message Type",
     "default": "TEXT"
     },
@@ -7463,6 +10315,166 @@
     "REMINDER"
     ],
     "title": "NotificationType"
+    },
+    "OperationalMetricsResponse": {
+    "properties": {
+    "on_time_performance": {
+    "type": "number",
+    "title": "On Time Performance"
+    },
+    "average_trip_duration": {
+    "type": "number",
+    "title": "Average Trip Duration"
+    },
+    "bus_utilization_rate": {
+    "type": "number",
+    "title": "Bus Utilization Rate"
+    },
+    "route_efficiency_score": {
+    "type": "number",
+    "title": "Route Efficiency Score"
+    },
+    "passenger_load_factor": {
+    "type": "number",
+    "title": "Passenger Load Factor"
+    },
+    "service_reliability": {
+    "type": "number",
+    "title": "Service Reliability"
+    },
+    "breakdown_incidents": {
+    "type": "integer",
+    "title": "Breakdown Incidents"
+    },
+    "maintenance_compliance": {
+    "type": "number",
+    "title": "Maintenance Compliance"
+    }
+    },
+    "type": "object",
+    "required": [
+    "on_time_performance",
+    "average_trip_duration",
+    "bus_utilization_rate",
+    "route_efficiency_score",
+    "passenger_load_factor",
+    "service_reliability",
+    "breakdown_incidents",
+    "maintenance_compliance"
+    ],
+    "title": "OperationalMetricsResponse",
+    "description": "Operational metrics response."
+    },
+    "OvercrowdingReportResponse": {
+    "properties": {
+    "created_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Created At"
+    },
+    "updated_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Updated At"
+    },
+    "id": {
+    "type": "string",
+    "title": "Id"
+    },
+    "reported_by_user_id": {
+    "type": "string",
+    "title": "Reported By User Id"
+    },
+    "bus_stop_id": {
+    "type": "string",
+    "title": "Bus Stop Id"
+    },
+    "bus_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Bus Id"
+    },
+    "route_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Route Id"
+    },
+    "severity": {
+    "$ref": "#/components/schemas/OvercrowdingSeverity"
+    },
+    "passenger_count": {
+    "anyOf": [
+    {
+    "type": "integer"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Passenger Count"
+    },
+    "description": {
+    "type": "string",
+    "title": "Description"
+    },
+    "location": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/Location"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "is_resolved": {
+    "type": "boolean",
+    "title": "Is Resolved",
+    "default": false
+    },
+    "resolution_notes": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Resolution Notes"
+    }
+    },
+    "type": "object",
+    "required": [
+    "id",
+    "reported_by_user_id",
+    "bus_stop_id",
+    "severity",
+    "description"
+    ],
+    "title": "OvercrowdingReportResponse"
+    },
+    "OvercrowdingSeverity": {
+    "type": "string",
+    "enum": [
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "CRITICAL"
+    ],
+    "title": "OvercrowdingSeverity"
     },
     "PaymentMethod": {
     "type": "string",
@@ -7674,6 +10686,351 @@
     ],
     "title": "PaymentStatus"
     },
+    "PerformanceMetricsResponse": {
+    "properties": {
+    "driver_performance_avg": {
+    "type": "number",
+    "title": "Driver Performance Avg"
+    },
+    "regulator_response_time": {
+    "type": "number",
+    "title": "Regulator Response Time"
+    },
+    "customer_complaint_resolution": {
+    "type": "number",
+    "title": "Customer Complaint Resolution"
+    },
+    "safety_score": {
+    "type": "number",
+    "title": "Safety Score"
+    },
+    "service_quality_index": {
+    "type": "number",
+    "title": "Service Quality Index"
+    },
+    "operational_efficiency": {
+    "type": "number",
+    "title": "Operational Efficiency"
+    }
+    },
+    "type": "object",
+    "required": [
+    "driver_performance_avg",
+    "regulator_response_time",
+    "customer_complaint_resolution",
+    "safety_score",
+    "service_quality_index",
+    "operational_efficiency"
+    ],
+    "title": "PerformanceMetricsResponse",
+    "description": "Performance metrics response."
+    },
+    "ReallocationHistoryResponse": {
+    "properties": {
+    "created_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Created At"
+    },
+    "updated_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Updated At"
+    },
+    "id": {
+    "type": "string",
+    "title": "Id"
+    },
+    "bus_id": {
+    "type": "string",
+    "title": "Bus Id"
+    },
+    "bus_number": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Bus Number"
+    },
+    "old_route_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Old Route Id"
+    },
+    "old_route_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Old Route Name"
+    },
+    "new_route_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "New Route Id"
+    },
+    "new_route_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "New Route Name"
+    },
+    "reason": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/ReallocationReason"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "description": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Description"
+    },
+    "priority": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Priority"
+    },
+    "status": {
+    "$ref": "#/components/schemas/ReallocationStatus"
+    },
+    "requested_by_user_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Requested By User Id"
+    },
+    "requested_by_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Requested By Name"
+    },
+    "reallocated_by": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Reallocated By"
+    },
+    "reallocated_by_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Reallocated By Name"
+    },
+    "reviewed_by": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Reviewed By"
+    },
+    "reviewed_by_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Reviewed By Name"
+    },
+    "reviewed_at": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Reviewed At"
+    },
+    "reallocated_at": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Reallocated At"
+    },
+    "review_notes": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Review Notes"
+    },
+    "reallocation_type": {
+    "type": "string",
+    "title": "Reallocation Type"
+    }
+    },
+    "type": "object",
+    "required": [
+    "id",
+    "bus_id",
+    "status",
+    "reallocation_type"
+    ],
+    "title": "ReallocationHistoryResponse"
+    },
+    "ReallocationReason": {
+    "type": "string",
+    "enum": [
+    "OVERCROWDING",
+    "ROUTE_DISRUPTION",
+    "MAINTENANCE_REQUIRED",
+    "EMERGENCY",
+    "SCHEDULE_OPTIMIZATION",
+    "OTHER"
+    ],
+    "title": "ReallocationReason"
+    },
+    "ReallocationRequestResponse": {
+    "properties": {
+    "created_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Created At"
+    },
+    "updated_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Updated At"
+    },
+    "id": {
+    "type": "string",
+    "title": "Id"
+    },
+    "requested_by_user_id": {
+    "type": "string",
+    "title": "Requested By User Id"
+    },
+    "bus_id": {
+    "type": "string",
+    "title": "Bus Id"
+    },
+    "current_route_id": {
+    "type": "string",
+    "title": "Current Route Id"
+    },
+    "requested_route_id": {
+    "type": "string",
+    "title": "Requested Route Id"
+    },
+    "reason": {
+    "$ref": "#/components/schemas/ReallocationReason"
+    },
+    "description": {
+    "type": "string",
+    "title": "Description"
+    },
+    "priority": {
+    "type": "string",
+    "title": "Priority"
+    },
+    "status": {
+    "$ref": "#/components/schemas/ReallocationStatus"
+    }
+    },
+    "type": "object",
+    "required": [
+    "id",
+    "requested_by_user_id",
+    "bus_id",
+    "current_route_id",
+    "requested_route_id",
+    "reason",
+    "description",
+    "priority",
+    "status"
+    ],
+    "title": "ReallocationRequestResponse"
+    },
+    "ReallocationStatus": {
+    "type": "string",
+    "enum": [
+    "PENDING",
+    "APPROVED",
+    "REJECTED",
+    "COMPLETED"
+    ],
+    "title": "ReallocationStatus"
+    },
     "RegisterPersonnelRequest": {
     "properties": {
     "first_name": {
@@ -7766,6 +11123,220 @@
     }
     ],
     "title": "Profile Image"
+    },
+    "date_of_birth": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Date Of Birth"
+    },
+    "gender": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/Gender"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "nationality": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Nationality"
+    },
+    "national_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "National Id"
+    },
+    "street_address": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Street Address"
+    },
+    "city": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "City"
+    },
+    "state_region": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "State Region"
+    },
+    "postal_code": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Postal Code"
+    },
+    "country": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Country",
+    "default": "Ethiopia"
+    },
+    "emergency_contact_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Name"
+    },
+    "emergency_contact_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Phone"
+    },
+    "emergency_contact_relationship": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Relationship"
+    },
+    "secondary_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Secondary Phone"
+    },
+    "work_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Work Phone"
+    },
+    "preferred_language": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Preferred Language",
+    "default": "en"
+    },
+    "preferred_payment_method": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Preferred Payment Method"
+    },
+    "student_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Student Discount Eligible",
+    "default": false
+    },
+    "senior_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Senior Discount Eligible",
+    "default": false
+    },
+    "disability_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Disability Discount Eligible",
+    "default": false
     }
     },
     "type": "object",
@@ -7801,6 +11372,9 @@
     "description": {
     "type": "string",
     "title": "Description"
+    },
+    "incident_type": {
+    "$ref": "#/components/schemas/IncidentType"
     },
     "location": {
     "anyOf": [
@@ -7841,9 +11415,271 @@
     "type": "object",
     "required": [
     "description",
+    "incident_type",
     "severity"
     ],
     "title": "ReportIncidentRequest"
+    },
+    "ReportOvercrowdingRequest": {
+    "properties": {
+    "bus_stop_id": {
+    "type": "string",
+    "title": "Bus Stop Id"
+    },
+    "bus_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Bus Id"
+    },
+    "route_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Route Id"
+    },
+    "severity": {
+    "$ref": "#/components/schemas/OvercrowdingSeverity"
+    },
+    "passenger_count": {
+    "anyOf": [
+    {
+    "type": "integer"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Passenger Count"
+    },
+    "description": {
+    "type": "string",
+    "title": "Description"
+    },
+    "location": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/Location"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    }
+    },
+    "type": "object",
+    "required": [
+    "bus_stop_id",
+    "severity",
+    "description"
+    ],
+    "title": "ReportOvercrowdingRequest"
+    },
+    "ReportRequest": {
+    "properties": {
+    "title": {
+    "type": "string",
+    "title": "Title"
+    },
+    "report_type": {
+    "type": "string",
+    "title": "Report Type"
+    },
+    "period": {
+    "type": "string",
+    "title": "Period"
+    },
+    "start_date": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Start Date"
+    },
+    "end_date": {
+    "type": "string",
+    "format": "date-time",
+    "title": "End Date"
+    },
+    "filters": {
+    "anyOf": [
+    {
+    "additionalProperties": true,
+    "type": "object"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Filters"
+    }
+    },
+    "type": "object",
+    "required": [
+    "title",
+    "report_type",
+    "period",
+    "start_date",
+    "end_date"
+    ],
+    "title": "ReportRequest",
+    "description": "Request schema for generating reports."
+    },
+    "ReportResponse": {
+    "properties": {
+    "created_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Created At"
+    },
+    "updated_at": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Updated At"
+    },
+    "id": {
+    "type": "string",
+    "title": "Id"
+    },
+    "title": {
+    "type": "string",
+    "title": "Title"
+    },
+    "report_type": {
+    "type": "string",
+    "title": "Report Type"
+    },
+    "period": {
+    "type": "string",
+    "title": "Period"
+    },
+    "start_date": {
+    "type": "string",
+    "format": "date-time",
+    "title": "Start Date"
+    },
+    "end_date": {
+    "type": "string",
+    "format": "date-time",
+    "title": "End Date"
+    },
+    "generated_by": {
+    "type": "string",
+    "title": "Generated By"
+    },
+    "data": {
+    "additionalProperties": true,
+    "type": "object",
+    "title": "Data"
+    },
+    "filters": {
+    "anyOf": [
+    {
+    "additionalProperties": true,
+    "type": "object"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Filters"
+    },
+    "status": {
+    "type": "string",
+    "title": "Status"
+    },
+    "file_path": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "File Path"
+    }
+    },
+    "type": "object",
+    "required": [
+    "id",
+    "title",
+    "report_type",
+    "period",
+    "start_date",
+    "end_date",
+    "generated_by",
+    "data",
+    "status"
+    ],
+    "title": "ReportResponse",
+    "description": "Response schema for reports."
+    },
+    "RequestReallocationRequest": {
+    "properties": {
+    "bus_id": {
+    "type": "string",
+    "title": "Bus Id"
+    },
+    "current_route_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Current Route Id"
+    },
+    "requested_route_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Requested Route Id"
+    },
+    "reason": {
+    "$ref": "#/components/schemas/ReallocationReason"
+    },
+    "description": {
+    "type": "string",
+    "title": "Description"
+    },
+    "priority": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Priority",
+    "default": "NORMAL"
+    }
+    },
+    "type": "object",
+    "required": [
+    "bus_id",
+    "current_route_id",
+    "requested_route_id",
+    "reason",
+    "description"
+    ],
+    "title": "RequestReallocationRequest"
     },
     "ResetPasswordRequest": {
     "properties": {
@@ -7974,6 +11810,83 @@
     ],
     "title": "RouteChangeResponse"
     },
+    "RouteInfo": {
+    "properties": {
+    "id": {
+    "type": "string",
+    "title": "Id"
+    },
+    "name": {
+    "type": "string",
+    "title": "Name"
+    },
+    "description": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Description"
+    },
+    "total_distance": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Total Distance"
+    },
+    "estimated_duration": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Estimated Duration"
+    },
+    "start_destination": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/BusStopResponse"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "end_destination": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/BusStopResponse"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "total_stops": {
+    "type": "integer",
+    "title": "Total Stops",
+    "default": 0
+    }
+    },
+    "type": "object",
+    "required": [
+    "id",
+    "name"
+    ],
+    "title": "RouteInfo",
+    "description": "Route information for detailed bus response"
+    },
     "RouteResponse": {
     "properties": {
     "created_at": {
@@ -8037,6 +11950,42 @@
     "is_active": {
     "type": "boolean",
     "title": "Is Active"
+    },
+    "route_geometry": {
+    "anyOf": [
+    {
+    "additionalProperties": true,
+    "type": "object"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Route Geometry"
+    },
+    "route_shape_data": {
+    "anyOf": [
+    {
+    "additionalProperties": true,
+    "type": "object"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Route Shape Data"
+    },
+    "last_shape_update": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date-time"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Last Shape Update"
     }
     },
     "type": "object",
@@ -8048,21 +11997,57 @@
     ],
     "title": "RouteResponse"
     },
+    "RouteShapeResponse": {
+    "properties": {
+    "route_id": {
+    "type": "string",
+    "title": "Route Id"
+    },
+    "geometry": {
+    "additionalProperties": true,
+    "type": "object",
+    "title": "Geometry"
+    },
+    "distance_meters": {
+    "type": "number",
+    "title": "Distance Meters"
+    },
+    "duration_seconds": {
+    "type": "number",
+    "title": "Duration Seconds"
+    },
+    "profile": {
+    "type": "string",
+    "title": "Profile"
+    },
+    "created_at": {
+    "type": "string",
+    "title": "Created At"
+    }
+    },
+    "type": "object",
+    "required": [
+    "route_id",
+    "geometry",
+    "distance_meters",
+    "duration_seconds",
+    "profile",
+    "created_at"
+    ],
+    "title": "RouteShapeResponse",
+    "description": "Route shape data response"
+    },
     "SendMessageRequest": {
     "properties": {
     "content": {
     "type": "string",
-    "title": "Content"
+    "maxLength": 1000,
+    "minLength": 1,
+    "title": "Content",
+    "description": "Message content"
     },
     "message_type": {
-    "anyOf": [
-    {
-    "type": "string"
-    },
-    {
-    "type": "null"
-    }
-    ],
+    "type": "string",
     "title": "Message Type",
     "default": "TEXT"
     }
@@ -8451,6 +12436,30 @@
     },
     "type": "object",
     "title": "UpdateAlertRequest"
+    },
+    "UpdateAttendanceStatusRequest": {
+    "properties": {
+    "status": {
+    "$ref": "#/components/schemas/AttendanceStatus"
+    },
+    "notes": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Notes"
+    }
+    },
+    "type": "object",
+    "required": [
+    "status"
+    ],
+    "title": "UpdateAttendanceStatusRequest",
+    "description": "Request to update attendance status"
     },
     "UpdateBusRequest": {
     "properties": {
@@ -8885,6 +12894,215 @@
     }
     ],
     "title": "Profile Image"
+    },
+    "date_of_birth": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Date Of Birth"
+    },
+    "gender": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/Gender"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "nationality": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Nationality"
+    },
+    "national_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "National Id"
+    },
+    "street_address": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Street Address"
+    },
+    "city": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "City"
+    },
+    "state_region": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "State Region"
+    },
+    "postal_code": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Postal Code"
+    },
+    "country": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Country"
+    },
+    "emergency_contact_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Name"
+    },
+    "emergency_contact_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Phone"
+    },
+    "emergency_contact_relationship": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Relationship"
+    },
+    "secondary_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Secondary Phone"
+    },
+    "work_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Work Phone"
+    },
+    "preferred_language": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Preferred Language"
+    },
+    "preferred_payment_method": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Preferred Payment Method"
+    },
+    "student_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Student Discount Eligible"
+    },
+    "senior_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Senior Discount Eligible"
+    },
+    "disability_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Disability Discount Eligible"
     }
     },
     "type": "object",
@@ -8940,6 +13158,259 @@
     "is_active": {
     "type": "boolean",
     "title": "Is Active"
+    },
+    "date_of_birth": {
+    "anyOf": [
+    {
+    "type": "string",
+    "format": "date"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Date Of Birth"
+    },
+    "gender": {
+    "anyOf": [
+    {
+    "$ref": "#/components/schemas/Gender"
+    },
+    {
+    "type": "null"
+    }
+    ]
+    },
+    "nationality": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Nationality"
+    },
+    "national_id": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "National Id"
+    },
+    "street_address": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Street Address"
+    },
+    "city": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "City"
+    },
+    "state_region": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "State Region"
+    },
+    "postal_code": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Postal Code"
+    },
+    "country": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Country"
+    },
+    "emergency_contact_name": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Name"
+    },
+    "emergency_contact_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Phone"
+    },
+    "emergency_contact_relationship": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Emergency Contact Relationship"
+    },
+    "secondary_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Secondary Phone"
+    },
+    "work_phone": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Work Phone"
+    },
+    "preferred_language": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Preferred Language"
+    },
+    "is_verified": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Is Verified"
+    },
+    "preferred_payment_method": {
+    "anyOf": [
+    {
+    "type": "string"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Preferred Payment Method"
+    },
+    "monthly_pass_active": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Monthly Pass Active"
+    },
+    "student_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Student Discount Eligible"
+    },
+    "senior_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Senior Discount Eligible"
+    },
+    "disability_discount_eligible": {
+    "anyOf": [
+    {
+    "type": "boolean"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Disability Discount Eligible"
+    },
+    "total_trips": {
+    "anyOf": [
+    {
+    "type": "integer"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Total Trips"
+    },
+    "total_distance_traveled": {
+    "anyOf": [
+    {
+    "type": "number"
+    },
+    {
+    "type": "null"
+    }
+    ],
+    "title": "Total Distance Traveled"
     }
     },
     "type": "object",

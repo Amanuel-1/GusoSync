@@ -1,10 +1,11 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, Shield, Calendar, MapPin, Clock, Route, Bus, Users, Activity, Award, CheckCircle, XCircle } from 'lucide-react';
+import { X, User, Mail, Phone, Shield, Calendar, Clock, Bus, Users, Activity, Award, CheckCircle, XCircle } from 'lucide-react';
 import { type User as UserType } from '@/services/userService';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
+import attendanceService, { type AttendanceRecord, type AttendanceHeatmapData } from '@/services/attendanceService';
 
 interface UserDetailsModalProps {
   isOpen: boolean;
@@ -12,27 +13,13 @@ interface UserDetailsModalProps {
   user: UserType | null;
 }
 
-interface AttendanceData {
-  date: string;
-  status: 'present' | 'absent' | 'late';
-  checkIn?: string;
-  checkOut?: string;
-}
-
 interface HeatmapValue {
   date: string;
   count: number;
-  status?: 'present' | 'absent' | 'late';
+  status?: 'PRESENT' | 'ABSENT' | 'LATE';
 }
 
-interface RouteData {
-  id: string;
-  name: string;
-  totalTrips: number;
-  completedTrips: number;
-  lastDriven: string;
-  rating: number;
-}
+
 
 interface PerformanceMetrics {
   totalDays: number;
@@ -43,95 +30,189 @@ interface PerformanceMetrics {
 }
 
 export default function UserDetailsModal({ isOpen, onClose, user }: UserDetailsModalProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'performance' | 'history'>('overview');
-  const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'history'>('overview');
+  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [heatmapData, setHeatmapData] = useState<HeatmapValue[]>([]);
-  const [routeData, setRouteData] = useState<RouteData[]>([]);
-  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  // Mock data - replace with actual API calls
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
+
+  // Fetch real attendance data from API
   useEffect(() => {
     if (isOpen && user) {
       setLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        // Mock attendance data for recent records
-        const mockAttendance: AttendanceData[] = Array.from({ length: 30 }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const statuses: ('present' | 'absent' | 'late')[] = ['present', 'present', 'present', 'late', 'absent'];
-          const status = statuses[Math.floor(Math.random() * statuses.length)];
+      fetchAttendanceData();
+    }
+  }, [isOpen, user]);
 
-          return {
-            date: date.toISOString().split('T')[0],
-            status,
-            checkIn: status !== 'absent' ? `${7 + Math.floor(Math.random() * 2)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}` : undefined,
-            checkOut: status !== 'absent' ? `${17 + Math.floor(Math.random() * 2)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}` : undefined,
-          };
-        });
+  const fetchAttendanceData = async () => {
+    try {
+      setAttendanceError(null);
+      const currentYear = new Date().getFullYear();
+      const yearStart = `${currentYear}-01-01`;
+      const yearEnd = `${currentYear}-12-31`;
 
-        // Generate heatmap data for the entire current year (all 12 months)
-        const mockHeatmapData: HeatmapValue[] = [];
-        const currentYear = new Date().getFullYear();
-        const startDate = new Date(currentYear, 0, 1); // January 1st of current year
-        const endDate = new Date(currentYear, 11, 31); // December 31st of current year
-        const today = new Date();
+      console.log('Fetching attendance data for user:', {
+        userId: user?.id,
+        userEmail: user?.email,
+        userRole: user?.role,
+        dateRange: { yearStart, yearEnd }
+      });
 
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split('T')[0];
+      // Fetch basic attendance records for the user (without date filters)
+      const recordsResponse = await attendanceService.getAttendanceRecords({
+        user_id: user?.id,
+      });
 
-          // Only generate attendance data for past dates and today
-          if (d <= today) {
-            const statuses: ('present' | 'absent' | 'late')[] = ['present', 'present', 'present', 'present', 'late', 'absent'];
-            const status = statuses[Math.floor(Math.random() * statuses.length)];
+      if (recordsResponse.success && recordsResponse.data) {
+        setAttendanceData(recordsResponse.data);
 
-            // Convert status to count for heatmap (present=3, late=2, absent=1, no data=0)
-            const count = status === 'present' ? 3 : status === 'late' ? 2 : status === 'absent' ? 1 : 0;
+        // Calculate metrics from records
+        const records = recordsResponse.data;
+        const presentDays = records.filter(r => r.status === 'PRESENT').length;
+        const lateDays = records.filter(r => r.status === 'LATE').length;
+        const absentDays = records.filter(r => r.status === 'ABSENT').length;
+        const totalDays = records.length;
 
-            mockHeatmapData.push({
-              date: dateStr,
-              count,
-              status,
-            });
-          } else {
-            // Future dates have no data (will show as empty)
-            mockHeatmapData.push({
-              date: dateStr,
-              count: 0,
-              status: undefined,
-            });
-          }
-        }
-
-        // Mock route data for drivers
-        const mockRoutes: RouteData[] = [
-          { id: 'R001', name: 'Downtown - Airport', totalTrips: 45, completedTrips: 43, lastDriven: '2024-01-15', rating: 4.8 },
-          { id: 'R002', name: 'University - Mall', totalTrips: 32, completedTrips: 30, lastDriven: '2024-01-14', rating: 4.6 },
-          { id: 'R003', name: 'Residential - Business District', totalTrips: 28, completedTrips: 28, lastDriven: '2024-01-13', rating: 4.9 },
-        ];
-
-        // Mock performance metrics
-        const presentDays = mockAttendance.filter(d => d.status === 'present').length;
-        const lateDays = mockAttendance.filter(d => d.status === 'late').length;
-        const absentDays = mockAttendance.filter(d => d.status === 'absent').length;
-        
-        const mockPerformance: PerformanceMetrics = {
-          totalDays: mockAttendance.length,
+        const performanceMetrics: PerformanceMetrics = {
+          totalDays,
           presentDays,
           lateDays,
           absentDays,
-          attendanceRate: ((presentDays + lateDays) / mockAttendance.length) * 100,
+          attendanceRate: totalDays > 0 ? ((presentDays + lateDays) / totalDays) * 100 : 0,
         };
+        setPerformanceMetrics(performanceMetrics);
 
-        setAttendanceData(mockAttendance);
-        setHeatmapData(mockHeatmapData);
-        setRouteData(mockRoutes);
-        setPerformanceMetrics(mockPerformance);
-        setLoading(false);
-      }, 1000);
+
+      } else {
+        console.warn('Failed to fetch attendance records, using fallback data:', recordsResponse.message);
+
+        // Fallback: Show empty state or basic info
+        const fallbackMetrics: PerformanceMetrics = {
+          totalDays: 0,
+          presentDays: 0,
+          lateDays: 0,
+          absentDays: 0,
+          attendanceRate: 0,
+        };
+        setPerformanceMetrics(fallbackMetrics);
+        setAttendanceData([]);
+
+        // Only set error if it's a real error, not just no data
+        if (recordsResponse.message && !recordsResponse.message.includes('No data')) {
+          setAttendanceError(recordsResponse.message);
+        }
+      }
+
+      // Fetch heatmap data (without date filters)
+      const heatmapResponse = await attendanceService.getAttendanceHeatmap({
+        user_id: user?.id,
+      });
+
+      if (heatmapResponse.success && heatmapResponse.data) {
+        const heatmapData = transformHeatmapData(heatmapResponse.data);
+        setHeatmapData(heatmapData);
+
+        // If we don't have attendance records but have heatmap data, create records from heatmap
+        if (attendanceData.length === 0) {
+          const recordsFromHeatmap = createRecordsFromHeatmap(heatmapResponse.data);
+          setAttendanceData(recordsFromHeatmap);
+
+          // Recalculate metrics with heatmap data
+          const presentDays = recordsFromHeatmap.filter((r: AttendanceRecord) => r.status === 'PRESENT').length;
+          const lateDays = recordsFromHeatmap.filter((r: AttendanceRecord) => r.status === 'LATE').length;
+          const absentDays = recordsFromHeatmap.filter((r: AttendanceRecord) => r.status === 'ABSENT').length;
+          const totalDays = recordsFromHeatmap.length;
+
+          const performanceMetrics: PerformanceMetrics = {
+            totalDays,
+            presentDays,
+            lateDays,
+            absentDays,
+            attendanceRate: totalDays > 0 ? ((presentDays + lateDays) / totalDays) * 100 : 0,
+          };
+          setPerformanceMetrics(performanceMetrics);
+        }
+      }
+
+
+
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+      setAttendanceError('Failed to load attendance data. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  }, [isOpen, user]);
+  };
+
+  const transformHeatmapData = (heatmapData: AttendanceHeatmapData): HeatmapValue[] => {
+    const result: HeatmapValue[] = [];
+    const currentYear = new Date().getFullYear();
+    const startDate = new Date(currentYear, 0, 1);
+    const endDate = new Date(currentYear, 11, 31);
+
+    // Create a normalized attendance data map (convert timestamps to date strings)
+    const normalizedAttendanceData: Record<string, string> = {};
+    Object.entries(heatmapData.attendance_data).forEach(([dateKey, status]) => {
+      // Handle both timestamp format (2025-04-14T00:00:00) and date format (2025-04-14)
+      const normalizedDate = dateKey.includes('T') ? dateKey.split('T')[0] : dateKey;
+      normalizedAttendanceData[normalizedDate] = status;
+    });
+
+    console.log('Normalized attendance data:', normalizedAttendanceData);
+
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      const attendanceStatus = normalizedAttendanceData[dateStr];
+
+      let count = 0;
+      let status: 'PRESENT' | 'ABSENT' | 'LATE' | undefined = undefined;
+
+      if (attendanceStatus) {
+        status = attendanceStatus as 'PRESENT' | 'ABSENT' | 'LATE';
+        count = status === 'PRESENT' ? 3 : status === 'LATE' ? 2 : status === 'ABSENT' ? 1 : 0;
+      }
+
+      result.push({
+        date: dateStr,
+        count,
+        status,
+      });
+    }
+
+    console.log('Transformed heatmap data sample:', result.filter(r => r.count > 0).slice(0, 5));
+    return result;
+  };
+
+  const createRecordsFromHeatmap = (heatmapData: AttendanceHeatmapData): AttendanceRecord[] => {
+    const records: AttendanceRecord[] = [];
+
+    Object.entries(heatmapData.attendance_data).forEach(([dateKey, status]) => {
+      // Handle both timestamp format (2025-04-14T00:00:00) and date format (2025-04-14)
+      const normalizedDate = dateKey.includes('T') ? dateKey.split('T')[0] : dateKey;
+
+      records.push({
+        id: `${heatmapData.user_id}-${normalizedDate}`,
+        user_id: heatmapData.user_id,
+        date: normalizedDate,
+        status: status as 'PRESENT' | 'ABSENT' | 'LATE',
+        check_in_time: null,
+        check_out_time: null,
+        location: null,
+        notes: null,
+        marked_by: null,
+        marked_at: new Date().toISOString(),
+      });
+    });
+
+    // Sort by date (most recent first)
+    records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    console.log('Created records from heatmap:', records.slice(0, 5));
+    return records;
+  };
 
   if (!isOpen || !user) return null;
 
@@ -150,14 +231,28 @@ export default function UserDetailsModal({ isOpen, onClose, user }: UserDetailsM
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'present':
+      case 'PRESENT':
         return 'bg-blue-100 text-blue-800';
-      case 'late':
+      case 'LATE':
         return 'bg-sky-100 text-sky-800';
-      case 'absent':
+      case 'ABSENT':
         return 'bg-slate-100 text-slate-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatTime = (timeString: string | null | undefined) => {
+    if (!timeString) return '';
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch {
+      return timeString;
     }
   };
 
@@ -201,7 +296,7 @@ export default function UserDetailsModal({ isOpen, onClose, user }: UserDetailsM
         {/* Navigation Tabs */}
         <div className="border-b bg-gray-50">
           <div className="flex">
-            {['overview', 'attendance', 'performance', 'history'].map((tab) => (
+            {['overview', 'attendance', 'history'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -290,19 +385,15 @@ export default function UserDetailsModal({ isOpen, onClose, user }: UserDetailsM
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-[#0097fb]">{routeData.length}</div>
+                          <div className="text-2xl font-bold text-[#0097fb]">3</div>
                           <div className="text-sm text-gray-600">Routes Assigned</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-[#103a5e]">
-                            {routeData.reduce((sum, route) => sum + route.completedTrips, 0)}
-                          </div>
+                          <div className="text-2xl font-bold text-[#103a5e]">125</div>
                           <div className="text-sm text-gray-600">Total Trips</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-slate-600">
-                            {routeData.length > 0 ? (routeData.reduce((sum, route) => sum + route.rating, 0) / routeData.length).toFixed(1) : '0'}
-                          </div>
+                          <div className="text-2xl font-bold text-slate-600">4.7</div>
                           <div className="text-sm text-gray-600">Avg Rating</div>
                         </div>
                       </div>
@@ -359,91 +450,19 @@ export default function UserDetailsModal({ isOpen, onClose, user }: UserDetailsM
 
               {activeTab === 'attendance' && (
                 <div className="space-y-6">
-                  {/* Attendance Heatmap */}
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-[#103a5e] mb-4 flex items-center gap-2">
-                      <Calendar size={20} />
-                      Attendance Heatmap ({new Date().getFullYear()})
-                    </h3>
-                    <div className="mb-4 overflow-x-auto">
-                      <CalendarHeatmap
-                        startDate={new Date(new Date().getFullYear(), 0, 1)}
-                        endDate={new Date(new Date().getFullYear(), 11, 31)}
-                        values={heatmapData}
-                        classForValue={(value) => {
-                          if (!value || value.count === 0) {
-                            return 'color-empty';
-                          }
-                          if (value.status === 'present') {
-                            return 'color-blue-3'; // Main theme blue
-                          }
-                          if (value.status === 'late') {
-                            return 'color-blue-2'; // Light blue
-                          }
-                          if (value.status === 'absent') {
-                            return 'color-blue-1'; // Very light blue
-                          }
-                          return 'color-empty';
-                        }}
-                        showWeekdayLabels={true}
-                        showMonthLabels={true}
-                        weekdayLabels={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']}
-                        monthLabels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
-                      />
+                  {/* Error Message */}
+                  {attendanceError && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-red-800">
+                        <XCircle size={20} />
+                        <span className="font-medium">Error loading attendance data</span>
+                      </div>
+                      <p className="text-red-600 text-sm mt-1">{attendanceError}</p>
                     </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-[#0097fb] rounded-sm"></div>
-                        <span>Present</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-[#7dd3fc] rounded-sm"></div>
-                        <span>Late</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-[#e0f2fe] rounded-sm border border-gray-300"></div>
-                        <span>Absent</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-[#f8fafc] rounded-sm border border-gray-300"></div>
-                        <span>No Data</span>
-                      </div>
-                    </div>
-                  </div>
+                  )}
 
-                  {/* Recent Attendance */}
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-[#103a5e] mb-4">Recent Attendance</h3>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {attendanceData.slice(0, 10).map((attendance, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-md">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-3 h-3 rounded-full ${
-                              attendance.status === 'present' ? 'bg-[#0097fb]' :
-                              attendance.status === 'late' ? 'bg-[#7dd3fc]' :
-                              'bg-[#e0f2fe] border border-gray-300'
-                            }`}></div>
-                            <span className="font-medium">{new Date(attendance.date).toLocaleDateString()}</span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(attendance.status)}`}>
-                              {attendance.status.charAt(0).toUpperCase() + attendance.status.slice(1)}
-                            </span>
-                          </div>
-                          {attendance.checkIn && (
-                            <div className="text-sm text-gray-600">
-                              {attendance.checkIn} - {attendance.checkOut}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'performance' && (
-                <div className="space-y-6">
-                  {/* Performance Overview */}
-                  {performanceMetrics && (
+                  {/* Attendance Summary */}
+                  {performanceMetrics ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                         <div className="flex items-center gap-3">
@@ -482,74 +501,120 @@ export default function UserDetailsModal({ isOpen, onClose, user }: UserDetailsM
                         </div>
                       </div>
                     </div>
+                  ) : !loading && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Activity size={48} className="mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium">No attendance data available</p>
+                      <p className="text-sm">Attendance information will appear here once available.</p>
+                    </div>
                   )}
 
-                  {/* Role-specific Performance */}
-                  {user.role === 'BUS_DRIVER' && (
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-[#103a5e] mb-4 flex items-center gap-2">
-                        <Route size={20} />
-                        Route Performance
-                      </h3>
-                      <div className="space-y-4">
-                        {routeData.map((route) => (
-                          <div key={route.id} className="bg-white rounded-lg p-4 border">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-medium text-[#103a5e]">{route.name}</h4>
-                              <span className="text-sm text-gray-600">Route {route.id}</span>
-                            </div>
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-600">Completion Rate:</span>
-                                <div className="font-medium text-[#0097fb]">
-                                  {((route.completedTrips / route.totalTrips) * 100).toFixed(1)}%
-                                </div>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Total Trips:</span>
-                                <div className="font-medium text-[#103a5e]">{route.completedTrips}/{route.totalTrips}</div>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Rating:</span>
-                                <div className="font-medium text-slate-600">★ {route.rating}</div>
-                              </div>
-                            </div>
-                            <div className="mt-2">
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="bg-[#0097fb] h-2 rounded-full"
-                                  style={{ width: `${(route.completedTrips / route.totalTrips) * 100}%` }}
-                                ></div>
-                              </div>
+                  {/* Attendance Heatmap */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-[#103a5e] mb-4 flex items-center gap-2">
+                      <Calendar size={20} />
+                      Attendance Heatmap ({new Date().getFullYear()})
+                    </h3>
+                    <div className="mb-4 overflow-x-auto">
+                      <CalendarHeatmap
+                        startDate={new Date(new Date().getFullYear(), 0, 1)}
+                        endDate={new Date(new Date().getFullYear(), 11, 31)}
+                        values={heatmapData}
+                        classForValue={(value) => {
+                          if (!value || value.count === 0) {
+                            return 'color-empty';
+                          }
+                          if (value.status === 'PRESENT') {
+                            return 'color-blue-3'; // Main theme blue
+                          }
+                          if (value.status === 'LATE') {
+                            return 'color-blue-2'; // Light blue
+                          }
+                          if (value.status === 'ABSENT') {
+                            return 'color-blue-1'; // Very light blue
+                          }
+                          return 'color-empty';
+                        }}
+                        showWeekdayLabels={true}
+                        showMonthLabels={true}
+                        weekdayLabels={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']}
+                        monthLabels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+                      />
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-[#0097fb] rounded-sm"></div>
+                        <span>Present</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-[#7dd3fc] rounded-sm"></div>
+                        <span>Late</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-[#e0f2fe] rounded-sm border border-gray-300"></div>
+                        <span>Absent</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-[#f8fafc] rounded-sm border border-gray-300"></div>
+                        <span>No Data</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Attendance */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-[#103a5e] mb-4">Recent Attendance Records</h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {attendanceData.slice(0, 10).map((attendance, index) => (
+                        <div key={attendance.id || index} className="flex items-center justify-between p-3 bg-white rounded-md border">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${
+                              attendance.status === 'PRESENT' ? 'bg-[#0097fb]' :
+                              attendance.status === 'LATE' ? 'bg-[#7dd3fc]' :
+                              'bg-[#e0f2fe] border border-gray-300'
+                            }`}></div>
+                            <div>
+                              <span className="font-medium">{new Date(attendance.date).toLocaleDateString()}</span>
+                              <span className={`ml-2 px-2 py-1 text-xs rounded-full ${getStatusColor(attendance.status)}`}>
+                                {attendance.status.charAt(0).toUpperCase() + attendance.status.slice(1).toLowerCase()}
+                              </span>
+                              {attendance.notes && (
+                                <div className="text-xs text-gray-500 mt-1">{attendance.notes}</div>
+                              )}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {user.role === 'QUEUE_REGULATOR' && (
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-[#103a5e] mb-4 flex items-center gap-2">
-                        <MapPin size={20} />
-                        Stop Management Performance
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium text-[#103a5e] mb-2">Queue Efficiency</h4>
-                          <div className="text-2xl font-bold text-[#0097fb]">94.2%</div>
-                          <div className="text-sm text-gray-600">Average queue processing efficiency</div>
+                          <div className="text-right">
+                            {(attendance.check_in_time || attendance.check_out_time) && (
+                              <div className="text-sm text-gray-600">
+                                {attendance.check_in_time && (
+                                  <div>In: {formatTime(attendance.check_in_time)}</div>
+                                )}
+                                {attendance.check_out_time && (
+                                  <div>Out: {formatTime(attendance.check_out_time)}</div>
+                                )}
+                              </div>
+                            )}
+                            {attendance.location && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                📍 {attendance.location.address || `${attendance.location.latitude}, ${attendance.location.longitude}`}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium text-[#103a5e] mb-2">Customer Satisfaction</h4>
-                          <div className="text-2xl font-bold text-slate-600">★ 4.7</div>
-                          <div className="text-sm text-gray-600">Based on passenger feedback</div>
+                      ))}
+                      {attendanceData.length === 0 && !loading && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Calendar size={48} className="mx-auto mb-4 text-gray-300" />
+                          <p className="text-lg font-medium">No attendance records found</p>
+                          <p className="text-sm">This user doesn't have any attendance records yet.</p>
                         </div>
-                      </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
+
+
 
               {activeTab === 'history' && (
                 <div className="space-y-6">
