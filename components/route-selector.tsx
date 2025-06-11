@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Search, X, Info } from "lucide-react"
-import { anbessaBusRoutes } from "@/data/busRoutes"
 import { BusRoute } from "@/types/bus"
+import { useBusTracking } from "@/hooks/use-bus-tracking"
 
 interface Bus {
   id: string
@@ -21,16 +21,14 @@ interface RouteSelectorProps {
 
 export default function RouteSelector({ selectedBus, onRouteSelect, selectedRoute }: RouteSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [routes, setRoutes] = useState<BusRoute[]>([])
   const [filteredRoutes, setFilteredRoutes] = useState<BusRoute[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const [showInfo, setShowInfo] = useState<string | null>(null)
+  const { routes, loading } = useBusTracking()
 
-  // Load routes from data
+  // Initialize filtered routes when routes data is loaded
   useEffect(() => {
-    setRoutes(anbessaBusRoutes)
-    setFilteredRoutes(anbessaBusRoutes)
-  }, [])
+    setFilteredRoutes(routes)
+  }, [routes])
 
   // Filter routes based on search query
   useEffect(() => {
@@ -95,7 +93,7 @@ export default function RouteSelector({ selectedBus, onRouteSelect, selectedRout
           </div>
 
           <div className="overflow-y-auto max-h-[400px]">
-            {isLoading ? (
+            {loading ? (
               <div className="flex justify-center items-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0097fb]"></div>
               </div>

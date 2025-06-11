@@ -82,12 +82,12 @@ export async function GET(request: NextRequest) {
 
     // Extract query parameters for pagination
     const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '10';
+    const limit = searchParams.get('limit') || '1000'; // Set high limit to fetch all routes
 
-    // Build query string - ensure limit doesn't exceed maximum allowed (100)
+    // Build query string - allow high limits for fetching all routes
     const queryParams = new URLSearchParams();
     queryParams.append('page', page);
-    queryParams.append('limit', Math.min(parseInt(limit), 100).toString()); // Max limit is 100
+    queryParams.append('limit', limit);
 
     // Use routes endpoint
     const endpoint = `${BACKEND_API_BASE_URL}/api/routes?${queryParams.toString()}`;

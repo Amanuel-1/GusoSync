@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     const filter_by = searchParams.get('filter_by');
     const status = searchParams.get('status');
     const pn = searchParams.get('pn') || '1';
-    const ps = searchParams.get('ps') || '10';
+    const ps = searchParams.get('ps') || '1000'; // Set high limit to fetch all buses
 
     // Build query string
     const queryParams = new URLSearchParams();

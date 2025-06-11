@@ -3,6 +3,12 @@ import { cookies } from 'next/headers';
 
 const BACKEND_API_BASE_URL = process.env.BACKEND_API_BASE_URL || 'https://guzosync-fastapi.onrender.com';
 
+// Helper function to invalidate cache
+function invalidateCache() {
+  busStopsCache = null;
+  console.log('Bus stops cache invalidated');
+}
+
 // Helper function to get auth token from cookies
 async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
@@ -79,8 +85,8 @@ export async function GET(request: NextRequest) {
 
     const token = await getAuthToken();
 
-    // Use /api/buses/stops endpoint for all users (both CONTROL_STAFF and CONTROL_ADMIN)
-    const endpoint = `${BACKEND_API_BASE_URL}/api/buses/stops`;
+    // Use /api/buses/stops endpoint with high limit to get all bus stops in one request
+    const endpoint = `${BACKEND_API_BASE_URL}/api/buses/stops?ps=1000`;
 
     console.log('Fetching bus stops from /api/buses/stops endpoint');
 

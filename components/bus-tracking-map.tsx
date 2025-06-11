@@ -1,12 +1,13 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState, useMemo } from "react"
 import mapboxgl from "mapbox-gl"
 import "mapbox-gl/dist/mapbox-gl.css"
 import type { Bus } from "@/types/bus"
 import { useBusTracking } from "@/hooks/use-bus-tracking"
 import { MapPin, ZoomIn, ZoomOut } from "lucide-react"
 import BusStopMarks from './circular-marks'
+import BusMarkers from './bus-markers'
 
 interface CircularMark {
   id: string
@@ -18,19 +19,36 @@ interface CircularMark {
   radius: number
 }
 
-interface BusStop {
-  id: string
-  name?: string
-  location: {
-    latitude: number
-    longitude: number
-  }
-  properties: any
-}
+
 
 // Initialize Mapbox with the access token
 if (typeof window !== 'undefined') {
   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
+}
+
+// Backend bus data interface
+interface BackendBus {
+  id: string
+  license_plate: string
+  bus_type: "STANDARD" | "ARTICULATED" | "MINIBUS"
+  capacity: number
+  current_location?: {
+    latitude: number
+    longitude: number
+  } | null
+  last_location_update?: string | null
+  heading?: number | null
+  speed?: number | null
+  location_accuracy?: number | null
+  current_address?: string | null
+  assigned_route_id?: string | null
+  assigned_driver_id?: string | null
+  assigned_driver?: any | null
+  bus_status: "OPERATIONAL" | "MAINTENANCE" | "BREAKDOWN" | "IDLE"
+  manufacture_year?: number | null
+  bus_model?: string | null
+  created_at?: string
+  updated_at?: string
 }
 
 interface BusTrackingMapProps {
@@ -38,92 +56,63 @@ interface BusTrackingMapProps {
   selectedBus: Bus | null
   onSelectBus: (bus: Bus) => void
   loading: boolean
+  // Optional props to avoid duplicate data fetching
+  routes?: any[]
+  busStops?: any[]
 }
 
-interface Route {
-  route_id: number
-  route_short_name: string
-  route_long_name: string
-}
-
-export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loading }: BusTrackingMapProps) {
+export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loading, routes: propRoutes, busStops: propBusStops }: BusTrackingMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
-  const markers = useRef<{ [key: string]: mapboxgl.Marker }>({})
   const [mapLoaded, setMapLoaded] = useState(false)
-  const { busStops } = useBusTracking()
+
+  // Use props if available, otherwise fetch data (but this should be avoided by always passing props)
+  const { busStops: hookBusStops, routes: hookRoutes } = useBusTracking()
+
+  // Use props if available, otherwise use hook data
+  const busStops = propBusStops || hookBusStops
+  const routes = propRoutes || hookRoutes
+
   const [showStops, setShowStops] = useState(true)
-  const stopMarkers = useRef<{ [key: string]: mapboxgl.Marker }>({})
-  const [routes, setRoutes] = useState<Route[]>([])
-  const [busStopsData, setBusStopsData] = useState<BusStop[]>([])
+  const [selectedBackendBus, setSelectedBackendBus] = useState<BackendBus | null>(null)
 
-  // Load routes from JSON file
-  useEffect(() => {
-    fetch('/busRoutes.json')
-      .then(response => response.json())
-      .then(data => {
-        const routeList = data.features.map((feature: any) => ({
-          route_id: feature.properties.route_id,
-          route_short_name: feature.properties.route_short_name,
-          route_long_name: feature.properties.route_long_name
-        }))
-        setRoutes(routeList)
-      })
-      .catch(error => console.error('Error loading routes:', error))
-  }, [])
+  // Memoize bus stops transformation to prevent unnecessary re-renders
+  const busStopsData = useMemo(() =>
+    busStops.map(stop => ({
+      id: stop.id,
+      name: stop.name || 'Unnamed Stop', // Provide default name to satisfy type requirement
+      location: stop.location,
+      properties: stop.properties || {} // Use existing properties or empty object
+    })), [busStops]
+  )
 
-  // Load bus stops from GeoJSON
-  useEffect(() => {
-    const loadBusStops = async () => {
-      try {
-        const response = await fetch('/busStops.geojson')
-        const data = await response.json()
-        
-        const stops: BusStop[] = data.features.map((feature: any) => {
-          const [longitude, latitude] = feature.geometry.coordinates
-          return {
-            id: feature.id,
-            name: feature.properties.name || feature.properties['name:en'] || feature.properties['name:am'],
-            location: {
-              latitude,
-              longitude
-            },
-            properties: feature.properties
-          }
-        })
+  // Memoize bus data transformation to prevent unnecessary re-renders
+  const backendBuses: BackendBus[] = useMemo(() =>
+    buses.map(bus => ({
+      id: bus.id,
+      license_plate: bus.name.replace('Bus ', ''), // Extract license plate from name
+      bus_type: "STANDARD" as const,
+      capacity: bus.capacity || 50,
+      current_location: bus.location,
+      last_location_update: bus.lastUpdated.toISOString(),
+      heading: bus.heading,
+      speed: bus.speed,
+      location_accuracy: null,
+      current_address: null,
+      assigned_route_id: bus.routeId !== 'unassigned' ? bus.routeId : null,
+      assigned_driver_id: bus.driver?.id !== 'unassigned' ? bus.driver?.id : null,
+      assigned_driver: bus.driver?.id !== 'unassigned' ? bus.driver : null,
+      bus_status: bus.status === 'IN_SERVICE' ? 'OPERATIONAL' as const :
+                  bus.status === 'OUT_OF_SERVICE' ? 'IDLE' as const :
+                  'OPERATIONAL' as const,
+      manufacture_year: null,
+      bus_model: null,
+      created_at: undefined,
+      updated_at: undefined
+    })), [buses]
+  )
 
-        setBusStopsData(stops)
-      } catch (error) {
-        console.error('Error loading bus stops:', error)
-      }
-    }
 
-    loadBusStops()
-  }, [])
-
-  const createBusMarker = (bus: Bus) => {
-    const el = document.createElement("div")
-    el.className = "bus-marker"
-    el.style.width = "64px"
-    el.style.height = "32px"
-    el.style.position = "relative"
-
-    const img = document.createElement("img")
-    img.src = "/busTopView.png"
-    img.style.width = "100%"
-    img.style.height = "100%"
-    img.style.objectFit = "contain"
-    img.style.transform = `rotate(${bus.heading}deg)`
-    img.style.transition = "transform 0.3s ease"
-    el.appendChild(img)
-
-    const number = document.createElement("div")
-    number.className = "absolute -top-2 -right-2 bg-[#0097fb] text-white text-sm rounded-full w-6 h-6 flex items-center justify-center"
-    number.textContent = bus.id.slice(-3)
-    el.appendChild(number)
-
-    return el
-  }
 
   // Initialize map
   useEffect(() => {
@@ -174,25 +163,17 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
     }
   }, [])
 
-  // Update bus markers
+
+
+  // Sync selected bus with backend bus selection
   useEffect(() => {
-    if (!mapLoaded || !map.current) return
-
-    // Clear existing markers
-    Object.values(markers.current).forEach(marker => marker.remove())
-    markers.current = {}
-
-    // Add new markers
-    buses.forEach(bus => {
-      if (map.current) {
-        const marker = new mapboxgl.Marker(createBusMarker(bus))
-          .setLngLat([bus.location.longitude, bus.location.latitude])
-          .addTo(map.current)
-
-        markers.current[bus.id] = marker
+    if (selectedBus) {
+      const correspondingBackendBus = backendBuses.find(bus => bus.id === selectedBus.id)
+      if (correspondingBackendBus && correspondingBackendBus !== selectedBackendBus) {
+        setSelectedBackendBus(correspondingBackendBus)
       }
-    })
-  }, [buses, mapLoaded])
+    }
+  }, [selectedBus, backendBuses, selectedBackendBus])
 
   // Center map on selected bus
   useEffect(() => {
@@ -235,6 +216,19 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
       />
 
       {mapLoaded && showStops && <BusStopMarks map={map.current} stops={busStopsData} />}
+      {mapLoaded && <BusMarkers
+        map={map.current}
+        buses={backendBuses}
+        selectedBus={selectedBackendBus}
+        onSelectBus={(backendBus) => {
+          setSelectedBackendBus(backendBus)
+          // Find the corresponding frontend bus and trigger the original onSelectBus
+          const frontendBus = buses.find(bus => bus.id === backendBus.id)
+          if (frontendBus && onSelectBus) {
+            onSelectBus(frontendBus)
+          }
+        }}
+      />}
 
       {/* Map controls */}
       <div className="absolute bottom-8 right-8 flex flex-col space-y-2">
@@ -266,11 +260,11 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
         <h3 className="text-sm font-medium text-[#103a5e] mb-2">Live Bus Tracking</h3>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
           <div className="text-[#7d7d7d]">Total Buses:</div>
-          <div className="font-medium">{buses.length}</div>
-          <div className="text-[#7d7d7d]">Active Buses:</div>
-          <div className="font-medium">{buses.filter((b) => b.status === "IN_SERVICE").length}</div>
-          <div className="text-[#7d7d7d]">Delayed:</div>
-          <div className="font-medium">{buses.filter((b) => b.status === "DELAYED").length}</div>
+          <div className="font-medium">{backendBuses.length}</div>
+          <div className="text-[#7d7d7d]">Operational:</div>
+          <div className="font-medium">{backendBuses.filter((b) => b.bus_status === "OPERATIONAL").length}</div>
+          <div className="text-[#7d7d7d]">Maintenance:</div>
+          <div className="font-medium">{backendBuses.filter((b) => b.bus_status === "MAINTENANCE").length}</div>
           <div className="text-[#7d7d7d]">Last Update:</div>
           <div className="font-medium">{new Date().toLocaleTimeString()}</div>
         </div>
@@ -281,9 +275,9 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
         <h3 className="text-xs font-medium text-[#103a5e] mb-2">Routes</h3>
         <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2">
           {routes.map((route) => (
-            <div key={route.route_id} className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#0097fb' }}></div>
-              <span className="text-xs">{route.route_long_name}</span>
+            <div key={route.id} className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: route.color }}></div>
+              <span className="text-xs">{route.name}</span>
             </div>
           ))}
         </div>
@@ -291,12 +285,6 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
 
       {/* Add custom styles */}
       <style jsx global>{`
-        .bus-marker.selected {
-          width: 36px !important;
-          height: 36px !important;
-          z-index: 10;
-          box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.8), 0 0 0 6px rgba(0, 151, 251, 0.5) !important;
-        }
         .mapboxgl-popup-content {
           border-radius: 8px;
           padding: 0;

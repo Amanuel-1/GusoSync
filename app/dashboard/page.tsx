@@ -9,7 +9,7 @@ import type { Bus } from "@/types/bus"
 import ChatBox from "@/components/chat-box"
 
 export default function Dashboard() {
-  const { buses, loading, error } = useBusTracking()
+  const { buses, routes, busStops, loading, error } = useBusTracking()
   const [selectedBus, setSelectedBus] = useState<Bus | null>(null)
   const [chatActiveForBusId, setChatActiveForBusId] = useState<string | null>(null); // State to track which bus chat is active for
   const [filterActive, setFilterActive] = useState(false)
@@ -64,6 +64,8 @@ export default function Dashboard() {
           selectedBus={selectedBus}
           onSelectBus={setSelectedBus}
           loading={loading}
+          routes={routes}
+          busStops={busStops}
         />
       </div>
 
