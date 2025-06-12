@@ -204,24 +204,6 @@ export default function ClientLayout({
             </Link>
 
             <Link
-              href="/dashboard/analysis"
-              className={`flex flex-col items-center text-white ${pathname === "/dashboard/analysis" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
-            >
-              <div className="w-8 h-8 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M21 21H4.6C4.03995 21 3.75992 21 3.54601 20.891C3.35785 20.7951 3.20487 20.6422 3.10899 20.454C3 20.2401 3 19.9601 3 19.4V3M7 16L12 11L16 16L21 11"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <span className="text-xs mt-1">Analysis</span>
-            </Link>
-
-            <Link
               href="/dashboard/analytics"
               className={`flex flex-col items-center text-white ${pathname === "/dashboard/analytics" ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
             >

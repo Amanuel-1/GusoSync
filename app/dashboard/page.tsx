@@ -158,6 +158,7 @@ export default function Dashboard() {
               }
             }}
             driverId={chatActiveForBusId} // Pass the active chat bus/driver ID
+            selectedBus={selectedBus} // Pass the selected bus information
           />
         </div>
       )}

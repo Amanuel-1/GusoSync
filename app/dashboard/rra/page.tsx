@@ -6,7 +6,7 @@ import RouteSelector from "../../../components/route-selector"
 import ReallocationSummary from "../../../components/reallocation-summary"
 import ReallocationHistory from "../../../components/reallocation-history"
 import AgentReallocationPanel from "../../../components/agent-reallocation-panel"
-import SimulatorControlPanel from "../../../components/simulator-control-panel"
+
 import IncomingReallocationRequests from "../../../components/incoming-reallocation-requests"
 
 interface Bus {
@@ -35,7 +35,7 @@ export default function RRAPage() {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [showAgentPanel, setShowAgentPanel] = useState(false)
-  const [showSimulatorPanel, setShowSimulatorPanel] = useState(false)
+
 
   const handleConfirmReallocation = () => {
     // Reset selections and show history
@@ -52,7 +52,7 @@ export default function RRAPage() {
     <div className="flex-1 flex flex-col overflow-hidden bg-[#f4f9fc]">
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-medium text-[#103a5e]">Route Reallocation Assistant (RRA)</h1>
+          <h1 className="text-2xl font-medium text-[#103a5e]">Route Reallocation Control</h1>
           <div className="flex gap-2">
             <button
               className={`px-4 py-2 rounded-md text-sm ${
@@ -63,7 +63,6 @@ export default function RRAPage() {
               onClick={() => {
                 setShowHistory(false)
                 setShowAgentPanel(false)
-                setShowSimulatorPanel(false)
               }}
             >
               Manual Reallocation
@@ -77,7 +76,6 @@ export default function RRAPage() {
               onClick={() => {
                 setShowAgentPanel(true)
                 setShowHistory(false)
-                setShowSimulatorPanel(false)
               }}
             >
               🤖 Agent Assistant
@@ -91,25 +89,11 @@ export default function RRAPage() {
               onClick={() => {
                 setShowHistory(true)
                 setShowAgentPanel(false)
-                setShowSimulatorPanel(false)
               }}
             >
               Reallocation History
             </button>
-            <button
-              className={`px-4 py-2 rounded-md text-sm ${
-                showSimulatorPanel
-                  ? "bg-[#ff8a00] text-white"
-                  : "bg-white border border-[#d9d9d9] text-[#7d7d7d] hover:bg-[#f9f9f9]"
-              }`}
-              onClick={() => {
-                setShowSimulatorPanel(true)
-                setShowHistory(false)
-                setShowAgentPanel(false)
-              }}
-            >
-              ⚡ Simulator
-            </button>
+
           </div>
         </div>
 
@@ -117,8 +101,6 @@ export default function RRAPage() {
           <ReallocationHistory />
         ) : showAgentPanel ? (
           <AgentReallocationPanel onClose={() => setShowAgentPanel(false)} />
-        ) : showSimulatorPanel ? (
-          <SimulatorControlPanel />
         ) : (
           <>
             <IncomingReallocationRequests />

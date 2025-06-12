@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
-import { Dialog, DialogContent } from "@/components/ui/dialog"; // Removed DialogTrigger
-import { Button } from "@/components/ui/button"; // Keep Button for form submit
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import type { Bus } from "@/types/bus"
 
 // Define the type for a message
 interface Message {
@@ -16,9 +16,10 @@ interface ChatBoxProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   driverId: string | null; // Add bus/driver ID prop for specific chat rooms
+  selectedBus: Bus | null; // Add selected bus information for driver details
 }
 
-const ChatBox: React.FC<ChatBoxProps> = ({ open, onOpenChange, driverId }) => {
+const ChatBox: React.FC<ChatBoxProps> = ({ open, onOpenChange, driverId, selectedBus }) => {
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<Socket | null>(null);
@@ -89,11 +90,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({ open, onOpenChange, driverId }) => {
     }
   };
 
+  // Get driver information for the title
+  const driverName = selectedBus?.driver?.name || 'Unknown Driver';
+  const driverPhone = selectedBus?.driver?.phone || 'N/A';
+  const busName = selectedBus?.name || 'Unknown Bus';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* DialogTrigger is now handled by the parent component */}
       {/* Increased width and adjusted positioning slightly */}
       <DialogContent className="fixed bottom-4 right-4 min-w-[60vw] min-h-[90vh] p-4 flex flex-col ">
+        <DialogTitle className="text-lg font-semibold text-gray-900 mb-4">
+          Chat with {driverName} ({busName})
+          {driverPhone !== 'N/A' && (
+            <div className="text-sm font-normal text-gray-600 mt-1">
+              📞 {driverPhone}
+            </div>
+          )}
+        </DialogTitle>
         <div className="flex-grow overflow-y-auto mb-4">
           {messages.map((msg, index) => (
             <div
