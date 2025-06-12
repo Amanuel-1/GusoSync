@@ -251,11 +251,20 @@ export function useRealTimeBusTracking() {
       socket.on('all_bus_locations', handleAllBusLocations)
       socket.on('proximity_alert', handleProximityAlert)
 
-      // Try to connect to WebSocket (will only connect if auth token is available)
+      // Try to connect to WebSocket (will only connect if auth token is available and not already connected)
       try {
-        await socket.connect(authToken)
+        if (!socket.isConnected()) {
+          console.log('🚌 Socket not connected, attempting to connect for bus tracking...')
+          await socket.connect(authToken)
+        } else {
+          console.log('🚌 Socket already connected, subscribing to bus updates')
+          socket.subscribeToAllBuses()
+          setConnected(true)
+          setError(null)
+          stopFallbackPolling()
+        }
       } catch (error) {
-        console.warn('Failed to connect to WebSocket:', error)
+        console.warn('🚌 Failed to connect to WebSocket:', error)
         setError('Unable to establish real-time connection')
         startFallbackPolling()
       }

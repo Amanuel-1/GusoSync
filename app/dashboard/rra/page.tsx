@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { RefreshCcw } from "lucide-react"
 import BusSearch from "../../../components/bus-search"
 import RouteSelector from "../../../components/route-selector"
 import ReallocationSummary from "../../../components/reallocation-summary"
 import ReallocationHistory from "../../../components/reallocation-history"
 import AgentReallocationPanel from "../../../components/agent-reallocation-panel"
-
 import IncomingReallocationRequests from "../../../components/incoming-reallocation-requests"
+import { useBusManagementAPI } from "@/hooks/useBusManagementAPI"
+import { useRouteManagementAPI } from "@/hooks/useRouteManagementAPI"
 
 interface Bus {
   id: string
@@ -35,25 +37,50 @@ export default function RRAPage() {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [showAgentPanel, setShowAgentPanel] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
+  // Get refresh functions from the hooks
+  const { refreshData: refreshBuses } = useBusManagementAPI()
+  const { refreshData: refreshRoutes } = useRouteManagementAPI()
 
   const handleConfirmReallocation = () => {
     // Reset selections and show history
     setSelectedBus(null)
     setSelectedRoute(null)
     setShowHistory(true)
+    // Refresh data after successful reallocation
+    handleRefreshData()
   }
 
   const handleCancelReallocation = () => {
     setSelectedRoute(null)
   }
 
+  const handleRefreshData = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([refreshBuses(), refreshRoutes()])
+    } catch (error) {
+      console.error("Error refreshing data:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[#f4f9fc]">
-      <div className="p-6">
+    <div className="flex-1 bg-[#f4f9fc] overflow-auto">
+      <div className="p-6 min-h-full">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-medium text-[#103a5e]">Route Reallocation Control</h1>
           <div className="flex gap-2">
+            <button
+              onClick={handleRefreshData}
+              disabled={isRefreshing}
+              className="px-3 py-2 border border-[#d9d9d9] rounded-md text-sm text-[#7d7d7d] hover:bg-[#f9f9f9] disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh bus and route data"
+            >
+              <RefreshCcw size={16} className={isRefreshing ? "animate-spin" : ""} />
+            </button>
             <button
               className={`px-4 py-2 rounded-md text-sm ${
                 !showHistory && !showAgentPanel
@@ -102,7 +129,7 @@ export default function RRAPage() {
         ) : showAgentPanel ? (
           <AgentReallocationPanel onClose={() => setShowAgentPanel(false)} />
         ) : (
-          <>
+          <div className="space-y-6">
             <IncomingReallocationRequests />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
@@ -160,7 +187,7 @@ export default function RRAPage() {
                 )}
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

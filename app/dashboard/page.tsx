@@ -7,7 +7,8 @@ import BusDetailPanel from "@/components/bus-detail-panel"
 import { useRealTimeBusTracking } from "@/hooks/use-realtime-bus-tracking"
 import type { Bus } from "@/types/bus"
 import ChatBox from "@/components/chat-box"
-import { Bell } from "lucide-react"
+import { Bell, TestTube } from "lucide-react"
+import { NotificationTestPanel } from "@/components/notifications/NotificationTestPanel"
 
 export default function Dashboard() {
   const {
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [filterActive, setFilterActive] = useState(false)
   const [filterRouteId, setFilterRouteId] = useState<string | null>(null)
   const [showProximityAlerts, setShowProximityAlerts] = useState(false)
+  const [showNotificationTest, setShowNotificationTest] = useState(false)
 
   // Filter buses based on active filters
   const filteredBuses = buses.filter((bus) => {
@@ -57,8 +59,18 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      {/* Proximity alerts indicator */}
+      {/* Proximity alerts and test panel indicators */}
       <div className="absolute top-4 right-4 z-50 flex items-center space-x-2">
+        {/* Notification test panel toggle */}
+        <button
+          onClick={() => setShowNotificationTest(!showNotificationTest)}
+          className="flex items-center space-x-1 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-medium hover:bg-purple-200 transition-colors"
+          title="Test Notifications"
+        >
+          <TestTube size={12} />
+          <span>Test</span>
+        </button>
+
         {proximityAlerts.length > 0 && (
           <button
             onClick={() => setShowProximityAlerts(!showProximityAlerts)}
@@ -69,6 +81,13 @@ export default function Dashboard() {
           </button>
         )}
       </div>
+
+      {/* Notification test panel */}
+      {showNotificationTest && (
+        <div className="absolute top-16 right-4 z-50 w-96">
+          <NotificationTestPanel />
+        </div>
+      )}
 
       {/* Proximity alerts panel */}
       {showProximityAlerts && proximityAlerts.length > 0 && (

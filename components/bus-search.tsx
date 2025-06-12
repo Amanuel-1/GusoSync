@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Search, X } from "lucide-react"
+import { useBusManagementAPI, type BusData } from "@/hooks/useBusManagementAPI"
 
 interface Bus {
   id: string
@@ -19,103 +20,52 @@ interface BusSearchProps {
   selectedBus: Bus | null
 }
 
+// Helper function to convert backend bus data to frontend format
+function convertBackendBusToFrontend(backendBus: BusData): Bus {
+  // Ensure status is valid, default to OUT_OF_SERVICE if not provided
+  let status: "IN_SERVICE" | "OUT_OF_SERVICE" | "DELAYED" | "MAINTENANCE" = "OUT_OF_SERVICE"
+  if (backendBus.status) {
+    const validStatuses = ["IN_SERVICE", "OUT_OF_SERVICE", "DELAYED", "MAINTENANCE"]
+    if (validStatuses.includes(backendBus.status)) {
+      status = backendBus.status as "IN_SERVICE" | "OUT_OF_SERVICE" | "DELAYED" | "MAINTENANCE"
+    }
+  }
+
+  return {
+    id: backendBus.id || "Unknown",
+    name: `Bus ${backendBus.id || "Unknown"}`,
+    routeId: backendBus.route_id || "N/A",
+    routeName: backendBus.route_name || "No Route Assigned",
+    status: status,
+    driver: backendBus.driver_name || "No Driver Assigned",
+    capacity: backendBus.capacity || 45,
+    passengerCount: backendBus.current_passenger_count || 0,
+  }
+}
+
 export default function BusSearch({ onBusSelect, selectedBus }: BusSearchProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [buses, setBuses] = useState<Bus[]>([])
   const [filteredBuses, setFilteredBuses] = useState<Bus[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { busses: backendBuses, loading: isLoading, error, refreshData } = useBusManagementAPI()
 
-  // Mock data for buses
+  // Convert backend buses to frontend format and update state
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockBuses: Bus[] = [
-        {
-          id: "A245",
-          name: "Bus A245",
-          routeId: "R-103",
-          routeName: "Bole Road - Merkato",
-          status: "IN_SERVICE",
-          driver: "Yonas Tadesse",
-          capacity: 45,
-          passengerCount: 32,
-        },
-        {
-          id: "B112",
-          name: "Bus B112",
-          routeId: "R-104",
-          routeName: "Megenagna - Piazza",
-          status: "IN_SERVICE",
-          driver: "Abebe Kebede",
-          capacity: 45,
-          passengerCount: 28,
-        },
-        {
-          id: "C078",
-          name: "Bus C078",
-          routeId: "R-105",
-          routeName: "CMC - Mexico Square",
-          status: "DELAYED",
-          driver: "Tigist Haile",
-          capacity: 45,
-          passengerCount: 40,
-        },
-        {
-          id: "D156",
-          name: "Bus D156",
-          routeId: "R-106",
-          routeName: "Ayat - Piazza",
-          status: "IN_SERVICE",
-          driver: "Solomon Tesfaye",
-          capacity: 50,
-          passengerCount: 35,
-        },
-        {
-          id: "E201",
-          name: "Bus E201",
-          routeId: "R-107",
-          routeName: "Kality - Megenagna",
-          status: "MAINTENANCE",
-          driver: "Hanna Girma",
-          capacity: 50,
-          passengerCount: 0,
-        },
-        {
-          id: "F089",
-          name: "Bus F089",
-          routeId: "R-108",
-          routeName: "Lebu - Meskel Square",
-          status: "OUT_OF_SERVICE",
-          driver: "Dawit Mengistu",
-          capacity: 45,
-          passengerCount: 0,
-        },
-        {
-          id: "G123",
-          name: "Bus G123",
-          routeId: "R-109",
-          routeName: "Jemo - Piazza",
-          status: "IN_SERVICE",
-          driver: "Kidist Alemu",
-          capacity: 45,
-          passengerCount: 22,
-        },
-        {
-          id: "H234",
-          name: "Bus H234",
-          routeId: "R-110",
-          routeName: "Saris - Megenagna",
-          status: "IN_SERVICE",
-          driver: "Bereket Tadesse",
-          capacity: 50,
-          passengerCount: 42,
-        },
-      ]
-      setBuses(mockBuses)
-      setFilteredBuses(mockBuses)
-      setIsLoading(false)
-    }, 1000)
-  }, [])
+    if (backendBuses && backendBuses.length > 0) {
+      const convertedBuses = backendBuses.map(convertBackendBusToFrontend)
+      setBuses(convertedBuses)
+    } else {
+      setBuses([])
+    }
+  }, [backendBuses])
+
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching buses:", error)
+      setBuses([])
+    }
+  }, [error])
 
   // Filter buses based on search query
   useEffect(() => {
@@ -125,11 +75,11 @@ export default function BusSearch({ onBusSelect, selectedBus }: BusSearchProps) 
       const query = searchQuery.toLowerCase()
       const filtered = buses.filter(
         (bus) =>
-          bus.id.toLowerCase().includes(query) ||
-          bus.name.toLowerCase().includes(query) ||
-          bus.routeId.toLowerCase().includes(query) ||
-          bus.routeName.toLowerCase().includes(query) ||
-          bus.driver.toLowerCase().includes(query),
+          (bus.id && bus.id.toLowerCase().includes(query)) ||
+          (bus.name && bus.name.toLowerCase().includes(query)) ||
+          (bus.routeId && bus.routeId.toLowerCase().includes(query)) ||
+          (bus.routeName && bus.routeName.toLowerCase().includes(query)) ||
+          (bus.driver && bus.driver.toLowerCase().includes(query)),
       )
       setFilteredBuses(filtered)
     }
@@ -152,6 +102,11 @@ export default function BusSearch({ onBusSelect, selectedBus }: BusSearchProps) 
       default:
         return "bg-[#7d7d7d] text-white"
     }
+  }
+
+  const formatStatusText = (status: string) => {
+    if (!status) return "UNKNOWN"
+    return status.replace(/_/g, " ")
   }
 
   return (
@@ -202,7 +157,7 @@ export default function BusSearch({ onBusSelect, selectedBus }: BusSearchProps) 
                     <div className="text-sm text-[#7d7d7d]">ID: {bus.id}</div>
                   </div>
                   <div className={`px-2 py-1 text-xs rounded-md ${getStatusColor(bus.status)}`}>
-                    {bus.status.replace("_", " ")}
+                    {formatStatusText(bus.status)}
                   </div>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-sm">

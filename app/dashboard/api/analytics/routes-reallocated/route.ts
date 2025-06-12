@@ -73,26 +73,41 @@ export async function GET(request: NextRequest) {
     // If no real data is available, generate some mock data for demonstration
     if (!Array.isArray(reallocationRequests) || reallocationRequests.length === 0) {
       console.log('Using mock reallocation data for analytics');
-      
-      // Generate mock reallocation data Last 30 days
-      const mockData = [];
-      for (let i = 0; i < 50; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-        
-        mockData.push({
-          id: `mock_${i}`,
-          route_id: `route_${Math.floor(Math.random() * 10) + 1}`,
-          bus_id: `bus_${Math.floor(Math.random() * 20) + 1}`,
-          reason: ['maintenance', 'breakdown', 'schedule_change', 'passenger_demand'][Math.floor(Math.random() * 4)],
-          status: ['pending', 'approved', 'rejected', 'completed'][Math.floor(Math.random() * 4)],
-          priority: ['low', 'medium', 'high', 'urgent'][Math.floor(Math.random() * 4)],
-          created_at: date.toISOString(),
-          requested_by: `user_${Math.floor(Math.random() * 10) + 1}`,
+
+      // Fetch real reallocation data from the reallocation agent
+      try {
+        const response = await fetch(`${request.url.split('/dashboard')[0]}/api/reallocation?type=decisions`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.decisions) {
+            // Transform agent decisions to match the expected format
+            reallocationRequests = data.decisions.map((decision: any, index: number) => ({
+              id: decision.id || `decision_${index}`,
+              route_id: decision.toRouteId || 'unknown',
+              bus_id: decision.busId || 'unknown',
+              reason: decision.agentDecision?.reasoning || 'No reason provided',
+              status: decision.status || 'completed',
+              priority: 'medium', // Default priority since agent decisions don't have this field
+              created_at: decision.timestamp || new Date().toISOString(),
+              requested_by: 'system_agent',
+            }));
+          } else {
+            reallocationRequests = [];
+          }
+        } else {
+          console.error('Failed to fetch reallocation decisions');
+          reallocationRequests = [];
+        }
+      } catch (error) {
+        console.error('Error fetching reallocation data:', error);
+        reallocationRequests = [];
       }
-      
-      reallocationRequests = mockData;
     }
 
     // Calculate analytics

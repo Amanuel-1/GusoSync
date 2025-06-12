@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Search, X, Info } from "lucide-react"
 import { BusRoute } from "@/types/bus"
-import { useBusTracking } from "@/hooks/use-bus-tracking"
+import { useRouteManagementAPI, type RouteData } from "@/hooks/useRouteManagementAPI"
 
 interface Bus {
   id: string
@@ -19,11 +19,45 @@ interface RouteSelectorProps {
   selectedRoute: BusRoute | null
 }
 
+// Helper function to convert backend route data to frontend format
+function convertBackendRouteToFrontend(backendRoute: RouteData): BusRoute {
+  return {
+    id: backendRoute.id,
+    name: backendRoute.name,
+    color: "#0097fb", // Default color since backend doesn't provide this
+    start: "N/A", // Backend doesn't provide start point
+    passBy: [], // Backend doesn't provide pass-by points
+    destination: "N/A", // Backend doesn't provide destination
+    distance: backendRoute.total_distance || 0,
+    stops: backendRoute.stop_ids?.length || 0,
+    activeBuses: 0, // This would need to be calculated separately
+    expectedLoad: "Medium" as "Low" | "Medium" | "High" | "Very High", // Default load
+    regulatorName: "System", // Default regulator
+    regulatorPhone: "N/A", // Default phone
+    is_active: backendRoute.is_active,
+    created_at: backendRoute.created_at,
+    updated_at: backendRoute.updated_at,
+  }
+}
+
 export default function RouteSelector({ selectedBus, onRouteSelect, selectedRoute }: RouteSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredRoutes, setFilteredRoutes] = useState<BusRoute[]>([])
   const [showInfo, setShowInfo] = useState<string | null>(null)
-  const { routes, loading } = useBusTracking()
+  const { routes: backendRoutes, loading } = useRouteManagementAPI()
+  const [routes, setRoutes] = useState<BusRoute[]>([])
+
+  // Convert backend routes to frontend format
+  useEffect(() => {
+    if (backendRoutes && backendRoutes.length > 0) {
+      const convertedRoutes = backendRoutes
+        .filter(route => route.is_active) // Only show active routes
+        .map(convertBackendRouteToFrontend)
+      setRoutes(convertedRoutes)
+    } else {
+      setRoutes([])
+    }
+  }, [backendRoutes])
 
   // Initialize filtered routes when routes data is loaded
   useEffect(() => {

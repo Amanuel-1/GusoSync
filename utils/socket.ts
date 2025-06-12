@@ -18,11 +18,13 @@ export class RealTimeSocketService {
 
   private constructor() {
     // Don't auto-connect, wait for explicit connect call
+    console.log('🔌 RealTimeSocketService instance created')
   }
 
   public static getInstance(): RealTimeSocketService {
     if (!RealTimeSocketService.instance) {
       RealTimeSocketService.instance = new RealTimeSocketService()
+      console.log('🔌 New RealTimeSocketService singleton instance created')
     }
     return RealTimeSocketService.instance
   }
@@ -74,19 +76,30 @@ export class RealTimeSocketService {
   }
 
   public async connect(token?: string) {
-    if (this.connected || this.ws?.readyState === WebSocket.CONNECTING) {
+    console.log('🔌 Connect called, current state:', {
+      connected: this.connected,
+      wsReadyState: this.ws?.readyState,
+      hasToken: !!this.authToken
+    })
+
+    if (this.isConnected() || this.isConnecting()) {
+      console.log('🔌 Already connected or connecting, skipping')
       return
     }
 
+    // Clean up any existing connection first
+    this.cleanup()
+
     this.authToken = token || await this.getAuthToken()
     if (!this.authToken) {
-      console.warn('No auth token available for WebSocket connection. Real-time features will be disabled.')
+      console.warn('🔑 No auth token available for WebSocket connection. Real-time features will be disabled.')
 
       // Try to get auth token periodically
       this.startAuthRetry()
       return
     }
 
+    console.log('🔌 Starting WebSocket connection with token')
     // Try multiple WebSocket connection methods
     await this.tryWebSocketConnection()
   }
@@ -154,6 +167,21 @@ export class RealTimeSocketService {
 
             // Handle different message types
             if (message.type) {
+              // Special handling for notification messages
+              if (message.type === 'notification' && message.notification) {
+                // Ensure the notification has an ID (generate one if missing)
+                if (!message.notification.id) {
+                  message.notification.id = `notification_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+                }
+
+                // Ensure timestamp is in the correct format
+                if (!message.notification.timestamp) {
+                  message.notification.timestamp = new Date().toISOString()
+                }
+
+                console.log('📢 Processing notification:', message.notification)
+              }
+
               this.emit(message.type, message)
             }
           } catch (error) {
@@ -163,17 +191,28 @@ export class RealTimeSocketService {
 
         this.ws.onclose = (event) => {
           clearTimeout(connectionTimeout)
-          console.log('🔌 WebSocket connection closed:', event.code, event.reason)
+          console.log('🔌 WebSocket connection closed:', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean,
+            reconnectAttempts: this.reconnectAttempts
+          })
+
           this.connected = false
           this.stopHeartbeat()
           this.emit("disconnect", { code: event.code, reason: event.reason })
 
-          // For now, just proceed with normal reconnection logic
-          // We can add alternative endpoint logic later if needed
-
-          // Attempt to reconnect if not a normal closure
+          // Attempt to reconnect if not a normal closure and we haven't exceeded max attempts
           if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+            console.log(`🔄 Scheduling reconnect attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}`)
             this.scheduleReconnect()
+          } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.warn('🚫 Max reconnection attempts reached, giving up')
+            this.emit("error", {
+              message: 'Max reconnection attempts reached',
+              code: 'MAX_RECONNECT_ATTEMPTS',
+              timestamp: new Date().toISOString()
+            })
           }
 
           if (event.code !== 1000) {
@@ -300,7 +339,13 @@ export class RealTimeSocketService {
     return this.connected && this.ws?.readyState === WebSocket.OPEN
   }
 
-  public disconnect() {
+  public isConnecting(): boolean {
+    return this.ws?.readyState === WebSocket.CONNECTING
+  }
+
+  private cleanup() {
+    console.log('🧹 Cleaning up existing WebSocket connection')
+
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
@@ -310,12 +355,32 @@ export class RealTimeSocketService {
     this.stopAuthRetry()
 
     if (this.ws) {
-      this.ws.close(1000, 'Client disconnect')
+      // Remove event listeners to prevent memory leaks
+      this.ws.onopen = null
+      this.ws.onmessage = null
+      this.ws.onclose = null
+      this.ws.onerror = null
+
+      if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+        this.ws.close(1000, 'Cleanup')
+      }
       this.ws = null
     }
 
     this.connected = false
     this.reconnectAttempts = 0
+  }
+
+  public disconnect() {
+    console.log('🔌 Disconnect called')
+    this.cleanup()
+  }
+
+  public forceReconnect() {
+    console.log('🔄 Force reconnect called')
+    this.cleanup()
+    this.reconnectAttempts = 0
+    return this.connect()
   }
 
   // Subscribe to all bus location updates
@@ -337,6 +402,11 @@ export class RealTimeSocketService {
       bus_id: busId,
       stop_id: stopId
     })
+  }
+
+  // Subscribe to notifications
+  public subscribeToNotifications() {
+    this.send('subscribe_notifications', {})
   }
 }
 

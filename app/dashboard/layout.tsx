@@ -8,13 +8,12 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { authService, User } from "@/services/authService" // Import authService and User type
 import { Toaster } from "@/components/ui/sonner"
+import { NotificationCenter } from "@/components/notifications/NotificationCenter"
+import { useNotifications } from "@/hooks/useNotifications"
 // No CSS import needed here
 
-export default function ClientLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+// Inner component that uses the notification context
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const [showUserPopup, setShowUserPopup] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showInbox, setShowInbox] = useState(false)
@@ -23,33 +22,8 @@ export default function ClientLayout({
   const pathname = usePathname()
   const router = useRouter(); // Get router instance
 
-  // Sample notifications data
-  const notifications = [
-    {
-      id: 1,
-      type: "alert",
-      title: "Bus A245 Delayed",
-      message: "Bus A245 is delayed by 15 minutes due to traffic",
-      time: "2 minutes ago",
-      read: false
-    },
-    {
-      id: 2,
-      type: "info",
-      title: "Route Update",
-      message: "Route R-103 has been modified",
-      time: "1 hour ago",
-      read: true
-    },
-    {
-      id: 3,
-      type: "warning",
-      title: "Low Fuel Alert",
-      message: "Bus B112 is running low on fuel",
-      time: "3 hours ago",
-      read: false
-    }
-  ]
+  // Use the notification context
+  const { unreadCount } = useNotifications();
 
   // Sample inbox messages
   const messages = [
@@ -316,54 +290,17 @@ export default function ClientLayout({
                 }}
               >
                 <Bell size={20} />
-                <span className="absolute -top-1 -right-1 bg-[#e92c2c] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  2
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#e92c2c] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
 
-              {showNotifications && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)}></div>
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-20 overflow-hidden">
-                    <div className="p-3 border-b border-gray-100 flex justify-between items-center">
-                      <h3 className="font-medium text-[#103a5e]">Notifications</h3>
-                      <button className="text-xs text-[#0097fb]">Mark all as read</button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                            !notification.read ? "bg-[#f8f9ff]" : ""
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <div className={`mt-1 ${
-                              notification.type === "alert" ? "text-[#e92c2c]" :
-                              notification.type === "warning" ? "text-[#ff8a00]" :
-                              "text-[#0097fb]"
-                            }`}>
-                              {notification.type === "alert" ? <AlertTriangle size={16} /> :
-                               notification.type === "warning" ? <AlertTriangle size={16} /> :
-                               <Info size={16} />}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex justify-between items-start">
-                                <h4 className="font-medium text-sm">{notification.title}</h4>
-                                <span className="text-xs text-[#7d7d7d]">{notification.time}</span>
-                              </div>
-                              <p className="text-xs text-[#7d7d7d] mt-1">{notification.message}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="p-3 border-t border-gray-100 text-center">
-                      <button className="text-xs text-[#0097fb]">View all notifications</button>
-                    </div>
-                  </div>
-                </>
-              )}
+              <NotificationCenter
+                isOpen={showNotifications}
+                onClose={() => setShowNotifications(false)}
+              />
             </div>
 
             <div className="relative">
@@ -458,5 +395,16 @@ export default function ClientLayout({
       {/* Toaster for notifications */}
       <Toaster />
     </div>
+  )
+}
+
+// Main layout component
+export default function ClientLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <DashboardContent>{children}</DashboardContent>
   )
 }
