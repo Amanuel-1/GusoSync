@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, Filter, Search, Plus, Edit, Trash2, Bus, Users, MapPin, Clock, Eye, MoreVertical, Power, PowerOff } from "lucide-react"
+import { Download, Filter, Search, Plus, Edit, Trash2, Bus, Users, MapPin, Clock, Eye, MoreVertical, Power, PowerOff, ChevronDown } from "lucide-react"
 import { useBusManagementAPI, type BusData, type CreateBusRequest, type UpdateBusRequest } from "@/hooks/useBusManagementAPI"
 import { authService } from "@/services/authService"
 import { showToast } from "@/lib/toast"
+import { exportData, commonFormatters, type ExportConfig } from "@/lib/export-utils"
 import BusModal from "@/components/BusManagement/BusModal"
 import BusDetailsModal from "@/components/BusManagement/BusDetailsModal"
 import SmartPagination from "@/components/ui/SmartPagination"
@@ -17,6 +18,7 @@ export default function BussesPage() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showRouteDropdown, setShowRouteDropdown] = useState(false)
   const [showActionsDropdown, setShowActionsDropdown] = useState<string | null>(null)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
   
   // Modal states
   const [busModalOpen, setBusModalOpen] = useState(false)
@@ -127,8 +129,45 @@ export default function BussesPage() {
       showToast.error("Only administrators can change bus status")
       return
     }
-    
+
     await toggleBusStatus(bus.id)
+  }
+
+  const handleExport = (format: 'csv' | 'excel') => {
+    try {
+      const exportConfig: ExportConfig = {
+        filename: `busses_${new Date().toISOString().split('T')[0]}`,
+        sheetName: 'Busses',
+        headers: {
+          id: 'Bus ID',
+          name: 'Bus Name',
+          license_plate: 'License Plate',
+          route_name: 'Route',
+          assigned_route_id: 'Route ID',
+          driver_name: 'Driver',
+          bus_status: 'Status',
+          capacity: 'Capacity',
+          bus_type: 'Type',
+          bus_model: 'Model',
+          created_at: 'Created Date',
+          updated_at: 'Updated Date'
+        },
+        excludeFields: ['id'], // Exclude internal ID from export
+        formatters: {
+          created_at: commonFormatters.datetime,
+          updated_at: commonFormatters.datetime,
+          bus_status: (value: string) => value?.replace('_', ' ') || '',
+          capacity: (value: number) => value ? `${value} passengers` : '',
+        }
+      }
+
+      exportData(filteredBusses, format, exportConfig)
+      setShowExportDropdown(false)
+      showToast.success(`Export Successful`, `Busses data exported as ${format.toUpperCase()}`)
+    } catch (error) {
+      console.error('Export error:', error)
+      showToast.error('Export Failed', 'Failed to export busses data')
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -309,8 +348,41 @@ export default function BussesPage() {
 
         {/* Busses Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-[#d9d9d9]">
+          <div className="p-6 border-b border-[#d9d9d9] flex justify-between items-center">
             <h2 className="text-lg font-semibold text-[#103a5e]">Busses ({filteredBusses.length})</h2>
+
+            {/* Export Button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                className="flex items-center gap-2 px-4 py-2 border border-[#d9d9d9] rounded-md hover:bg-[#f9f9f9] transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Export
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              {showExportDropdown && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowExportDropdown(false)}></div>
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 border border-[#d9d9d9]">
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-[#f9f9f9] transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export as CSV
+                    </button>
+                    <button
+                      onClick={() => handleExport('excel')}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-[#f9f9f9] transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export as Excel
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           
           <div className="overflow-x-auto">

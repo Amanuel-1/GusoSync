@@ -408,6 +408,124 @@ export class RealTimeSocketService {
   public subscribeToNotifications() {
     this.send('subscribe_notifications', {})
   }
+
+  // Send reallocation request notification
+  public sendReallocationRequestNotification(requestData: {
+    request_id: string;
+    bus_id: string;
+    current_route_id: string;
+    requesting_regulator_id: string;
+    reason: string;
+    priority: "LOW" | "NORMAL" | "HIGH";
+  }) {
+    this.send('send_notification', {
+      title: "New Reallocation Request",
+      message: `New reallocation request submitted for bus ${requestData.bus_id} on route ${requestData.current_route_id}. Reason: ${requestData.reason}`,
+      notification_type: "REALLOCATION_REQUEST_SUBMITTED",
+      target_roles: ["CONTROL_CENTER_ADMIN", "CONTROL_STAFF"],
+      related_entity: {
+        entity_type: "reallocation_request",
+        request_id: requestData.request_id,
+        bus_id: requestData.bus_id,
+        current_route_id: requestData.current_route_id,
+        requesting_regulator_id: requestData.requesting_regulator_id,
+        reason: requestData.reason,
+        priority: requestData.priority
+      }
+    })
+  }
+
+  // Send reallocation approval notification
+  public sendReallocationApprovalNotification(approvalData: {
+    request_id: string;
+    bus_id: string;
+    old_route_id: string;
+    new_route_id: string;
+    approved_by: string;
+  }) {
+    this.send('send_notification', {
+      title: "Reallocation Request Approved",
+      message: `Your reallocation request for bus ${approvalData.bus_id} has been approved. Bus will be moved from ${approvalData.old_route_id} to ${approvalData.new_route_id}`,
+      notification_type: "REALLOCATION_REQUEST_APPROVED",
+      target_user_ids: [], // Will be filled by backend based on request
+      related_entity: {
+        entity_type: "reallocation_request",
+        request_id: approvalData.request_id,
+        bus_id: approvalData.bus_id,
+        priority: "NORMAL"
+      }
+    })
+  }
+
+  // Send reallocation discard notification
+  public sendReallocationDiscardNotification(discardData: {
+    request_id: string;
+    bus_id: string;
+    reason: string;
+    discarded_by: string;
+  }) {
+    this.send('send_notification', {
+      title: "Reallocation Request Discarded",
+      message: `Your reallocation request for bus ${discardData.bus_id} has been discarded. Reason: ${discardData.reason}`,
+      notification_type: "REALLOCATION_REQUEST_DISCARDED",
+      target_user_ids: [], // Will be filled by backend based on request
+      related_entity: {
+        entity_type: "reallocation_request",
+        request_id: discardData.request_id,
+        bus_id: discardData.bus_id,
+        priority: "NORMAL"
+      }
+    })
+  }
+
+  // Send route reallocation notification
+  public sendRouteReallocationNotification(reallocationData: {
+    bus_id: string;
+    old_route_id: string;
+    new_route_id: string;
+    reallocated_by: string;
+  }) {
+    this.send('send_notification', {
+      title: "Bus Route Reallocated",
+      message: `Bus ${reallocationData.bus_id} has been reallocated from ${reallocationData.old_route_id} to ${reallocationData.new_route_id}`,
+      notification_type: "ROUTE_REALLOCATION",
+      target_roles: ["BUS_DRIVER", "QUEUE_REGULATOR"],
+      related_entity: {
+        entity_type: "route_reallocation",
+        bus_id: reallocationData.bus_id,
+        route_id: reallocationData.new_route_id,
+        priority: "HIGH"
+      }
+    })
+  }
+
+  // Chat functionality
+  public joinConversation(conversationId: string) {
+    this.send('join_conversation', { conversation_id: conversationId })
+  }
+
+  public sendTypingIndicator(conversationId: string, isTyping: boolean) {
+    this.send('typing_indicator', {
+      conversation_id: conversationId,
+      is_typing: isTyping
+    })
+  }
+
+  public markMessageRead(conversationId: string, messageId: string) {
+    this.send('mark_message_read', {
+      conversation_id: conversationId,
+      message_id: messageId
+    })
+  }
+
+  // Send chat message directly via WebSocket (if supported by backend)
+  public sendChatMessage(conversationId: string, content: string, type: string = 'TEXT') {
+    this.send('send_chat_message', {
+      conversation_id: conversationId,
+      content: content,
+      type: type
+    })
+  }
 }
 
 // Legacy SocketService for backward compatibility with existing chat functionality

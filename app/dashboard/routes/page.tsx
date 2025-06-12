@@ -19,13 +19,16 @@ import {
   Plus,
   Route as RouteIcon,
   Power,
-  PowerOff
+  PowerOff,
+  Download,
+  ChevronDown
 } from "lucide-react"
 import { useRouteManagementAPI, type RouteData, type CreateRouteRequest, type UpdateRouteRequest } from "@/hooks/useRouteManagementAPI"
 import { useBusStopManagement } from "@/hooks/useBusStopManagement"
 import { type BusStop, type CreateBusStopRequest, type UpdateBusStopRequest } from "@/types/busStop"
 import { authService } from "@/services/authService"
 import { showToast } from "@/lib/toast"
+import { exportData, commonFormatters, type ExportConfig } from "@/lib/export-utils"
 import RouteModal from "@/components/RouteManagement/RouteModal"
 import RouteDetailsModal from "@/components/RouteManagement/RouteDetailsModal"
 import BusStopModal from "@/components/BusStopManagement/BusStopModal"
@@ -53,6 +56,7 @@ export default function RoutesPage() {
   const [showBusStopStatusDropdown, setShowBusStopStatusDropdown] = useState(false)
   const [showBusStopActionsDropdown, setShowBusStopActionsDropdown] = useState<string | null>(null)
   const [selectedBusStop, setSelectedBusStop] = useState<BusStop | null>(null)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
 
   // Modal states
   const [routeModalOpen, setRouteModalOpen] = useState(false)
@@ -315,6 +319,65 @@ export default function RoutesPage() {
     }
   }
 
+  const handleExport = (format: 'csv' | 'excel') => {
+    try {
+      if (activeTab === 'routes') {
+        const exportConfig: ExportConfig = {
+          filename: `routes_${new Date().toISOString().split('T')[0]}`,
+          sheetName: 'Routes',
+          headers: {
+            id: 'Route ID',
+            name: 'Route Name',
+            description: 'Description',
+            is_active: 'Status',
+            total_distance: 'Total Distance (km)',
+            stop_ids: 'Number of Stops',
+            created_at: 'Created Date',
+            updated_at: 'Updated Date'
+          },
+          excludeFields: ['id'],
+          formatters: {
+            created_at: commonFormatters.datetime,
+            updated_at: commonFormatters.datetime,
+            is_active: (value: boolean) => value ? 'Active' : 'Inactive',
+            total_distance: (value: number) => value ? value.toFixed(2) : '0',
+            stop_ids: (value: string[]) => value ? value.length.toString() : '0',
+          }
+        }
+        exportData(filteredData, format, exportConfig)
+      } else {
+        const exportConfig: ExportConfig = {
+          filename: `bus_stops_${new Date().toISOString().split('T')[0]}`,
+          sheetName: 'Bus Stops',
+          headers: {
+            id: 'Stop ID',
+            name: 'Stop Name',
+            location: 'Location',
+            is_active: 'Status',
+            capacity: 'Capacity',
+            created_at: 'Created Date',
+            updated_at: 'Updated Date'
+          },
+          excludeFields: ['id'],
+          formatters: {
+            created_at: commonFormatters.datetime,
+            updated_at: commonFormatters.datetime,
+            is_active: (value: boolean) => value ? 'Active' : 'Inactive',
+            location: (value: any) => value ? `${value.latitude?.toFixed(4)}, ${value.longitude?.toFixed(4)}` : '',
+            capacity: (value: number) => value ? value.toString() : 'N/A',
+          }
+        }
+        exportData(filteredBusStops, format, exportConfig)
+      }
+
+      setShowExportDropdown(false)
+      showToast.success(`Export Successful`, `${activeTab === 'routes' ? 'Routes' : 'Bus stops'} data exported as ${format.toUpperCase()}`)
+    } catch (error) {
+      console.error('Export error:', error)
+      showToast.error('Export Failed', `Failed to export ${activeTab === 'routes' ? 'routes' : 'bus stops'} data`)
+    }
+  }
+
   // Helper functions
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A'
@@ -560,6 +623,39 @@ export default function RoutesPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Export Button */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportDropdown(!showExportDropdown)}
+                  className="flex items-center gap-2 px-4 py-2 border border-[#d9d9d9] rounded-md hover:bg-gray-50"
+                >
+                  <Download size={16} />
+                  Export
+                  <ChevronDown size={16} />
+                </button>
+                {showExportDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowExportDropdown(false)}></div>
+                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 border border-[#d9d9d9]">
+                      <button
+                        onClick={() => handleExport('csv')}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        <Download size={14} />
+                        Export as CSV
+                      </button>
+                      <button
+                        onClick={() => handleExport('excel')}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        <Download size={14} />
+                        Export as Excel
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

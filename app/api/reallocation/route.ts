@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import BusAllocationAgent, { ReallocationRequest, ReallocationDecision } from '../../../services/busAllocationAgent';
+import { RealTimeSocketService } from '@/utils/socket';
 
 // Global agent instance (in production, this would be properly managed)
 let agentInstance: BusAllocationAgent | null = null;
@@ -47,8 +48,8 @@ export async function POST(request: NextRequest) {
       }
 
       case 'execute_reallocation': {
-        const { decisionId, busId, fromRouteId, toRouteId, reason } = data;
-        
+        const { decisionId, busId, fromRouteId, toRouteId, reason, executedBy } = data;
+
         if (!decisionId || !busId || !fromRouteId || !toRouteId || !reason) {
           return NextResponse.json(
             { error: 'Missing required fields for reallocation execution' },
@@ -71,6 +72,21 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Send notification about route reallocation
+        try {
+          const socket = RealTimeSocketService.getInstance();
+          if (socket.isConnected()) {
+            socket.sendRouteReallocationNotification({
+              bus_id: busId,
+              old_route_id: fromRouteId,
+              new_route_id: toRouteId,
+              reallocated_by: executedBy || 'system'
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to send route reallocation notification:', error);
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Reallocation executed successfully'
@@ -78,8 +94,8 @@ export async function POST(request: NextRequest) {
       }
 
       case 'manual_review': {
-        const { decisionId, approved, staffId } = data;
-        
+        const { decisionId, approved, staffId, busId, reason } = data;
+
         if (!decisionId || typeof approved !== 'boolean' || !staffId) {
           return NextResponse.json(
             { error: 'Missing required fields for manual review' },
@@ -94,6 +110,31 @@ export async function POST(request: NextRequest) {
             { error: 'Decision not found' },
             { status: 404 }
           );
+        }
+
+        // Send notification about manual review decision
+        try {
+          const socket = RealTimeSocketService.getInstance();
+          if (socket.isConnected()) {
+            if (approved) {
+              socket.sendReallocationApprovalNotification({
+                request_id: decisionId,
+                bus_id: busId || 'unknown',
+                old_route_id: 'unknown', // You might need to get this from the decision
+                new_route_id: 'unknown', // You might need to get this from the decision
+                approved_by: staffId
+              });
+            } else {
+              socket.sendReallocationDiscardNotification({
+                request_id: decisionId,
+                bus_id: busId || 'unknown',
+                reason: reason || 'Manual review rejected',
+                discarded_by: staffId
+              });
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to send manual review notification:', error);
         }
 
         return NextResponse.json({
@@ -120,7 +161,7 @@ export async function POST(request: NextRequest) {
 
       case 'add_request': {
         const { request } = data;
-        
+
         if (!request || !request.fermataId || !request.fermataName) {
           return NextResponse.json(
             { error: 'Invalid request data. fermataId and fermataName are required' },
@@ -129,6 +170,24 @@ export async function POST(request: NextRequest) {
         }
 
         const requestId = agent.addReallocationRequest(request);
+
+        // Send notification about new reallocation request
+        try {
+          const socket = RealTimeSocketService.getInstance();
+          if (socket.isConnected()) {
+            socket.sendReallocationRequestNotification({
+              request_id: requestId,
+              bus_id: request.busId || 'unknown',
+              current_route_id: request.currentRouteId || 'unknown',
+              requesting_regulator_id: request.requestingRegulatorId || 'system',
+              reason: request.reason || 'Queue management',
+              priority: request.priority || 'NORMAL'
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to send reallocation request notification:', error);
+        }
+
         return NextResponse.json({
           success: true,
           requestId,

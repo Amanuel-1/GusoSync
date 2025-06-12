@@ -10,6 +10,7 @@ import { authService, User } from "@/services/authService" // Import authService
 import { Toaster } from "@/components/ui/sonner"
 import { NotificationCenter } from "@/components/notifications/NotificationCenter"
 import { useNotifications } from "@/hooks/useNotifications"
+import { useReallocationNotifications } from "@/hooks/useReallocationNotifications"
 // No CSS import needed here
 
 // Inner component that uses the notification context
@@ -24,6 +25,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Use the notification context
   const { unreadCount } = useNotifications();
+
+  // Initialize reallocation notifications
+  useReallocationNotifications();
 
   // Sample inbox messages
   const messages = [

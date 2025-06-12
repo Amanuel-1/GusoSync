@@ -4,11 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { useNotifications } from './NotificationProvider';
 import { AppNotification, NotificationType } from '@/types/notification';
 import { RealTimeSocketService } from '@/utils/socket';
+import { useReallocationNotifications } from '@/hooks/useReallocationNotifications';
 
 export function NotificationTestPanel() {
   const { addNotification } = useNotifications();
   const [socketConnected, setSocketConnected] = useState(false);
   const [socketConnecting, setSocketConnecting] = useState(false);
+  const {
+    sendTestReallocationRequest,
+    sendTestReallocationApproval,
+    sendTestReallocationDiscard,
+    sendTestRouteReallocation
+  } = useReallocationNotifications();
 
   useEffect(() => {
     const socket = RealTimeSocketService.getInstance();
@@ -260,9 +267,47 @@ export function NotificationTestPanel() {
         </button>
       </div>
       
+      {/* WebSocket Reallocation Tests */}
+      <div className="mt-6 border-t pt-4">
+        <h4 className="text-md font-medium text-[#103a5e] mb-3">WebSocket Reallocation Tests</h4>
+        <p className="text-sm text-gray-600 mb-3">
+          Test real-time reallocation notifications via WebSocket:
+        </p>
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={sendTestReallocationRequest}
+            className="px-3 py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+          >
+            🔄 Request Submitted
+          </button>
+
+          <button
+            onClick={sendTestReallocationApproval}
+            className="px-3 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
+          >
+            ✅ Request Approved
+          </button>
+
+          <button
+            onClick={sendTestReallocationDiscard}
+            className="px-3 py-2 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+          >
+            ❌ Request Discarded
+          </button>
+
+          <button
+            onClick={sendTestRouteReallocation}
+            className="px-3 py-2 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 transition-colors"
+          >
+            🚌 Route Reallocated
+          </button>
+        </div>
+      </div>
+
       <div className="mt-4 p-3 bg-gray-50 rounded text-xs text-gray-600">
-        <strong>Note:</strong> These are test notifications to demonstrate the system. 
-        In production, notifications will be received automatically via WebSocket from the backend.
+        <strong>Note:</strong> The top section creates local test notifications. The WebSocket section
+        sends actual notifications through the real-time system that would be received by all connected clients.
       </div>
     </div>
   );

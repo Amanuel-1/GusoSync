@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, Filter, Search, UserPlus, Edit, Trash2, Key, ToggleLeft, ToggleRight, Users, UserCheck, UserX, Clock, Eye } from "lucide-react"
+import { Download, Filter, Search, UserPlus, Edit, Trash2, Key, ToggleLeft, ToggleRight, Users, UserCheck, UserX, Clock, Eye, ChevronDown } from "lucide-react"
 import { useUserManagement } from "@/hooks/useUserManagement"
 import { useApprovalManagement } from "@/hooks/useApprovalManagement"
 import { authService } from "@/services/authService"
+import { exportData, commonFormatters, type ExportConfig } from "@/lib/export-utils"
 import UserModal from "@/components/UserManagement/UserModal"
 import PasswordResetModal from "@/components/UserManagement/PasswordResetModal"
 import ApprovalModal from "@/components/UserManagement/ApprovalModal"
@@ -21,6 +22,7 @@ export default function PersonnelPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
   
   // Modal states
   const [userModalOpen, setUserModalOpen] = useState(false)
@@ -207,6 +209,41 @@ export default function PersonnelPage() {
   const handleViewDetails = (user: User) => {
     setSelectedUser(user)
     setUserDetailsModalOpen(true)
+  }
+
+  const handleExport = (format: 'csv' | 'excel') => {
+    try {
+      const exportConfig: ExportConfig = {
+        filename: `${getTabDisplayName(activeTab).toLowerCase().replace(' ', '_')}_${new Date().toISOString().split('T')[0]}`,
+        sheetName: getTabDisplayName(activeTab),
+        headers: {
+          id: 'User ID',
+          first_name: 'First Name',
+          last_name: 'Last Name',
+          email: 'Email',
+          phone_number: 'Phone Number',
+          role: 'Role',
+          is_active: 'Status',
+          created_at: 'Created Date',
+          updated_at: 'Updated Date'
+        },
+        excludeFields: ['id', 'profile_image'], // Exclude internal ID and image from export
+        formatters: {
+          created_at: commonFormatters.datetime,
+          updated_at: commonFormatters.datetime,
+          is_active: (value: boolean) => value ? 'Active' : 'Inactive',
+          role: (value: string) => getRoleDisplayName(value),
+          phone_number: (value: string) => value || 'N/A',
+        }
+      }
+
+      exportData(filteredData, format, exportConfig)
+      setShowExportDropdown(false)
+      showToast.success(`Export Successful`, `${getTabDisplayName(activeTab)} data exported as ${format.toUpperCase()}`)
+    } catch (error) {
+      console.error('Export error:', error)
+      showToast.error('Export Failed', `Failed to export ${getTabDisplayName(activeTab).toLowerCase()} data`)
+    }
   }
 
   // Helper functions
@@ -455,10 +492,37 @@ export default function PersonnelPage() {
                 </div>
               </div>
 
-              <button className="flex items-center gap-2 px-4 py-2 border border-[#d9d9d9] rounded-md hover:bg-gray-50">
-                <Download size={16} />
-                <span>Export</span>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportDropdown(!showExportDropdown)}
+                  className="flex items-center gap-2 px-4 py-2 border border-[#d9d9d9] rounded-md hover:bg-gray-50"
+                >
+                  <Download size={16} />
+                  <span>Export</span>
+                  <ChevronDown size={16} />
+                </button>
+                {showExportDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowExportDropdown(false)}></div>
+                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 border border-[#d9d9d9]">
+                      <button
+                        onClick={() => handleExport('csv')}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        <Download size={14} />
+                        Export as CSV
+                      </button>
+                      <button
+                        onClick={() => handleExport('excel')}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        <Download size={14} />
+                        Export as Excel
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
