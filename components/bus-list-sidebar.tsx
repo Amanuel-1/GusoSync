@@ -15,6 +15,7 @@ interface BusListSidebarProps {
   filterRouteId: string | null
   onChangeFilterRoute: (routeId: string | null) => void
   loading: boolean
+  connected?: boolean
 }
 
 export default function BusListSidebar({
@@ -26,6 +27,7 @@ export default function BusListSidebar({
   filterRouteId,
   onChangeFilterRoute,
   loading,
+  connected = false,
 }: BusListSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showRouteFilter, setShowRouteFilter] = useState(false)
@@ -59,7 +61,15 @@ export default function BusListSidebar({
     <div className="w-[320px] border-r border-[#d9d9d9] bg-white flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-[#d9d9d9]">
-        <h2 className="text-lg font-medium text-[#103a5e] mb-4">Bus Tracking</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-[#103a5e]">Bus Tracking</h2>
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <span className={`text-xs font-medium ${connected ? 'text-green-600' : 'text-red-600'}`}>
+              {connected ? 'LIVE' : 'OFFLINE'}
+            </span>
+          </div>
+        </div>
 
         {/* Search */}
         <div className="relative mb-4">
@@ -188,8 +198,15 @@ export default function BusListSidebar({
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <div className="font-medium text-[#103a5e]">{bus.name}</div>
-                    <div className="text-xs text-[#7d7d7d]">ID: {bus.id}</div>
+                    <div className="flex items-center">
+                      <div className="font-medium text-[#103a5e]">{bus.name}</div>
+                      {connected && (
+                        <div className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Live tracking"></div>
+                      )}
+                    </div>
+                    <div className="text-xs text-[#7d7d7d]">
+                      ID: {bus.id} • Updated: {bus.lastUpdated.toLocaleTimeString()}
+                    </div>
                   </div>
                   <div className={`px-2 py-1 text-xs rounded-md ${getStatusColor(bus.status)}`}>
                     {bus.status.replace("_", " ")}
@@ -235,6 +252,18 @@ export default function BusListSidebar({
 
       {/* Footer with stats */}
       <div className="p-4 border-t border-[#d9d9d9] bg-[#f9f9f9]">
+        {/* Connection Status Banner */}
+        <div className={`mb-3 p-2 rounded-md text-xs text-center ${
+          connected
+            ? 'bg-green-50 text-green-800 border border-green-200'
+            : 'bg-orange-50 text-orange-800 border border-orange-200'
+        }`}>
+          {connected
+            ? '🔄 Real-time tracking active'
+            : '📡 Polling mode (updates every 30s)'
+          }
+        </div>
+
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="text-xs text-[#7d7d7d]">Total</div>

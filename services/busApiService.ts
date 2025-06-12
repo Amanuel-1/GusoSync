@@ -80,9 +80,22 @@ class BusApiService {
       const data = await response.json()
 
       if (response.ok) {
+        const buses = data.data || []
+        console.log(`🚌 Fetched ${buses.length} buses from API:`)
+        buses.forEach((bus: BackendBusResponse, index: number) => {
+          if (index < 3) { // Log first 3 buses for debugging
+            console.log(`Bus ${bus.license_plate}:`, {
+              id: bus.id,
+              assigned_driver_id: bus.assigned_driver_id,
+              assigned_driver: bus.assigned_driver,
+              bus_status: bus.bus_status
+            })
+          }
+        })
+
         return {
           success: true,
-          data: data.data || [],
+          data: buses,
         }
       } else {
         return {
@@ -165,9 +178,16 @@ class BusApiService {
     routes: BackendRouteResponse[],
     busStops: BackendBusStopResponse[]
   ): Bus {
+    // Debug logging for driver assignment
+    console.log(`🚌 Transforming bus ${backendBus.license_plate}:`, {
+      assigned_driver_id: backendBus.assigned_driver_id,
+      assigned_driver: backendBus.assigned_driver,
+      has_driver: !!backendBus.assigned_driver
+    })
+
     // Find the assigned route
     const assignedRoute = routes.find(route => route.id === backendBus.assigned_route_id)
-    
+
     // Generate route color based on route ID (fallback if no route found)
     const routeColors = ["#0097fb", "#48c864", "#ff8a00", "#e92c2c", "#7d7d7d"]
     const colorIndex = assignedRoute ? parseInt(assignedRoute.id.slice(-1)) % routeColors.length : 0
@@ -184,7 +204,7 @@ class BusApiService {
     // Find next stop (simplified - just pick first stop from route)
     let nextStop = "Unknown"
     let nextStopETA = "N/A"
-    
+
     if (assignedRoute && assignedRoute.stop_ids.length > 0) {
       const firstStopId = assignedRoute.stop_ids[0]
       const firstStop = busStops.find(stop => stop.id === firstStopId)
@@ -193,6 +213,18 @@ class BusApiService {
         nextStopETA = `${Math.floor(Math.random() * 15) + 5} min` // Random ETA for now
       }
     }
+
+    // Transform driver information
+    const driverInfo = {
+      id: backendBus.assigned_driver?.id || 'unassigned',
+      name: backendBus.assigned_driver
+        ? `${backendBus.assigned_driver.first_name} ${backendBus.assigned_driver.last_name}`
+        : 'Unassigned',
+      phone: backendBus.assigned_driver?.phone_number || 'N/A',
+      photo: backendBus.assigned_driver?.profile_image
+    }
+
+    console.log(`👨‍✈️ Driver info for bus ${backendBus.license_plate}:`, driverInfo)
 
     return {
       id: backendBus.id,
@@ -209,15 +241,8 @@ class BusApiService {
       nextStopETA,
       passengerCount: Math.floor(Math.random() * backendBus.capacity), // Random passenger count for now
       capacity: backendBus.capacity,
-      driver: {
-        id: backendBus.assigned_driver?.id || 'unassigned',
-        name: backendBus.assigned_driver 
-          ? `${backendBus.assigned_driver.first_name} ${backendBus.assigned_driver.last_name}`
-          : 'Unassigned',
-        phone: backendBus.assigned_driver?.phone_number || 'N/A',
-        photo: backendBus.assigned_driver?.profile_image
-      },
-      vehicleType: backendBus.bus_type === 'STANDARD' ? 'Standard Bus' : 
+      driver: driverInfo,
+      vehicleType: backendBus.bus_type === 'STANDARD' ? 'Standard Bus' :
                    backendBus.bus_type === 'ARTICULATED' ? 'Articulated Bus' : 'Minibus',
       licensePlate: backendBus.license_plate,
     }

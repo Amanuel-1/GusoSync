@@ -59,9 +59,11 @@ interface BusTrackingMapProps {
   // Optional props to avoid duplicate data fetching
   routes?: any[]
   busStops?: any[]
+  // Real-time connection status
+  connected?: boolean
 }
 
-export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loading, routes: propRoutes, busStops: propBusStops }: BusTrackingMapProps) {
+export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loading, routes: propRoutes, busStops: propBusStops, connected = false }: BusTrackingMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
@@ -256,15 +258,38 @@ export default function BusTrackingMap({ buses, selectedBus, onSelectBus, loadin
       </div>
 
       {/* Map overlay with stats */}
-      <div className="absolute top-4 left-4 bg-white bg-opacity-90 rounded-md shadow-md p-3">
-        <h3 className="text-sm font-medium text-[#103a5e] mb-2">Live Bus Tracking</h3>
+      <div className="absolute top-4 left-4 bg-white bg-opacity-95 rounded-lg shadow-lg p-4 min-w-[200px]">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[#103a5e]">
+            Bus Tracking
+          </h3>
+          <div className="flex items-center space-x-2">
+            <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <span className={`text-xs font-medium ${connected ? 'text-green-600' : 'text-red-600'}`}>
+              {connected ? 'LIVE' : 'OFFLINE'}
+            </span>
+          </div>
+        </div>
+
+        {/* Connection Status Details */}
+        <div className={`mb-3 p-2 rounded-md text-xs ${
+          connected
+            ? 'bg-green-50 text-green-800 border border-green-200'
+            : 'bg-orange-50 text-orange-800 border border-orange-200'
+        }`}>
+          {connected
+            ? '🔄 Real-time updates active'
+            : '📡 Using fallback polling (30s intervals)'
+          }
+        </div>
+
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
           <div className="text-[#7d7d7d]">Total Buses:</div>
           <div className="font-medium">{backendBuses.length}</div>
           <div className="text-[#7d7d7d]">Operational:</div>
-          <div className="font-medium">{backendBuses.filter((b) => b.bus_status === "OPERATIONAL").length}</div>
+          <div className="font-medium text-green-600">{backendBuses.filter((b) => b.bus_status === "OPERATIONAL").length}</div>
           <div className="text-[#7d7d7d]">Maintenance:</div>
-          <div className="font-medium">{backendBuses.filter((b) => b.bus_status === "MAINTENANCE").length}</div>
+          <div className="font-medium text-orange-600">{backendBuses.filter((b) => b.bus_status === "MAINTENANCE").length}</div>
           <div className="text-[#7d7d7d]">Last Update:</div>
           <div className="font-medium">{new Date().toLocaleTimeString()}</div>
         </div>

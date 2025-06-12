@@ -4,16 +4,28 @@ import { useState, useEffect } from "react"
 import BusTrackingMap from "@/components/bus-tracking-map"
 import BusListSidebar from "@/components/bus-list-sidebar"
 import BusDetailPanel from "@/components/bus-detail-panel"
-import { useBusTracking } from "@/hooks/use-bus-tracking"
+import { useRealTimeBusTracking } from "@/hooks/use-realtime-bus-tracking"
 import type { Bus } from "@/types/bus"
 import ChatBox from "@/components/chat-box"
+import { Bell } from "lucide-react"
 
 export default function Dashboard() {
-  const { buses, routes, busStops, loading, error } = useBusTracking()
+  const {
+    buses,
+    routes,
+    busStops,
+    loading,
+    error,
+    connected,
+    proximityAlerts,
+    clearProximityAlerts
+  } = useRealTimeBusTracking()
+
   const [selectedBus, setSelectedBus] = useState<Bus | null>(null)
-  const [chatActiveForBusId, setChatActiveForBusId] = useState<string | null>(null); // State to track which bus chat is active for
+  const [chatActiveForBusId, setChatActiveForBusId] = useState<string | null>(null)
   const [filterActive, setFilterActive] = useState(false)
   const [filterRouteId, setFilterRouteId] = useState<string | null>(null)
+  const [showProximityAlerts, setShowProximityAlerts] = useState(false)
 
   // Filter buses based on active filters
   const filteredBuses = buses.filter((bus) => {
@@ -45,6 +57,61 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 flex overflow-hidden">
+      {/* Proximity alerts indicator */}
+      <div className="absolute top-4 right-4 z-50 flex items-center space-x-2">
+        {proximityAlerts.length > 0 && (
+          <button
+            onClick={() => setShowProximityAlerts(!showProximityAlerts)}
+            className="flex items-center space-x-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium hover:bg-blue-200 transition-colors"
+          >
+            <Bell size={12} />
+            <span>{proximityAlerts.length}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Proximity alerts panel */}
+      {showProximityAlerts && proximityAlerts.length > 0 && (
+        <div className="absolute top-16 right-4 z-50 w-80 bg-white rounded-lg shadow-lg border p-4 max-h-96 overflow-y-auto">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-900">Proximity Alerts</h3>
+            <button
+              onClick={clearProximityAlerts}
+              className="text-xs text-gray-500 hover:text-gray-700"
+            >
+              Clear All
+            </button>
+          </div>
+          <div className="space-y-2">
+            {proximityAlerts.map((alert, index) => (
+              <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-blue-900">
+                    Bus {alert.bus_info.license_plate}
+                  </span>
+                  <span className="text-xs text-blue-600">
+                    {new Date(alert.timestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-sm text-blue-800 mt-1">
+                  Approaching {alert.bus_stop_name}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  ETA: ~{alert.estimated_arrival_minutes} minutes
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-lg">
+          {error}
+        </div>
+      )}
+
       {/* Left sidebar with bus list */}
       <BusListSidebar
         buses={filteredBuses}
@@ -55,6 +122,7 @@ export default function Dashboard() {
         filterRouteId={filterRouteId}
         onChangeFilterRoute={setFilterRouteId}
         loading={loading}
+        connected={connected}
       />
 
       {/* Main map area */}
@@ -66,6 +134,7 @@ export default function Dashboard() {
           loading={loading}
           routes={routes}
           busStops={busStops}
+          connected={connected}
         />
       </div>
 
@@ -92,6 +161,7 @@ export default function Dashboard() {
           />
         </div>
       )}
+
     </div>
   )
 }

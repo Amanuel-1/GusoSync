@@ -381,7 +381,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -673,7 +672,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Ps"
@@ -816,7 +814,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Ps"
@@ -1748,7 +1745,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "description": "Number of routes per page",
     "default": 10,
@@ -2208,7 +2204,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -2319,7 +2314,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -2431,7 +2425,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -3002,7 +2995,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -3262,7 +3254,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -3337,7 +3328,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 50,
     "title": "Limit"
@@ -3701,7 +3691,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -3812,7 +3801,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -3960,7 +3948,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -4238,7 +4225,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -4509,7 +4495,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -4839,7 +4824,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -4950,7 +4934,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -5164,7 +5147,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -5536,7 +5518,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -5750,7 +5731,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -5856,7 +5836,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -6006,7 +5985,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 20,
     "title": "Limit"
@@ -6403,7 +6381,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -6469,7 +6446,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -7295,7 +7271,6 @@
     "required": false,
     "schema": {
     "type": "integer",
-    "maximum": 100,
     "minimum": 1,
     "default": 10,
     "title": "Limit"
@@ -7674,14 +7649,14 @@
     }
     }
     },
-    "/socket.io/info": {
+    "/ws/status": {
     "get": {
     "tags": [
-    "socketio"
+    "websocket"
     ],
-    "summary": "Socketio Info",
-    "description": "Get Socket.IO connection information",
-    "operationId": "socketio_info_socket_io_info_get",
+    "summary": "Get Websocket Status",
+    "description": "Get WebSocket server status",
+    "operationId": "get_websocket_status_ws_status_get",
     "responses": {
     "200": {
     "description": "Successful Response",
@@ -7694,14 +7669,14 @@
     }
     }
     },
-    "/socket.io/stats": {
+    "/ws/info": {
     "get": {
     "tags": [
-    "socketio"
+    "websocket"
     ],
-    "summary": "Socketio Stats",
-    "description": "Get Socket.IO connection statistics",
-    "operationId": "socketio_stats_socket_io_stats_get",
+    "summary": "Websocket Info",
+    "description": "Get WebSocket connection information",
+    "operationId": "websocket_info_ws_info_get",
     "responses": {
     "200": {
     "description": "Successful Response",
@@ -7906,6 +7881,23 @@
     "get": {
     "summary": "Root",
     "operationId": "root__get",
+    "responses": {
+    "200": {
+    "description": "Successful Response",
+    "content": {
+    "application/json": {
+    "schema": {}
+    }
+    }
+    }
+    }
+    }
+    },
+    "/health": {
+    "get": {
+    "summary": "Health Check",
+    "description": "Health check endpoint for testing",
+    "operationId": "health_check_health_get",
     "responses": {
     "200": {
     "description": "Successful Response",
