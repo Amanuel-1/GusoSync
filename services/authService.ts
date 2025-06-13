@@ -248,43 +248,102 @@ class AuthService {
   }
 
   async requestPasswordReset(email: string): Promise<void> {
-    // try {
-    //   const response = await fetch(`${this.apiBaseUrl}/api/accounts/password/reset/request`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ email }),
-    //   });
+    try {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address.');
+      }
 
-    //   if (!response.ok) {
-    //     const errorData = await response.json();
-    //     throw new Error(errorData.detail?.[0]?.msg || 'Failed to request password reset.');
-    //   }
-    // } catch (error: any) {
-    //   console.error('Request password reset error:', error);
-    //   throw new Error(error.message || 'An error occurred during password reset request.');
-    // }
+      const response = await fetch(`${this.apiBaseUrl}/api/accounts/password/reset/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        // Handle different error scenarios
+        if (response.status === 422) {
+          const validationError = errorData.detail?.[0]?.msg || 'Invalid email format.';
+          throw new Error(validationError);
+        } else if (response.status === 429) {
+          throw new Error('Too many password reset requests. Please wait before trying again.');
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        } else {
+          throw new Error(errorData.message || 'Failed to request password reset.');
+        }
+      }
+
+      // Success - no need to throw error for 404 as we don't want to reveal if email exists
+    } catch (error: any) {
+      console.error('Request password reset error:', error);
+
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to the service. Please check your internet connection and try again.');
+      }
+
+      throw error; // Re-throw the original error
+    }
   }
 
   async confirmPasswordReset(token: string, newPassword: string): Promise<void> {
-    // try {
-    //   const response = await fetch(`${this.apiBaseUrl}/api/accounts/password/reset/confirm`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ token, new_password: newPassword }),
-    //   });
+    try {
+      // Validate inputs
+      if (!token) {
+        throw new Error('Reset token is required.');
+      }
 
-    //   if (!response.ok) {
-    //     const errorData = await response.json();
-    //     throw new Error(errorData.detail?.[0]?.msg || 'Failed to confirm password reset.');
-    //   }
-    // } catch (error: any) {
-    //   console.error('Confirm password reset error:', error);
-    //   throw new Error(error.message || 'An error occurred during password reset confirmation.');
-    // }
+      if (!newPassword) {
+        throw new Error('New password is required.');
+      }
+
+      if (newPassword.length < 8) {
+        throw new Error('Password must be at least 8 characters long.');
+      }
+
+      const response = await fetch(`${this.apiBaseUrl}/api/accounts/password/reset/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, new_password: newPassword }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        // Handle different error scenarios
+        if (response.status === 400 || response.status === 404) {
+          throw new Error('Invalid or expired reset token. Please request a new password reset.');
+        } else if (response.status === 422) {
+          const validationError = errorData.detail?.[0]?.msg || 'Invalid password format.';
+          throw new Error(validationError);
+        } else if (response.status === 429) {
+          throw new Error('Too many password reset attempts. Please wait before trying again.');
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        } else {
+          throw new Error(errorData.message || 'Failed to reset password.');
+        }
+      }
+
+      // Success
+    } catch (error: any) {
+      console.error('Confirm password reset error:', error);
+
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to the service. Please check your internet connection and try again.');
+      }
+
+      throw error; // Re-throw the original error
+    }
   }
 
   async logout(): Promise<void> {
@@ -392,3 +451,7 @@ function decodeJwtPayload(token: string): any | null {
 
 export const authService = new AuthService();
 export type { User, LoginRequest, RegisterRequest, AuthResponse };
+
+// Export password reset functions for use in components
+export const requestPasswordReset = (email: string) => authService.requestPasswordReset(email);
+export const confirmPasswordReset = (token: string, newPassword: string) => authService.confirmPasswordReset(token, newPassword);
