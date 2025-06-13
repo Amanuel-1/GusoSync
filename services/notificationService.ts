@@ -31,19 +31,34 @@ export class NotificationService {
    */
   async fetchNotifications(): Promise<{ notifications: AppNotification[]; error?: string }> {
     try {
+      console.log('📡 Fetching notifications from API...');
       const response = await this.makeRequest('/api/notifications');
+
+      console.log('📡 Notification API response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
+          console.warn('📡 Unauthorized access to notifications');
           return { notifications: [], error: 'Please log in to view notifications' };
         }
-        throw new Error(`Failed to fetch notifications: ${response.status}`);
+        throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('📡 Received notifications data:', {
+        type: typeof data,
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'N/A',
+        sample: Array.isArray(data) && data.length > 0 ? data[0] : null
+      });
+
       return { notifications: Array.isArray(data) ? data : [] };
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('📡 Error fetching notifications:', error);
       return {
         notifications: [],
         error: error instanceof Error ? error.message : 'Failed to fetch notifications'

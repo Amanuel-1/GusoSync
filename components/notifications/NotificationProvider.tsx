@@ -206,22 +206,48 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     const socket = RealTimeSocketService.getInstance();
 
     const handleNotification = (message: NotificationSocketMessage) => {
-      console.log('📢 Received notification:', message);
-      addNotification(message.notification);
+      console.log('📢 Received notification via WebSocket:', {
+        type: message.type,
+        notification: {
+          id: message.notification?.id,
+          title: message.notification?.title,
+          type: message.notification?.notification_type,
+          timestamp: message.notification?.timestamp
+        }
+      });
+
+      if (message.notification) {
+        addNotification(message.notification);
+      } else {
+        console.warn('📢 Received notification message without notification data:', message);
+      }
     };
 
     const handleConnect = () => {
-      console.log('🔔 Socket connected, subscribing to notifications');
-      socket.subscribeToNotifications();
+      console.log('🔔 Socket connected successfully, subscribing to notifications');
+
+      // Wait a moment for the connection to stabilize, then subscribe
+      setTimeout(() => {
+        socket.subscribeToNotifications();
+        console.log('🔔 Notification subscription request sent');
+      }, 1000);
     };
 
     const handleDisconnect = (data: any) => {
-      console.log('🔔 Socket disconnected:', data);
+      console.log('🔔 Socket disconnected:', {
+        reason: data?.reason,
+        code: data?.code,
+        wasClean: data?.wasClean
+      });
       // Don't show error to user for normal disconnections
     };
 
     const handleError = (error: any) => {
-      console.warn('🔔 Socket error:', error);
+      console.warn('🔔 Socket error occurred:', {
+        message: error?.message,
+        type: error?.type,
+        timestamp: error?.timestamp
+      });
       // Don't show error to user - the system will try to reconnect
     };
 

@@ -121,20 +121,50 @@ export default function UserModal({
     }
   }, [isOpen, mode, user]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
     if (type === 'file') {
       const fileInput = e.target as HTMLInputElement;
       const file = fileInput.files?.[0];
       if (file) {
+        // Create a preview of the image for the UI
         const reader = new FileReader();
         reader.onload = (e) => {
           const result = e.target?.result as string;
           setImagePreviewUrl(result);
-          setFormData(prev => ({ ...prev, [name]: result }));
         };
         reader.readAsDataURL(file);
+        
+        // Upload the file to Cloudinary
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && data.success) {
+            // Use the Cloudinary URL for the profile image
+            setFormData(prev => ({ ...prev, [name]: data.photoUrl }));
+          } else {
+            // Handle upload error
+            setErrors(prev => ({ 
+              ...prev, 
+              [name]: data.message || 'Failed to upload image to Cloudinary' 
+            }));
+          }
+        } catch (error) {
+          console.error('Error uploading image to Cloudinary:', error);
+          setErrors(prev => ({ 
+            ...prev, 
+            [name]: 'Network error during image upload' 
+          }));
+        }
       }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));

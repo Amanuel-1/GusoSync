@@ -50,12 +50,22 @@ export class RealTimeSocketService {
             // Try to decode the payload for debugging (without verification)
             try {
               const payload = JSON.parse(atob(tokenParts[1]))
+              const now = Math.floor(Date.now() / 1000)
+              const isExpired = payload.exp && payload.exp < now
+
               console.log("🔑 Token payload:", {
                 sub: payload.sub,
                 role: payload.role,
                 exp: payload.exp,
-                expiry: new Date(payload.exp * 1000).toISOString()
+                expiry: new Date(payload.exp * 1000).toISOString(),
+                isExpired: isExpired,
+                timeUntilExpiry: payload.exp ? `${payload.exp - now} seconds` : 'unknown'
               })
+
+              if (isExpired) {
+                console.warn("🔑 Token is expired!")
+                return null
+              }
             } catch (e) {
               console.warn("🔑 Could not decode token payload:", e)
             }
@@ -66,7 +76,7 @@ export class RealTimeSocketService {
 
         return data.token
       } else {
-        console.warn('Failed to get auth token:', response.status)
+        console.warn('Failed to get auth token:', response.status, response.statusText)
         return null
       }
     } catch (error) {
@@ -113,6 +123,9 @@ export class RealTimeSocketService {
       // Fallback endpoints
       `wss://guzosync-fastapi.onrender.com/ws?token=${encodeURIComponent(this.authToken)}`,
       `wss://guzosync-fastapi.onrender.com/ws/connect?auth=${encodeURIComponent(this.authToken)}`,
+      // Additional fallback endpoints
+      `wss://guzosync-fastapi.onrender.com/ws/notifications?token=${encodeURIComponent(this.authToken)}`,
+      `wss://guzosync-fastapi.onrender.com/websocket?token=${encodeURIComponent(this.authToken)}`,
     ]
 
     for (let i = 0; i < endpoints.length; i++) {
@@ -121,14 +134,15 @@ export class RealTimeSocketService {
 
       try {
         await this.connectToEndpoint(wsUrl)
+        console.log(`✅ Successfully connected to WebSocket endpoint ${i + 1}`)
         return // Success, exit the loop
       } catch (error) {
         console.warn(`❌ WebSocket connection ${i + 1} failed:`, error)
         if (i === endpoints.length - 1) {
           console.error('🚫 All WebSocket connection attempts failed')
-          console.log('🔄 WebSocket unavailable, fallback polling should be used')
+          console.log('🔄 WebSocket unavailable, notifications will not work in real-time')
           this.emit("error", {
-            message: 'WebSocket connection failed - using fallback polling',
+            message: 'WebSocket connection failed - real-time notifications unavailable',
             originalError: error,
             timestamp: new Date().toISOString()
           })
@@ -163,26 +177,48 @@ export class RealTimeSocketService {
         this.ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data)
-            console.log('📨 Received WebSocket message:', message)
+
+            // Filter out bus location updates from console logs to reduce noise
+            const shouldLogMessage = !this.isBusLocationUpdate(message)
+
+            if (shouldLogMessage) {
+              console.log('📨 Received WebSocket message:', message)
+            }
 
             // Handle different message types
             if (message.type) {
-              // Special handling for notification messages
-              if (message.type === 'notification' && message.notification) {
-                // Ensure the notification has an ID (generate one if missing)
-                if (!message.notification.id) {
-                  message.notification.id = `notification_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
-                }
-
-                // Ensure timestamp is in the correct format
-                if (!message.notification.timestamp) {
-                  message.notification.timestamp = new Date().toISOString()
-                }
-
-                console.log('📢 Processing notification:', message.notification)
+              // Handle authentication success
+              if (message.type === 'authenticated') {
+                console.log('✅ WebSocket authentication successful')
               }
-
-              this.emit(message.type, message)
+              // Handle subscription responses
+              else if (message.success !== undefined) {
+                if (message.success) {
+                  console.log('✅ WebSocket operation successful:', message.message || 'Operation completed')
+                  if (message.subscribed_types) {
+                    console.log('🔔 Successfully subscribed to notifications:', message.subscribed_types)
+                  }
+                } else {
+                  console.error('❌ WebSocket operation failed:', message.error || 'Unknown error')
+                }
+              }
+              // Handle pong responses
+              else if (message.type === 'pong') {
+                // Don't log pong messages to reduce console noise
+                // console.log('🏓 Received pong from server')
+              }
+              // Handle error messages
+              else if (message.type === 'error') {
+                console.error('❌ WebSocket error from server:', message.message)
+              }
+              // Special handling for notification messages
+              else if (message.type === 'notification') {
+                this.handleNotificationMessage(message)
+              }
+              // Handle all other message types (including bus location updates)
+              else {
+                this.emit(message.type, message)
+              }
             }
           } catch (error) {
             console.error('Error parsing WebSocket message:', error)
@@ -291,6 +327,66 @@ export class RealTimeSocketService {
       this.authRetryInterval = null
     }
   }
+
+  // Helper method to check if a message is a bus location update
+  private isBusLocationUpdate(message: any): boolean {
+    return message.type === 'bus_location_update' ||
+           message.type === 'location_update' ||
+           message.type === 'bus_position' ||
+           (message.type === 'update' && message.data?.type === 'location') ||
+           (message.data && message.data.latitude && message.data.longitude && message.data.bus_id)
+  }
+
+  // Handle notification messages with proper processing
+  private handleNotificationMessage(message: any) {
+    // Handle both direct notification format and nested notification format
+    let notification = message.notification || message.data || message
+
+    // If the message has a 'data' field with notification info, use that
+    if (message.data && (message.data.title || message.data.notification_type)) {
+      notification = {
+        id: message.data.id || `notification_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+        title: message.data.title,
+        message: message.data.message,
+        notification_type: message.data.notification_type,
+        timestamp: message.data.timestamp || new Date().toISOString(),
+        is_read: false,
+        related_entity: message.data.related_entity
+      }
+    }
+    // If it's already a properly formatted notification
+    else if (notification && notification.title) {
+      // Ensure the notification has required fields
+      if (!notification.id) {
+        notification.id = `notification_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+      }
+      if (!notification.timestamp) {
+        notification.timestamp = new Date().toISOString()
+      }
+      if (notification.is_read === undefined) {
+        notification.is_read = false
+      }
+    }
+    else {
+      console.warn('📢 Received notification message with invalid format:', message)
+      return
+    }
+
+    console.log('📢 Processing notification:', {
+      id: notification.id,
+      title: notification.title,
+      type: notification.notification_type,
+      timestamp: notification.timestamp
+    })
+
+    // Emit the notification to listeners
+    this.emit('notification', {
+      type: 'notification',
+      notification: notification
+    })
+  }
+
+
 
   private scheduleReconnect() {
     if (this.reconnectTimer) {
@@ -406,7 +502,41 @@ export class RealTimeSocketService {
 
   // Subscribe to notifications
   public subscribeToNotifications() {
-    this.send('subscribe_notifications', {})
+    console.log('📡 Sending notification subscription request...')
+
+    // Subscribe to notification types as specified in the backend format
+    const notificationTypes = [
+      'ALERT',
+      'ROUTE_REALLOCATION',
+      'TRIP_UPDATE',
+      'CHAT_MESSAGE',
+      'REALLOCATION_REQUEST_SUBMITTED',
+      'REALLOCATION_REQUEST_APPROVED',
+      'REALLOCATION_REQUEST_DISCARDED',
+      'INCIDENT_REPORTED',
+      'GENERAL',
+      'PROXIMITY_ALERT',
+      'SERVICE_ALERT'
+    ]
+
+    this.send('subscribe_notifications', {
+      notification_types: notificationTypes
+    })
+
+    console.log('📡 Subscribed to notification types:', notificationTypes)
+  }
+
+  // Send a test notification (for debugging)
+  public sendTestNotification(notificationData: {
+    title: string;
+    message: string;
+    notification_type: string;
+    target_roles?: string[];
+    target_user_ids?: string[];
+    related_entity?: any;
+  }) {
+    console.log('🧪 Sending test notification:', notificationData)
+    this.send('send_test_notification', notificationData)
   }
 
   // Send reallocation request notification

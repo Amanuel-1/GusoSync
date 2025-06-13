@@ -9,6 +9,7 @@ import type { Bus } from "@/types/bus"
 import ChatBox from "@/components/chat-box"
 import { Bell, TestTube } from "lucide-react"
 import { NotificationTestPanel } from "@/components/notifications/NotificationTestPanel"
+import { NotificationDebugPanel } from "@/components/notifications/NotificationDebugPanel"
 
 export default function Dashboard() {
   const {
@@ -84,8 +85,8 @@ export default function Dashboard() {
 
       {/* Notification test panel */}
       {showNotificationTest && (
-        <div className="absolute top-16 right-4 z-50 w-96">
-          <NotificationTestPanel />
+        <div className="absolute top-16 right-4 z-50 w-[800px] max-h-[600px] overflow-y-auto">
+          <NotificationDebugPanel />
         </div>
       )}
 

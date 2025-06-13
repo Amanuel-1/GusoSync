@@ -1,6 +1,7 @@
-export type NotificationType = 
+export type NotificationType =
+  | "ALERT"
   | "REALLOCATION_REQUEST_SUBMITTED"
-  | "REALLOCATION_REQUEST_APPROVED" 
+  | "REALLOCATION_REQUEST_APPROVED"
   | "REALLOCATION_REQUEST_DISCARDED"
   | "ROUTE_REALLOCATION"
   | "INCIDENT_REPORTED"
@@ -59,6 +60,7 @@ export interface NotificationContextType extends NotificationState {
 // Notification priority levels for UI styling
 export const getNotificationPriority = (notification: AppNotification): "low" | "normal" | "high" => {
   if (notification.related_entity?.priority === "HIGH") return "high";
+  if (notification.notification_type === "ALERT") return "high";
   if (notification.notification_type === "INCIDENT_REPORTED") return "high";
   if (notification.notification_type === "SERVICE_ALERT") return "high";
   if (notification.notification_type === "PROXIMITY_ALERT") return "normal";
@@ -69,6 +71,8 @@ export const getNotificationPriority = (notification: AppNotification): "low" | 
 // Get icon for notification type
 export const getNotificationIcon = (type: NotificationType): string => {
   switch (type) {
+    case "ALERT":
+      return "🔔";
     case "REALLOCATION_REQUEST_SUBMITTED":
     case "REALLOCATION_REQUEST_APPROVED":
     case "REALLOCATION_REQUEST_DISCARDED":
@@ -94,6 +98,7 @@ export const getNotificationIcon = (type: NotificationType): string => {
 // Get color scheme for notification type
 export const getNotificationColors = (type: NotificationType, priority: "low" | "normal" | "high") => {
   const baseColors = {
+    ALERT: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800", icon: "text-orange-600" },
     REALLOCATION_REQUEST_SUBMITTED: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-800", icon: "text-blue-600" },
     REALLOCATION_REQUEST_APPROVED: { bg: "bg-green-50", border: "border-green-200", text: "text-green-800", icon: "text-green-600" },
     REALLOCATION_REQUEST_DISCARDED: { bg: "bg-red-50", border: "border-red-200", text: "text-red-800", icon: "text-red-600" },
